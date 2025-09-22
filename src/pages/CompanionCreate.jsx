@@ -19,26 +19,10 @@ const CompanionCreateContainer = styled.div`
 const PageHeader = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
   margin-bottom: 30px;
   padding-bottom: 20px;
   border-bottom: 2px solid #e9ecef;
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #6c757d;
-  cursor: pointer;
-  margin-right: 15px;
-  padding: 5px;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #f8f9fa;
-    color: #333;
-  }
 `;
 
 const PageTitle = styled.h1`
@@ -309,6 +293,16 @@ const ErrorMessage = styled.div`
   margin-top: 5px;
 `;
 
+const DateInputGroup = styled.div`
+  display: flex;
+  gap: 10px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 15px;
+  }
+`;
+
 const Modal = styled.div`
   position: fixed;
   top: 0;
@@ -400,8 +394,6 @@ const CompanionCreate = () => {
     estimatedCost: '',
     travelStyle: [],
     images: [],
-    contactMethod: 'profile',
-    contactInfo: '',
     notice: ''
   });
 
@@ -485,12 +477,48 @@ const CompanionCreate = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    
-    // 실제로는 API 호출
+
+    // 로그인된 사용자 정보 가져오기
+    const getLoginData = () => {
+      const localData = localStorage.getItem('loginData');
+      const sessionData = sessionStorage.getItem('loginData');
+      return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+    };
+
+    const loginData = getLoginData();
+
+    // 새 게시물 생성
+    const newPost = {
+      id: Date.now(), // 임시 ID
+      title: formData.title,
+      ageGroup: formData.ageGroup,
+      region: formData.region,
+      date: `${formData.startDate} ~ ${formData.endDate}`,
+      description: formData.description,
+      participants: { current: 1, max: formData.maxParticipants },
+      image: imagePreview[0] || "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+      author: {
+        name: loginData?.name || "익명사용자",
+        profileImage: loginData?.profileImage || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+        age: loginData?.age || 25,
+        location: loginData?.location || formData.region
+      },
+      meetingPoint: formData.meetingPoint,
+      estimatedCost: formData.estimatedCost,
+      travelStyle: formData.travelStyle,
+      notice: formData.notice,
+      createdAt: new Date().toISOString()
+    };
+
+    // localStorage에 저장 (실제로는 API 호출)
+    const existingPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
+    existingPosts.unshift(newPost); // 맨 앞에 추가
+    localStorage.setItem('companionPosts', JSON.stringify(existingPosts));
+
     setTimeout(() => {
       setIsSubmitting(false);
       setShowSubmitModal(true);
@@ -502,12 +530,12 @@ const CompanionCreate = () => {
   };
 
   const confirmCancel = () => {
-    navigate('/companion');
+    navigate('/companion-list');
   };
 
   const confirmSubmit = () => {
     setShowSubmitModal(false);
-    navigate('/companion');
+    navigate('/companion-list');
   };
 
   return (
@@ -516,9 +544,6 @@ const CompanionCreate = () => {
       
       <CompanionCreateContainer>
         <PageHeader>
-          <BackButton onClick={() => navigate('/companion')}>
-            ←
-          </BackButton>
           <PageTitle>동행모집 글 작성</PageTitle>
         </PageHeader>
 
@@ -545,13 +570,14 @@ const CompanionCreate = () => {
                 <Label>
                   여행 기간 <Required>*</Required>
                 </Label>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <DateInputGroup>
                   <Input
                     type="date"
                     name="startDate"
                     value={formData.startDate}
                     onChange={handleInputChange}
                     style={{ flex: 1 }}
+                    placeholder="출발일"
                   />
                   <Input
                     type="date"
@@ -559,8 +585,9 @@ const CompanionCreate = () => {
                     value={formData.endDate}
                     onChange={handleInputChange}
                     style={{ flex: 1 }}
+                    placeholder="도착일"
                   />
-                </div>
+                </DateInputGroup>
                 {errors.startDate && <ErrorMessage>{errors.startDate}</ErrorMessage>}
                 {errors.endDate && <ErrorMessage>{errors.endDate}</ErrorMessage>}
               </FormGroup>
@@ -707,36 +734,6 @@ const CompanionCreate = () => {
               </FormGroup>
             </FormSection>
 
-            <FormSection>
-              <SectionTitle>연락처 정보</SectionTitle>
-              
-              <FormGroup>
-                <Label>연락 방법</Label>
-                <Select
-                  name="contactMethod"
-                  value={formData.contactMethod}
-                  onChange={handleInputChange}
-                >
-                  <option value="profile">프로필 메시지</option>
-                  <option value="kakao">카카오톡</option>
-                  <option value="phone">전화번호</option>
-                  <option value="email">이메일</option>
-                </Select>
-              </FormGroup>
-
-              {formData.contactMethod !== 'profile' && (
-                <FormGroup>
-                  <Label>연락처 정보</Label>
-                  <Input
-                    type="text"
-                    name="contactInfo"
-                    value={formData.contactInfo}
-                    onChange={handleInputChange}
-                    placeholder="연락처를 입력해주세요"
-                  />
-                </FormGroup>
-              )}
-            </FormSection>
 
             <FormSection>
               <SectionTitle>추가 안내사항</SectionTitle>

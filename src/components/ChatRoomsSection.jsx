@@ -103,6 +103,10 @@ const FloatingButton = styled.div`
   bottom: 30px;
   right: 30px;
   z-index: 100;
+
+  @media (max-width: 1024px) {
+    bottom: 110px;
+  }
 `;
 
 const CompanionButton = styled.button`

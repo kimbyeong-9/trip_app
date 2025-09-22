@@ -56,6 +56,38 @@ body {
   }
 }
 
+.companion-main-content {
+  padding-top: 70px;
+  width: 100%;
+  flex: 1;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 150px);
+  overflow-x: hidden;
+  padding-bottom: 0;
+}
+
+@media (max-width: 1024px) {
+  .companion-main-content {
+    padding-bottom: 80px;
+  }
+}
+
+.login-main-content {
+  padding-top: 70px;
+  width: 100%;
+  flex: 1;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 150px);
+  overflow-x: hidden;
+  padding-bottom: 0;
+}
+
+@media (max-width: 1024px) {
+  .login-main-content {
+    padding-bottom: 80px;
+  }
+}
+
 /* 기본 유틸리티 클래스들 */
 .text-center { text-align: center; }
 .text-left { text-align: left; }

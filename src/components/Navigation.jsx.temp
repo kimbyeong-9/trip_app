@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import Settings from '../pages/Settings';
+import ProfileInfo from '../pages/ProfileInfo';
 
 // Styled Components - 기존 CSS와 동일한 스타일
 const NavigationContainer = styled.nav`
@@ -96,7 +98,7 @@ const BackButton = styled.button`
   }
 `;
 
-const NavLogoCenter = styled(Link)`
+const NavLogoCenter = styled.div`
   position: absolute;
   left: 50%;
   top: 50%;
@@ -108,12 +110,6 @@ const NavLogoCenter = styled(Link)`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-decoration: none;
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: none;
-  }
 `;
 
 const SearchForm = styled.form`
@@ -184,14 +180,6 @@ const NavButton = styled.button`
     background: #f8f9fa;
     color: #667eea;
   }
-
-  @media (max-width: 768px) {
-    display: none;
-
-    &:first-child {
-      display: flex;
-    }
-  }
 `;
 
 const LoginButton = styled(Link)`
@@ -210,10 +198,6 @@ const LoginButton = styled(Link)`
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
     text-decoration: none;
     color: white;
-  }
-
-  @media (max-width: 768px) {
-    display: none;
   }
 `;
 
@@ -432,6 +416,8 @@ const ModalConfirmBtn = styled.button`
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileInfoOpen, setIsProfileInfoOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [loginData, setLoginData] = useState(null);
   const [showNoResultsModal, setShowNoResultsModal] = useState(false);
@@ -540,7 +526,7 @@ const Navigation = () => {
               </SearchButton>
             </SearchForm>
           ) : (
-            <NavLogoCenter to="/">여행대로</NavLogoCenter>
+            <NavLogoCenter>여행대로</NavLogoCenter>
           )}
         </NavCenter>
 
@@ -666,7 +652,14 @@ const Navigation = () => {
       )}
 
       {/* 설정 모달 */}
+      {isSettingsOpen && (
+        <Settings onClose={() => setIsSettingsOpen(false)} />
+      )}
 
+      {/* 프로필 정보 모달 */}
+      {isProfileInfoOpen && (
+        <ProfileInfo onClose={() => setIsProfileInfoOpen(false)} />
+      )}
     </NavigationContainer>
   );
 };

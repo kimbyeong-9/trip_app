@@ -3,11 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 
-// Styled Components - 기존 CSS와 동일한 스타일
+// Styled Components
 const UserProfilePage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
   padding-top: 70px;
+  padding-bottom: 20px;
+
+  @media (max-width: 1024px) {
+    padding-bottom: 100px;
+  }
 `;
 
 const UserProfileContainer = styled.div`
@@ -35,7 +40,7 @@ const ProfileMain = styled.div`
   margin-bottom: 32px;
   justify-content: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -53,7 +58,7 @@ const ProfileLeft = styled.div`
   align-items: center;
   gap: 16px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     width: 100%;
   }
 `;
@@ -64,11 +69,13 @@ const ProfileRight = styled.div`
   flex-direction: column;
   gap: 16px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     width: 100%;
     text-align: center;
+    align-items: center;
   }
 `;
+
 
 const ProfileAvatar = styled.div`
   width: 120px;
@@ -124,6 +131,11 @@ const ProfileBio = styled.p`
   margin: 0 0 20px 0;
   max-width: 500px;
 
+  @media (max-width: 1024px) {
+    max-width: 100%;
+    text-align: center;
+  }
+
   @media (max-width: 768px) {
     max-width: 100%;
   }
@@ -131,10 +143,13 @@ const ProfileBio = styled.p`
 
 const ProfileMetaInfo = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   width: 100%;
   gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 
   @media (max-width: 768px) {
     flex-direction: row;
@@ -202,21 +217,22 @@ const JoinIcon = styled.span`
 
 const ProfileStats = styled.div`
   display: flex;
-  gap: 48px;
+  gap: 180px;
   padding: 24px 0;
   border-top: 2px solid #f8f9fa;
   border-bottom: 2px solid #f8f9fa;
   margin-bottom: 32px;
-  justify-content: space-between;
+  justify-content: center;
 
   @media (max-width: 768px) {
-    gap: 30px;
+    gap: 60px;
     justify-content: center;
   }
 
   @media (max-width: 480px) {
-    gap: 20px;
-    flex-direction: column;
+    gap: 40px;
+    flex-direction: row;
+    justify-content: center;
     align-items: center;
   }
 `;
@@ -250,6 +266,7 @@ const ProfileActions = styled.div`
   display: flex;
   gap: 16px;
   margin-top: 8px;
+  justify-content: center;
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -341,7 +358,6 @@ const InterestTags = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 15px;
 `;
 
 const InterestTag = styled.span`
@@ -476,19 +492,6 @@ const MyPageSection = styled.div`
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   border: 1px solid #f0f0f0;
   margin-bottom: 30px;
-`;
-
-const SectionTitle = styled.h3`
-  font-size: 22px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 20px 0;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f8f9fa;
-
-  @media (max-width: 480px) {
-    font-size: 20px;
-  }
 `;
 
 const PointsInfo = styled.div`
@@ -874,29 +877,35 @@ const UserProfile = () => {
                 <ProfileAvatar>
                   <img src={user.profileImage} alt={user.name} />
                 </ProfileAvatar>
-                
+
                 {username === 'user' && (
                   <ProfileEditButton onClick={() => navigate('/profile-edit')}>
                     프로필 편집하기
                   </ProfileEditButton>
                 )}
-                
-                <ProfileMetaInfo>
-                  <ProfileLocation>
-                    <LocationIcon>📍</LocationIcon>
-                    <span>{user.location}</span>
-                  </ProfileLocation>
-                  <ProfileJoinDate>
-                    <JoinIcon>📅</JoinIcon>
-                    <span>{user.joinDate} 가입</span>
-                  </ProfileJoinDate>
-                </ProfileMetaInfo>
               </ProfileLeft>
+
               <ProfileRight>
                 <ProfileName>{user.name}</ProfileName>
                 <ProfileBio>{user.bio}</ProfileBio>
               </ProfileRight>
             </ProfileMain>
+
+            <ProfileMetaInfo>
+              <ProfileLocation>
+                <LocationIcon>📍</LocationIcon>
+                <span>{user.location}</span>
+              </ProfileLocation>
+              <ProfileJoinDate>
+                <JoinIcon>📅</JoinIcon>
+                <span>{user.joinDate} 가입</span>
+              </ProfileJoinDate>
+              <InterestTags>
+                {user.interests.map((interest, index) => (
+                  <InterestTag key={index}>{interest}</InterestTag>
+                ))}
+              </InterestTags>
+            </ProfileMetaInfo>
 
             <ProfileStats>
               <StatItem>
@@ -935,59 +944,7 @@ const UserProfile = () => {
                   </PointsInfo>
                 </MyPageSection>
 
-                {/* 예약 내역 */}
-                <MyPageSection>
-                  <SectionTitle>예약 내역</SectionTitle>
-                  {myPageData.bookings.map(booking => (
-                    <BookingCard key={booking.id}>
-                      <BookingHeader>
-                        <HotelName>{booking.hotel}</HotelName>
-                        <Status status={booking.status}>{booking.status}</Status>
-                      </BookingHeader>
-                      <BookingDetails>
-                        <DetailItem>
-                          <DetailLabel>객실</DetailLabel>
-                          <DetailValue>{booking.room}</DetailValue>
-                        </DetailItem>
-                        <DetailItem>
-                          <DetailLabel>체크인</DetailLabel>
-                          <DetailValue>{booking.checkIn}</DetailValue>
-                        </DetailItem>
-                        <DetailItem>
-                          <DetailLabel>체크아웃</DetailLabel>
-                          <DetailValue>{booking.checkOut}</DetailValue>
-                        </DetailItem>
-                        <DetailItem>
-                          <DetailLabel>금액</DetailLabel>
-                          <DetailValue>{booking.amount.toLocaleString()}원</DetailValue>
-                        </DetailItem>
-                      </BookingDetails>
-                      <ActionButtons>
-                        {booking.status === '예약완료' && (
-                          <>
-                            <ActionButton className="primary">후기작성</ActionButton>
-                            <ActionButton className="secondary">재예약</ActionButton>
-                          </>
-                        )}
-                      </ActionButtons>
-                    </BookingCard>
-                  ))}
-                </MyPageSection>
 
-                {/* 찜한 숙소 */}
-                <MyPageSection>
-                  <SectionTitle>찜한 숙소</SectionTitle>
-                  {myPageData.favorites.map(favorite => (
-                    <FavoriteCard key={favorite.id}>
-                      <FavoriteImage src={favorite.image} alt={favorite.name} />
-                      <FavoriteInfo>
-                        <FavoriteName>{favorite.name}</FavoriteName>
-                        <FavoriteLocation>{favorite.location}</FavoriteLocation>
-                        <FavoritePrice>{favorite.price.toLocaleString()}원</FavoritePrice>
-                      </FavoriteInfo>
-                    </FavoriteCard>
-                  ))}
-                </MyPageSection>
 
                 {/* 관심 일정 */}
                 <MyPageSection>
@@ -1006,14 +963,6 @@ const UserProfile = () => {
             )}
 
             {/* 일반 프로필 정보 */}
-            <InterestsSection>
-              <SectionTitle>관심사</SectionTitle>
-              <InterestTags>
-                {user.interests.map((interest, index) => (
-                  <InterestTag key={index}>{interest}</InterestTag>
-                ))}
-              </InterestTags>
-            </InterestsSection>
 
             <RecentTripsSection>
               <SectionTitle>최근 여행</SectionTitle>

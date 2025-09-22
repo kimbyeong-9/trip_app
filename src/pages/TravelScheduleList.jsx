@@ -1,402 +1,370 @@
-import React, { useState } from 'react';
+import React, { useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 import Navigation from '../components/Navigation';
+import { itineraryCards } from '../data/mockData';
+
+// Styled Components
+const TravelScheduleListPage = styled.div`
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding-top: 70px;
+`;
+
+const TravelScheduleListContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+`;
+
+const PageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+`;
+
+const PageTitle = styled.h1`
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+`;
+
+const CreateButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+`;
+
+const FilterSection = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+`;
+
+const FilterTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 20px 0;
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+`;
+
+const SearchInput = styled.input`
+  padding: 10px 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #495057;
+  background: white;
+  transition: all 0.3s ease;
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  &::placeholder {
+    color: #6c757d;
+  }
+`;
+
+const FilterTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+const FilterTag = styled.button`
+  padding: 6px 12px;
+  border: 2px solid ${props => props.active ? '#667eea' : '#e9ecef'};
+  background: ${props => props.active ? '#667eea' : 'white'};
+  color: ${props => props.active ? 'white' : '#495057'};
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: #667eea;
+    background: ${props => props.active ? '#5a6fd8' : '#f8f9fa'};
+  }
+`;
+
+const SchedulesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+  margin-bottom: 30px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+`;
+
+const ScheduleCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid #e9ecef;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+const ScheduleImage = styled.img`
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+`;
+
+const ScheduleContent = styled.div`
+  padding: 20px;
+`;
+
+const ScheduleTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+`;
+
+const ScheduleMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+`;
+
+const ScheduleTag = styled.span`
+  background: ${props => {
+    switch(props.type) {
+      case 'region': return '#e3f2fd';
+      case 'date': return '#f3e5f5';
+      case 'author': return '#e8f5e8';
+      default: return '#f8f9fa';
+    }
+  }};
+  color: ${props => {
+    switch(props.type) {
+      case 'region': return '#1976d2';
+      case 'date': return '#7b1fa2';
+      case 'author': return '#2e7d32';
+      default: return '#495057';
+    }
+  }};
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+`;
+
+const NoResults = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+`;
+
+const NoResultsIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 20px;
+`;
+
+const NoResultsTitle = styled.h3`
+  font-size: 24px;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const NoResultsText = styled.p`
+  font-size: 16px;
+  margin: 0;
+`;
+
+const LoginModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 40px 30px 30px 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+`;
+
+const ModalIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 20px;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 24px;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const ModalMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 25px 0;
+  line-height: 1.5;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+`;
+
+const ModalButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+
+  ${props => props.primary ? `
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+  ` : `
+    background: white;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+
+    &:hover {
+      background: #f8f9fa;
+      color: #495057;
+    }
+  `}
+`;
+
+const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 30px;
+`;
+
+const PageButton = styled.button`
+  padding: 8px 12px;
+  border: 1px solid #e9ecef;
+  background: ${props => props.active ? '#667eea' : 'white'};
+  color: ${props => props.active ? 'white' : '#495057'};
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: ${props => props.active ? '#5a6fd8' : '#f8f9fa'};
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const ScheduleStats = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e9ecef;
+`;
+
+const ScheduleStat = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6c757d;
+
+  span:first-child {
+    font-size: 14px;
+  }
+`;
 
 const TravelScheduleList = () => {
   const navigate = useNavigate();
   const [selectedRegion, setSelectedRegion] = useState('all');
-  const [selectedDuration, setSelectedDuration] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const postsPerPage = 10;
-
-  // 임의의 여행 일정 데이터
-  const travelSchedules = [
-    {
-      id: 1,
-      title: "제주도 3박4일 완벽 코스",
-      region: "제주",
-      duration: "3박4일",
-      author: "김제주",
-      authorAvatar: "김",
-      views: 1250,
-      likes: 89,
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
-      description: "제주도의 핫플레이스들을 모두 담은 완벽한 여행 코스입니다. 한라산, 성산일출봉, 협재해수욕장까지!",
-      tags: ["자연", "힐링", "사진"],
-      date: "2024-01-15"
-    },
-    {
-      id: 2,
-      title: "부산 해운대 & 감천문화마을 투어",
-      region: "부산",
-      duration: "2박3일",
-      author: "박부산",
-      authorAvatar: "박",
-      views: 980,
-      likes: 67,
-      image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop",
-      description: "부산의 대표 관광지들을 효율적으로 돌아볼 수 있는 일정입니다. 맛집도 놓치지 마세요!",
-      tags: ["문화", "맛집", "바다"],
-      date: "2024-01-20"
-    },
-    {
-      id: 3,
-      title: "서울 한강 라이딩 & 야경투어",
-      region: "서울",
-      duration: "당일",
-      author: "이서울",
-      authorAvatar: "이",
-      views: 2100,
-      likes: 156,
-      image: "https://images.unsplash.com/photo-1549693578-d683be217e58?w=400&h=300&fit=crop",
-      description: "서울의 야경을 만끽할 수 있는 당일 코스입니다. 한강 자전거 라이딩과 용산 전망대까지!",
-      tags: ["액티비티", "야경", "운동"],
-      date: "2024-01-25"
-    },
-    {
-      id: 4,
-      title: "경주 역사여행 & 불국사 관광",
-      region: "경상",
-      duration: "2박3일",
-      author: "최경주",
-      authorAvatar: "최",
-      views: 780,
-      likes: 45,
-      image: "https://images.unsplash.com/photo-1541698444083-023c97d3f4b6?w=400&h=300&fit=crop",
-      description: "천년고도 경주의 역사를 느낄 수 있는 여행입니다. 불국사, 석굴암, 첨성대까지!",
-      tags: ["역사", "문화", "교육"],
-      date: "2024-01-28"
-    },
-    {
-      id: 5,
-      title: "강원도 평창 스키장 겨울여행",
-      region: "강원",
-      duration: "2박3일",
-      author: "정강원",
-      authorAvatar: "정",
-      views: 1450,
-      likes: 98,
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-      description: "평창 알펜시아 스키장에서 즐기는 겨울 스포츠 여행입니다. 초보자도 환영!",
-      tags: ["겨울", "스키", "스포츠"],
-      date: "2024-02-01"
-    },
-    {
-      id: 6,
-      title: "전주 한옥마을 & 맛집투어",
-      region: "전라",
-      duration: "1박2일",
-      author: "한전주",
-      authorAvatar: "한",
-      views: 920,
-      likes: 72,
-      image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop",
-      description: "전주 한옥마을의 전통과 현대를 만나는 여행입니다. 비빔밥과 한지 체험까지!",
-      tags: ["전통", "맛집", "체험"],
-      date: "2024-02-05"
-    },
-    {
-      id: 7,
-      title: "인천 차이나타운 & 월미도 관광",
-      region: "인천",
-      duration: "당일",
-      author: "오인천",
-      authorAvatar: "오",
-      views: 650,
-      likes: 38,
-      image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop",
-      description: "인천의 독특한 매력을 느낄 수 있는 당일 코스입니다. 차이나타운과 월미도 해변까지!",
-      tags: ["다문화", "바다", "당일"],
-      date: "2024-02-08"
-    },
-    {
-      id: 8,
-      title: "대구 팔공산 등반 & 동화사 탐방",
-      region: "경상",
-      duration: "1박2일",
-      author: "윤대구",
-      authorAvatar: "윤",
-      views: 580,
-      likes: 34,
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
-      description: "팔공산의 자연과 동화사의 불교문화를 체험하는 힐링 여행입니다.",
-      tags: ["등산", "힐링", "문화"],
-      date: "2024-02-10"
-    },
-    {
-      id: 9,
-      title: "울산 대왕암 & 태화강 국립공원",
-      region: "경상",
-      duration: "1박2일",
-      author: "강울산",
-      authorAvatar: "강",
-      views: 720,
-      likes: 51,
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
-      description: "울산의 아름다운 자연을 만끽할 수 있는 여행입니다. 대왕암 일출과 태화강 산책까지!",
-      tags: ["자연", "일출", "산책"],
-      date: "2024-02-12"
-    },
-    {
-      id: 10,
-      title: "광주 5.18 기념공원 & 무등산",
-      region: "전라",
-      duration: "1박2일",
-      author: "조광주",
-      authorAvatar: "조",
-      views: 890,
-      likes: 63,
-      image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop",
-      description: "광주의 역사와 문화, 그리고 자연을 모두 체험하는 의미 있는 여행입니다.",
-      tags: ["역사", "문화", "등산"],
-        date: "2024-02-15"
-      },
-      {
-        id: 11,
-        title: "여수 밤바다 & 오동도 야경투어",
-        region: "전라",
-        duration: "2박3일",
-        author: "송여수",
-        authorAvatar: "송",
-        views: 1150,
-        likes: 78,
-        image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
-        description: "여수의 아름다운 밤바다와 오동도의 야경을 감상하는 로맨틱 여행입니다.",
-        tags: ["야경", "바다", "로맨틱"],
-        date: "2024-02-18"
-      },
-      {
-        id: 12,
-        title: "안동 하회마을 & 도산서원 탐방",
-        region: "경상",
-        duration: "1박2일",
-        author: "배안동",
-        authorAvatar: "배",
-        views: 650,
-        likes: 42,
-        image: "https://images.unsplash.com/photo-1541698444083-023c97d3f4b6?w=400&h=300&fit=crop",
-        description: "안동의 전통문화와 유교문화를 체험하는 교육적인 여행입니다.",
-        tags: ["전통", "문화", "교육"],
-        date: "2024-02-20"
-      },
-      {
-        id: 13,
-        title: "춘천 남이섬 & 청평호수",
-        region: "강원",
-        duration: "1박2일",
-        author: "임춘천",
-        authorAvatar: "임",
-        views: 980,
-        likes: 65,
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-        description: "춘천의 대표 관광지 남이섬과 청평호수의 자연을 만끽하는 힐링 여행입니다.",
-        tags: ["자연", "힐링", "섬"],
-        date: "2024-02-22"
-      },
-      {
-        id: 14,
-        title: "목포 유달산 & 죽녹원",
-        region: "전라",
-        duration: "당일",
-        author: "허목포",
-        authorAvatar: "허",
-        views: 520,
-        likes: 35,
-        image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
-        description: "목포의 아름다운 자연과 죽녹원의 푸른 대나무를 감상하는 당일 여행입니다.",
-        tags: ["자연", "대나무", "당일"],
-        date: "2024-02-25"
-      },
-      {
-        id: 15,
-        title: "통영 미륵산 & 동피랑마을",
-        region: "경상",
-        duration: "1박2일",
-        author: "신통영",
-        authorAvatar: "신",
-        views: 780,
-        likes: 58,
-        image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop",
-        description: "통영의 바다와 미륵산, 그리고 예술마을 동피랑을 탐방하는 문화 여행입니다.",
-        tags: ["바다", "예술", "문화"],
-        date: "2024-02-28"
-      },
-      {
-        id: 16,
-        title: "속초 설악산 & 영금정",
-        region: "강원",
-        duration: "2박3일",
-        author: "노속초",
-        authorAvatar: "노",
-        views: 1200,
-        likes: 85,
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-        description: "속초의 설악산과 영금정에서 즐기는 자연과 바다를 모두 만끽하는 여행입니다.",
-        tags: ["산", "바다", "자연"],
-        date: "2024-03-02"
-      },
-      {
-        id: 17,
-        title: "순천만 갈대숲 & 선암사",
-        region: "전라",
-        duration: "1박2일",
-        author: "문순천",
-        authorAvatar: "문",
-        views: 950,
-        likes: 72,
-        image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
-        description: "순천만의 아름다운 갈대숲과 선암사의 고즈넉한 분위기를 느끼는 힐링 여행입니다.",
-        tags: ["자연", "힐링", "갈대숲"],
-        date: "2024-03-05"
-      },
-      {
-        id: 18,
-        title: "포항 호미곶 일출 & 경주 불국사",
-        region: "경상",
-        duration: "1박2일",
-        author: "강포항",
-        authorAvatar: "강",
-        views: 1100,
-        likes: 89,
-        image: "https://images.unsplash.com/photo-1541698444083-023c97d3f4b6?w=400&h=300&fit=crop",
-        description: "포항 호미곶에서 보는 일출과 경주 불국사의 역사를 함께 체험하는 의미 있는 여행입니다.",
-        tags: ["일출", "역사", "문화"],
-        date: "2024-03-08"
-      },
-      {
-        id: 19,
-        title: "단양 도담삼봉 & 온달동굴",
-        region: "충청",
-        duration: "1박2일",
-        author: "조단양",
-        authorAvatar: "조",
-        views: 680,
-        likes: 48,
-        image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop",
-        description: "단양의 아름다운 자연과 도담삼봉, 온달동굴을 탐방하는 자연 체험 여행입니다.",
-        tags: ["자연", "동굴", "체험"],
-        date: "2024-03-10"
-      },
-      {
-        id: 20,
-        title: "태안 반딧불이 & 안면도",
-        region: "충청",
-        duration: "1박2일",
-        author: "한태안",
-        authorAvatar: "한",
-        views: 850,
-        likes: 61,
-        image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
-        description: "태안의 아름다운 반딧불이와 안면도의 자연을 감상하는 특별한 여행입니다.",
-        tags: ["반딧불이", "자연", "특별"],
-        date: "2024-03-12"
-      },
-      {
-        id: 21,
-        title: "강릉 정동진 & 커피거리",
-        region: "강원",
-        duration: "1박2일",
-        author: "김강릉",
-        authorAvatar: "김",
-        views: 1350,
-        likes: 95,
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-        description: "강릉 정동진의 아름다운 일출과 커피거리의 감성을 만끽하는 힐링 여행입니다.",
-        tags: ["일출", "커피", "힐링"],
-        date: "2024-03-15"
-      },
-      {
-        id: 22,
-        title: "거제 바람의 언덕 & 해금강",
-        region: "경상",
-        duration: "2박3일",
-        author: "박거제",
-        authorAvatar: "박",
-        views: 980,
-        likes: 74,
-        image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop",
-        description: "거제의 바람의 언덕과 해금강의 아름다운 자연을 감상하는 바다 여행입니다.",
-        tags: ["바다", "자연", "풍경"],
-        date: "2024-03-18"
-      },
-      {
-        id: 23,
-        title: "영월 청령포 & 단종능",
-        region: "강원",
-        duration: "1박2일",
-        author: "최영월",
-        authorAvatar: "최",
-        views: 720,
-        likes: 52,
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-        description: "영월 청령포의 아름다운 자연과 단종능의 역사를 함께 체험하는 의미 있는 여행입니다.",
-        tags: ["역사", "자연", "문화"],
-        date: "2024-03-20"
-      },
-      {
-        id: 24,
-        title: "보령 무창포 & 대천해수욕장",
-        region: "충청",
-        duration: "1박2일",
-        author: "정보령",
-        authorAvatar: "정",
-        views: 650,
-        likes: 43,
-        image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
-        description: "보령 무창포와 대천해수욕장에서 즐기는 바다와 해변의 즐거움을 만끽하는 여행입니다.",
-        tags: ["바다", "해수욕장", "여름"],
-        date: "2024-03-22"
-      },
-      {
-        id: 25,
-        title: "화천 산천어축제 & 평화의댐",
-        region: "강원",
-        duration: "1박2일",
-        author: "윤화천",
-        authorAvatar: "윤",
-        views: 890,
-        likes: 67,
-        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-        description: "화천의 산천어축제와 평화의댐을 함께 즐기는 특별한 축제 여행입니다.",
-        tags: ["축제", "자연", "특별"],
-        date: "2024-03-25"
-      }
-    ];
-
-  const regions = ['전체', '서울', '부산', '제주', '경상', '전라', '강원', '인천'];
-  const durations = ['전체', '당일', '1박2일', '2박3일', '3박4일', '4박5일 이상'];
-
-  // 필터링된 데이터
-  const filteredSchedules = travelSchedules.filter(schedule => {
-    const regionMatch = selectedRegion === 'all' || schedule.region === selectedRegion;
-    const durationMatch = selectedDuration === 'all' || schedule.duration === selectedDuration;
-    const searchMatch = searchTerm === '' || 
-      schedule.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      schedule.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      schedule.region.toLowerCase().includes(searchTerm.toLowerCase());
-    return regionMatch && durationMatch && searchMatch;
-  });
-
-  // 페이지네이션
-  const totalPages = Math.ceil(filteredSchedules.length / postsPerPage);
-  const currentSchedules = filteredSchedules.slice(
-    (currentPage - 1) * postsPerPage,
-    currentPage * postsPerPage
-  );
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  const handleScheduleClick = (id) => {
-    navigate(`/travel-schedule/${id}`);
-  };
-
-  const handleBackClick = () => {
-    navigate(-1);
-  };
+  const [sortBy, setSortBy] = useState('latest'); // 'latest', 'popular'
+  const schedulesPerPage = 9;
 
   // 로그인 상태 확인
   const getLoginData = () => {
@@ -404,9 +372,53 @@ const TravelScheduleList = () => {
     const sessionData = sessionStorage.getItem('loginData');
     return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
   };
-  
+
   const loginData = getLoginData();
   const isLoggedIn = loginData && loginData.isLoggedIn;
+
+  // 사용자가 등록한 여행 일정 불러오기
+  const getUserSchedules = () => {
+    try {
+      return JSON.parse(localStorage.getItem('travelSchedules')) || [];
+    } catch {
+      return [];
+    }
+  };
+
+  // 모든 여행 일정 결합 (사용자 + 기본)
+  const userSchedules = getUserSchedules();
+  const allSchedules = [...userSchedules, ...itineraryCards];
+
+  // 필터링 및 정렬된 일정 계산
+  const filteredSchedules = allSchedules.filter(schedule => {
+    const matchesRegion = selectedRegion === 'all' || schedule.region === selectedRegion;
+    const matchesMonth = selectedMonth === 'all' || schedule.date.includes(selectedMonth);
+    const matchesSearch = searchTerm === '' ||
+      schedule.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      schedule.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (schedule.author && schedule.author.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    return matchesRegion && matchesMonth && matchesSearch;
+  }).sort((a, b) => {
+    if (sortBy === 'latest') {
+      // 최신순: createdAt이 있으면 사용, 없으면 date 사용
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(a.date.split('~')[0]);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(b.date.split('~')[0]);
+      return dateB - dateA; // 내림차순 (최신순)
+    } else if (sortBy === 'popular') {
+      // 인기순: views가 있으면 사용, 없으면 랜덤 값 사용
+      const viewsA = a.views || Math.floor(Math.random() * 1000) + 100;
+      const viewsB = b.views || Math.floor(Math.random() * 1000) + 100;
+      return viewsB - viewsA; // 내림차순 (조회수 높은 순)
+    }
+    return 0;
+  });
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(filteredSchedules.length / schedulesPerPage);
+  const startIndex = (currentPage - 1) * schedulesPerPage;
+  const endIndex = startIndex + schedulesPerPage;
+  const currentSchedules = filteredSchedules.slice(startIndex, endIndex);
 
   const handleCreateSchedule = () => {
     if (isLoggedIn) {
@@ -422,188 +434,180 @@ const TravelScheduleList = () => {
   };
 
   return (
-    <div className="travel-schedule-list-page">
+    <TravelScheduleListPage>
       <Navigation />
-      {/* 헤더 */}
-      <div className="travel-schedule-list-header">
-        <button className="back-button" onClick={handleBackClick}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        <h1>여행 일정</h1>
-        <button className="create-schedule-button" onClick={handleCreateSchedule}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          일정 추가
-        </button>
-      </div>
 
-      <div className="travel-schedule-list-content">
-        {/* 검색 */}
-        <div className="search-section">
-          <div className="search-container">
-            <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <input
+      <TravelScheduleListContainer>
+        <PageHeader>
+          <PageTitle>여행 일정</PageTitle>
+          <CreateButton onClick={handleCreateSchedule}>
+            일정 등록
+          </CreateButton>
+        </PageHeader>
+
+        <FilterSection>
+          <FilterTitle>필터</FilterTitle>
+
+          <FilterGroup style={{ marginBottom: '20px' }}>
+            <FilterLabel>검색</FilterLabel>
+            <SearchInput
               type="text"
-              placeholder="여행지, 제목으로 검색..."
+              placeholder="제목, 지역, 작성자로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
             />
-          </div>
-        </div>
+          </FilterGroup>
 
-        {/* 필터 */}
-        <div className="filter-section">
-          <div className="filter-group">
-            <label>지역</label>
-            <div className="filter-buttons">
-              {regions.map(region => (
-                <button
+          <FilterGroup>
+            <FilterLabel>지역</FilterLabel>
+            <FilterTags>
+              {['all', '서울', '경기', '인천', '강원', '충청', '전라', '경상', '제주', '부산'].map(region => (
+                <FilterTag
                   key={region}
-                  className={`filter-btn ${selectedRegion === (region === '전체' ? 'all' : region) ? 'active' : ''}`}
-                  onClick={() => setSelectedRegion(region === '전체' ? 'all' : region)}
+                  active={selectedRegion === region}
+                  onClick={() => setSelectedRegion(region)}
                 >
-                  {region}
-                </button>
+                  {region === 'all' ? '전체' : region}
+                </FilterTag>
               ))}
-            </div>
-          </div>
+            </FilterTags>
+          </FilterGroup>
 
-          <div className="filter-group">
-            <label>여행 기간</label>
-            <div className="filter-buttons">
-              {durations.map(duration => (
-                <button
-                  key={duration}
-                  className={`filter-btn ${selectedDuration === (duration === '전체' ? 'all' : duration) ? 'active' : ''}`}
-                  onClick={() => setSelectedDuration(duration === '전체' ? 'all' : duration)}
+          <FilterGroup>
+            <FilterLabel>여행일</FilterLabel>
+            <FilterTags>
+              {[
+                { value: 'all', label: '전체' },
+                { value: '2024-01', label: '1월' },
+                { value: '2024-02', label: '2월' },
+                { value: '2024-03', label: '3월' },
+                { value: '2024-04', label: '4월' },
+                { value: '2024-05', label: '5월' },
+                { value: '2024-06', label: '6월' },
+                { value: '2024-07', label: '7월' },
+                { value: '2024-08', label: '8월' },
+                { value: '2024-09', label: '9월' },
+                { value: '2024-10', label: '10월' },
+                { value: '2024-11', label: '11월' },
+                { value: '2024-12', label: '12월' }
+              ].map(month => (
+                <FilterTag
+                  key={month.value}
+                  active={selectedMonth === month.value}
+                  onClick={() => setSelectedMonth(month.value)}
                 >
-                  {duration}
-                </button>
+                  {month.label}
+                </FilterTag>
               ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 일정 목록 */}
-        <div className="schedule-list">
-          <div className="schedule-table">
-            {/* 테이블 헤더 */}
-            <div className="table-header">
-              <div className="table-cell">사진</div>
-              <div className="table-cell">제목</div>
-              <div className="table-cell">지역</div>
-              <div className="table-cell">기간</div>
-              <div className="table-cell">작성자</div>
-              <div className="table-cell">조회수</div>
-              <div className="table-cell">좋아요</div>
-            </div>
-            
-            {currentSchedules.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">🗺️</div>
-                <h3>검색 결과가 없습니다</h3>
-                <p>다른 검색어나 필터를 시도해보세요.</p>
-              </div>
-            ) : (
-              <div className="table-body">
-                  {currentSchedules.map(schedule => (
-                    <div 
-                      key={schedule.id} 
-                      className="table-row"
-                      onClick={() => handleScheduleClick(schedule.id)}
-                    >
-                      <div className="table-cell image-cell">
-                        <div className="representative-image">
-                          <img src={schedule.image} alt={schedule.title} />
-                        </div>
-                      </div>
-                      <div className="table-cell title-cell">
-                        <div className="post-title">{schedule.title}</div>
-                        <div className="post-description">{schedule.description.length > 20 ? schedule.description.substring(0, 20) + '...' : schedule.description}</div>
-                      </div>
-                      <div className="table-cell region-cell">
-                        <span className="region-badge">{schedule.region}</span>
-                      </div>
-                      <div className="table-cell duration-cell">
-                        <span className="duration-text">{schedule.duration}</span>
-                      </div>
-                      <div className="table-cell author-cell">
-                        <div className="author-info">
-                          <div className="author-avatar">{schedule.authorAvatar}</div>
-                          <span className="author-name">{schedule.author}</span>
-                        </div>
-                      </div>
-                      <div className="table-cell views-cell">
-                        <span className="views-count">{schedule.views}</span>
-                      </div>
-                      <div className="table-cell likes-cell">
-                        <span className="likes-count">{schedule.likes}</span>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button 
-                className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
+            </FilterTags>
+          </FilterGroup>
+          <FilterGroup>
+            <FilterLabel>정렬</FilterLabel>
+            <FilterTags>
+              <FilterTag
+                active={sortBy === 'latest'}
+                onClick={() => setSortBy('latest')}
               >
-                이전
-              </button>
-              
-              <div className="pagination-numbers">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    className={`pagination-number ${page === currentPage ? 'active' : ''}`}
-                    onClick={() => handlePageChange(page)}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-              
-              <button 
-                className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                최신순
+              </FilterTag>
+              <FilterTag
+                active={sortBy === 'popular'}
+                onClick={() => setSortBy('popular')}
               >
-                다음
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+                인기순
+              </FilterTag>
+            </FilterTags>
+          </FilterGroup>
+        </FilterSection>
 
-      {/* 로그인 안내 모달 */}
+        {currentSchedules.length > 0 ? (
+          <SchedulesGrid>
+            {currentSchedules.map((schedule) => (
+              <ScheduleCard
+                key={schedule.id}
+                onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
+              >
+                <ScheduleImage src={schedule.image} alt={schedule.title} />
+                <ScheduleContent>
+                  <ScheduleTitle>{schedule.title}</ScheduleTitle>
+                  <ScheduleMeta>
+                    <ScheduleTag type="region">{schedule.region}</ScheduleTag>
+                    <ScheduleTag type="date">{schedule.date}</ScheduleTag>
+                    {schedule.author && (
+                      <ScheduleTag type="author">by {schedule.author}</ScheduleTag>
+                    )}
+                  </ScheduleMeta>
+                  {schedule.views && (
+                    <ScheduleStats>
+                      <ScheduleStat>
+                        <span>👁️</span>
+                        <span>{schedule.views.toLocaleString()}</span>
+                      </ScheduleStat>
+                      {schedule.likes && (
+                        <ScheduleStat>
+                          <span>❤️</span>
+                          <span>{schedule.likes}</span>
+                        </ScheduleStat>
+                      )}
+                    </ScheduleStats>
+                  )}
+                </ScheduleContent>
+              </ScheduleCard>
+            ))}
+          </SchedulesGrid>
+        ) : (
+          <NoResults>
+            <NoResultsIcon>📅</NoResultsIcon>
+            <NoResultsTitle>검색 결과가 없습니다</NoResultsTitle>
+            <NoResultsText>다른 검색어나 필터를 시도해보세요</NoResultsText>
+          </NoResults>
+        )}
+
+        {/* 페이지네이션 */}
+        {filteredSchedules.length > 0 && totalPages > 1 && (
+          <Pagination>
+            <PageButton
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              이전
+            </PageButton>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <PageButton
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                active={currentPage === page}
+              >
+                {page}
+              </PageButton>
+            ))}
+
+            <PageButton
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              다음
+            </PageButton>
+          </Pagination>
+        )}
+      </TravelScheduleListContainer>
+
+      {/* 로그인 모달 */}
       {showLoginModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>해당 서비스는 로그인을 해야 이용 가능합니다</h3>
-            <p>여행 일정을 작성하려면 로그인이 필요합니다.</p>
-            <div className="modal-actions">
-              <button className="modal-cancel-btn" onClick={() => setShowLoginModal(false)}>
-                뒤로
-              </button>
-              <button className="modal-confirm-btn" onClick={handleLoginClick}>
-                로그인하기
-              </button>
-            </div>
-          </div>
-        </div>
+        <LoginModal onClick={() => setShowLoginModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalIcon>🔒</ModalIcon>
+            <ModalTitle>로그인이 필요합니다</ModalTitle>
+            <ModalMessage>여행 일정을 등록하려면 로그인해주세요.</ModalMessage>
+            <ModalButtons>
+              <ModalButton primary onClick={handleLoginClick}>로그인</ModalButton>
+              <ModalButton onClick={() => setShowLoginModal(false)}>취소</ModalButton>
+            </ModalButtons>
+          </ModalContent>
+        </LoginModal>
       )}
-    </div>
+    </TravelScheduleListPage>
   );
 };
 

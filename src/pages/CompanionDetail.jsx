@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
+import { fullCompanionPosts, fillMissingData } from '../data/mockData';
 
 // Styled Components - 기존 CSS와 동일한 스타일
 const CompanionDetailPage = styled.div`
@@ -307,101 +308,24 @@ const CompanionDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // 홈페이지의 동행 카드 데이터와 완전히 매칭
-  const companionData = {
-    1: {
-      id: 1,
-      title: "제주여행 갈사람~ ✈️",
-      region: "제주",
-      ageGroup: "20대",
-      date: "2025-10-11~2025-10-14",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop",
-      description: "제주도의 아름다운 풍경을 함께 즐기고 싶어요! 한라산 등반, 성산일출봉, 카페 투어까지 다 같이 즐겨봐요. 편안하고 즐거운 여행을 원하시는 분들 환영합니다!",
-      author: "제주러버",
-      authorImage: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face",
-      participants: { current: 2, max: 4 },
-      budget: "150,000원",
-      meetingPoint: "제주공항",
-      interests: ["자연", "카페", "등산", "사진"]
-    },
-    2: {
-      id: 2,
-      title: "서해안 드라이브 🚗",
-      region: "충남",
-      ageGroup: "30대",
-      date: "2025-10-15~2025-10-16",
-      image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop",
-      description: "서해안의 멋진 일몰과 신선한 해산물을 맛보며 드라이브하는 여행입니다. 차량이 있으신 분들이면 더욱 좋고, 없으셔도 같이 타고 갈 수 있어요!",
-      author: "드라이브매니아",
-      authorImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
-      participants: { current: 1, max: 3 },
-      budget: "80,000원",
-      meetingPoint: "서울역",
-      interests: ["드라이브", "해산물", "일몰", "휴식"]
-    },
-    3: {
-      id: 3,
-      title: "강원도 캠핑 ⛺",
-      region: "강원",
-      ageGroup: "20대",
-      date: "2025-10-20~2025-10-22",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
-      description: "강원도의 맑은 공기와 자연 속에서 캠핑을 즐겨봐요! 바비큐, 숯불구이, 그리고 밤하늘의 별까지. 캠핑 초보자도 환영합니다.",
-      author: "캠핑러버",
-      authorImage: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=40&h=40&fit=crop&crop=face",
-      participants: { current: 3, max: 6 },
-      budget: "120,000원",
-      meetingPoint: "춘천역",
-      interests: ["캠핑", "바비큐", "자연", "별보기"]
-    },
-    4: {
-      id: 4,
-      title: "부산 바다여행 🌊",
-      region: "부산",
-      ageGroup: "30대",
-      date: "2025-10-25~2025-10-27",
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
-      description: "부산의 아름다운 해변과 신선한 회를 맛보며 힐링하는 여행입니다. 해운대, 광안리 해변 투어와 함께 부산의 맛집도 탐방해요!",
-      author: "부산탐험가",
-      authorImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face",
-      participants: { current: 1, max: 4 },
-      budget: "200,000원",
-      meetingPoint: "부산역",
-      interests: ["해변", "회", "힐링", "맛집"]
-    },
-    5: {
-      id: 5,
-      title: "서울 맛집 투어 🍜",
-      region: "서울",
-      ageGroup: "20대",
-      date: "2025-11-01~2025-11-02",
-      image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop",
-      description: "서울의 숨은 맛집들을 찾아 떠나는 맛집 투어입니다. 전통 음식부터 트렌디한 카페까지, 맛있는 여행을 함께해요!",
-      author: "맛집헌터",
-      authorImage: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
-      participants: { current: 4, max: 6 },
-      budget: "80,000원",
-      meetingPoint: "명동역",
-      interests: ["맛집", "카페", "전통음식", "사진"]
-    },
-    6: {
-      id: 6,
-      title: "경주 역사 여행 🏛️",
-      region: "경상",
-      ageGroup: "30대",
-      date: "2025-11-05~2025-11-07",
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-      description: "신라 천년의 역사가 살아있는 경주를 탐방하는 여행입니다. 불국사, 석굴암, 첨성대 등 역사 유적지를 함께 둘러봐요!",
-      author: "역사탐방가",
-      authorImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-      participants: { current: 2, max: 4 },
-      budget: "120,000원",
-      meetingPoint: "경주역",
-      interests: ["역사", "문화유산", "불국사", "석굴암"]
+  // localStorage에서 사용자가 등록한 게시물 불러오기
+  const getUserPosts = () => {
+    try {
+      return JSON.parse(localStorage.getItem('companionPosts')) || [];
+    } catch {
+      return [];
     }
   };
 
-  const companion = companionData[id];
+  // mockData에서 가져온 기본 데이터를 사용 (CompanionList와 동일)
+  const completedDefaultPosts = fullCompanionPosts.map(fillMissingData);
+
+  // 사용자 게시물과 완성된 기본 게시물 결합 (CompanionList와 동일)
+  const userPosts = getUserPosts();
+  const allCompanionPosts = [...userPosts, ...completedDefaultPosts];
+
+  // ID를 기준으로 게시물 찾기
+  const companion = allCompanionPosts.find(post => post.id.toString() === id);
 
   if (!companion) {
     return (
@@ -442,11 +366,19 @@ const CompanionDetail = () => {
               </MetaInfo>
             </TitleSection>
 
-            <AuthorSection onClick={() => navigate(`/profile/${companion.author}`)}>
-              <AuthorAvatar src={companion.authorImage} alt={companion.author} />
+            <AuthorSection onClick={() => navigate(`/profile/${companion.author?.name || companion.author}`)}>
+              <AuthorAvatar
+                src={companion.author?.profileImage || companion.authorImage}
+                alt={companion.author?.name || companion.author}
+              />
               <AuthorInfo>
-                <AuthorName>{companion.author}</AuthorName>
-                <AuthorRole>모집자</AuthorRole>
+                <AuthorName>{companion.author?.name || companion.author}</AuthorName>
+                <AuthorRole>
+                  {companion.author?.age && companion.author?.location
+                    ? `${companion.author.age}세 · ${companion.author.location}`
+                    : '모집자'
+                  }
+                </AuthorRole>
               </AuthorInfo>
               <ProfileArrow>→</ProfileArrow>
             </AuthorSection>
@@ -459,11 +391,11 @@ const CompanionDetail = () => {
             <DetailsGrid>
               <DetailItem>
                 <DetailLabel>예산</DetailLabel>
-                <DetailValue>{companion.budget}</DetailValue>
+                <DetailValue>{companion.estimatedCost || companion.budget || '협의 후 결정'}</DetailValue>
               </DetailItem>
               <DetailItem>
                 <DetailLabel>모임 장소</DetailLabel>
-                <DetailValue>{companion.meetingPoint}</DetailValue>
+                <DetailValue>{companion.meetingPoint || '추후 공지'}</DetailValue>
               </DetailItem>
               <DetailItem>
                 <DetailLabel>참여 인원</DetailLabel>
@@ -471,17 +403,39 @@ const CompanionDetail = () => {
               </DetailItem>
             </DetailsGrid>
 
-            <InterestsSection>
-              <h3>관심사</h3>
-              <InterestTags>
-                {companion.interests.map((interest, index) => (
-                  <InterestTag key={index}>{interest}</InterestTag>
-                ))}
-              </InterestTags>
-            </InterestsSection>
+            {(companion.travelStyle && companion.travelStyle.length > 0) && (
+              <InterestsSection>
+                <h3>여행 스타일</h3>
+                <InterestTags>
+                  {companion.travelStyle.map((style, index) => (
+                    <InterestTag key={index}>{style}</InterestTag>
+                  ))}
+                </InterestTags>
+              </InterestsSection>
+            )}
+
+            {(companion.interests && companion.interests.length > 0) && (
+              <InterestsSection>
+                <h3>관심사</h3>
+                <InterestTags>
+                  {companion.interests.map((interest, index) => (
+                    <InterestTag key={index}>{interest}</InterestTag>
+                  ))}
+                </InterestTags>
+              </InterestsSection>
+            )}
+
+            {companion.notice && (
+              <DescriptionSection>
+                <h3>특별 안내사항</h3>
+                <Description>{companion.notice}</Description>
+              </DescriptionSection>
+            )}
 
             <ActionButtons>
-              <JoinButton>참여하기</JoinButton>
+              <JoinButton disabled={companion.participants.current >= companion.participants.max}>
+                {companion.participants.current >= companion.participants.max ? '모집마감' : '참여하기'}
+              </JoinButton>
               <ContactButton>문의하기</ContactButton>
             </ActionButtons>
           </DetailInfo>

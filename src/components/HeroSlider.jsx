@@ -132,7 +132,7 @@ const HeroSlider = ({ heroSlides, showServiceModal, setShowServiceModal }) => {
   // 슬라이드 클릭 핸들러
   const handleSlideClick = (slideId) => {
     switch(slideId) {
-      case 1: // 한일쿠폰
+      case 1: // 할인쿠폰
         setShowServiceModal(true);
         break;
       case 2: // 버스대절

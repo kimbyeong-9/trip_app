@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 const WebsiteFooterContainer = styled.footer`
   background: #2c3e50;
   color: white;
-  padding: 40px 0 20px 0;
-  margin-top: 60px;
+  padding: 20px 0 10px 0;
+  margin-top: 30px;
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
 `;
 
 const FooterContainer = styled.div`
@@ -16,8 +20,8 @@ const FooterContainer = styled.div`
 
 const FooterTopCompact = styled.div`
   border-bottom: 1px solid #34495e;
-  padding-bottom: 20px;
-  margin-bottom: 30px;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
 `;
 
 const CompanyInfoLine = styled.div`
@@ -50,17 +54,17 @@ const Divider = styled.span`
 const FooterBottomCompact = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 15px;
 `;
 
 const FooterLinksCompact = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 30px;
+  gap: 20px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 15px;
   }
 `;
 
@@ -69,7 +73,7 @@ const LinkGroup = styled.div`
     font-size: 16px;
     font-weight: 600;
     color: #ecf0f1;
-    margin: 0 0 15px 0;
+    margin: 0 0 10px 0;
   }
 
   ul {
@@ -79,7 +83,7 @@ const LinkGroup = styled.div`
   }
 
   li {
-    margin-bottom: 8px;
+    margin-bottom: 5px;
   }
 
   a {
@@ -103,20 +107,20 @@ const FooterCopyright = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 30px;
-  padding-top: 20px;
+  gap: 20px;
+  padding-top: 15px;
   border-top: 1px solid #34495e;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
   }
 `;
 
 const CopyrightLeft = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 `;
 
 const Copyright = styled.p`
@@ -157,8 +161,88 @@ const Disclaimer = styled.p`
   margin: 0;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ServiceModal = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+`;
+
+const ModalContent = styled.div`
+  padding: 40px 30px 30px 30px;
+  text-align: center;
+`;
+
+const ModalIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 20px;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 24px;
+  color: #2c3e50;
+  margin: 0 0 16px 0;
+  font-weight: 700;
+`;
+
+const ModalMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+`;
+
+const ModalConfirmBtn = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const WebsiteFooter = () => {
   const currentYear = new Date().getFullYear();
+  const [showServiceModal, setShowServiceModal] = useState(false);
+
+  const handleLinkClick = (e) => {
+    e.preventDefault();
+    setShowServiceModal(true);
+  };
+
+  const closeServiceModal = () => {
+    setShowServiceModal(false);
+  };
 
   return (
     <WebsiteFooterContainer>
@@ -188,30 +272,30 @@ const WebsiteFooter = () => {
             <LinkGroup>
               <h5>고객지원</h5>
               <ul>
-                <li><a href="/faq">자주묻는질문</a></li>
-                <li><a href="/notice">공지사항</a></li>
-                <li><a href="/contact">문의하기</a></li>
-                <li><a href="/guide">이용가이드</a></li>
+                <li><a href="/faq" onClick={handleLinkClick}>자주묻는질문</a></li>
+                <li><a href="/notice" onClick={handleLinkClick}>공지사항</a></li>
+                <li><a href="/contact" onClick={handleLinkClick}>문의하기</a></li>
+                <li><a href="/guide" onClick={handleLinkClick}>이용가이드</a></li>
               </ul>
             </LinkGroup>
 
             <LinkGroup>
               <h5>정책</h5>
               <ul>
-                <li><a href="/terms" className="important-link">이용약관</a></li>
-                <li><a href="/privacy" className="important-link">개인정보처리방침</a></li>
-                <li><a href="/location">위치기반서비스약관</a></li>
-                <li><a href="/refund">취소/환불정책</a></li>
+                <li><a href="/terms" className="important-link" onClick={handleLinkClick}>이용약관</a></li>
+                <li><a href="/privacy" className="important-link" onClick={handleLinkClick}>개인정보처리방침</a></li>
+                <li><a href="/location" onClick={handleLinkClick}>위치기반서비스약관</a></li>
+                <li><a href="/refund" onClick={handleLinkClick}>취소/환불정책</a></li>
               </ul>
             </LinkGroup>
 
             <LinkGroup>
               <h5>소셜미디어</h5>
               <ul>
-                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer">📷 Instagram</a></li>
-                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer">📘 Facebook</a></li>
-                <li><a href="https://blog.naver.com" target="_blank" rel="noopener noreferrer">📝 Blog</a></li>
-                <li><a href="https://youtube.com" target="_blank" rel="noopener noreferrer">📺 YouTube</a></li>
+                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📷 Instagram</a></li>
+                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📘 Facebook</a></li>
+                <li><a href="https://blog.naver.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📝 Blog</a></li>
+                <li><a href="https://youtube.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📺 YouTube</a></li>
               </ul>
             </LinkGroup>
           </FooterLinksCompact>
@@ -232,6 +316,25 @@ const WebsiteFooter = () => {
           </FooterCopyright>
         </FooterBottomCompact>
       </FooterContainer>
+
+      {/* 준비중인 서비스 모달 */}
+      {showServiceModal && (
+        <ModalOverlay>
+          <ServiceModal>
+            <ModalContent>
+              <ModalIcon>🚧</ModalIcon>
+              <ModalTitle>준비중입니다</ModalTitle>
+              <ModalMessage>
+                해당 서비스는 현재 준비중입니다.<br />
+                조금만 기다려주세요!
+              </ModalMessage>
+              <ModalConfirmBtn onClick={closeServiceModal}>
+                확인
+              </ModalConfirmBtn>
+            </ModalContent>
+          </ServiceModal>
+        </ModalOverlay>
+      )}
     </WebsiteFooterContainer>
   );
 };

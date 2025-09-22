@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
+import { fullCompanionPosts, regions, ageGroups, fillMissingData } from '../data/mockData';
 
 // Styled Components - 기존 CSS와 동일한 스타일
 const CompanionListPage = styled.div`
@@ -86,6 +87,7 @@ const FilterGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 `;
 
 const FilterLabel = styled.label`
@@ -94,20 +96,28 @@ const FilterLabel = styled.label`
   color: #495057;
 `;
 
-const FilterSelect = styled.select`
-  padding: 10px 12px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #495057;
-  background: white;
+const FilterTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+const FilterTag = styled.button`
+  padding: 6px 12px;
+  border: 2px solid ${props => props.active ? '#667eea' : '#e9ecef'};
+  background: ${props => props.active ? '#667eea' : 'white'};
+  color: ${props => props.active ? 'white' : '#495057'};
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  white-space: nowrap;
 
-  &:focus {
-    outline: none;
+  &:hover {
     border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: ${props => props.active ? '#5a6fd8' : '#f8f9fa'};
   }
 `;
 
@@ -119,6 +129,7 @@ const SearchInput = styled.input`
   color: #495057;
   background: white;
   transition: all 0.3s ease;
+  width: 100%;
 
   &:focus {
     outline: none;
@@ -141,7 +152,7 @@ const PostsSection = styled.div`
 
 const TableHeader = styled.div`
   display: grid;
-  grid-template-columns: 180px 1fr 80px 80px 140px 120px 80px;
+  grid-template-columns: 120px 1fr 120px 80px 80px 120px 90px 70px;
   gap: 15px;
   padding: 15px 20px;
   background: #f8f9fa;
@@ -152,21 +163,13 @@ const TableHeader = styled.div`
   margin-bottom: 15px;
 
   @media (max-width: 768px) {
-    grid-template-columns: 120px 1fr 60px 60px 120px 100px 70px;
-    padding: 12px 15px;
-    font-size: 12px;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 80px 1fr 50px 50px 100px 80px 60px;
-    padding: 10px 12px;
-    font-size: 11px;
+    display: none;
   }
 `;
 
 const TableRow = styled.div`
   display: grid;
-  grid-template-columns: 180px 1fr 80px 80px 140px 120px 80px;
+  grid-template-columns: 120px 1fr 120px 80px 80px 120px 90px 70px;
   gap: 15px;
   padding: 20px;
   border-bottom: 1px solid #e9ecef;
@@ -185,16 +188,94 @@ const TableRow = styled.div`
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 120px 1fr 60px 60px 120px 100px 70px;
-    padding: 15px;
-    gap: 12px;
+    display: none;
   }
+`;
 
-  @media (max-width: 480px) {
-    grid-template-columns: 80px 1fr 50px 50px 100px 80px 60px;
-    padding: 12px;
-    gap: 10px;
+const MobileCard = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
   }
+`;
+
+const MobileCardHeader = styled.div`
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+`;
+
+const MobileCardImage = styled.img`
+  width: 80px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+`;
+
+const MobileCardInfo = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+`;
+
+const MobileCardTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+  line-height: 1.3;
+`;
+
+const MobileCardMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+`;
+
+const MobileCardTag = styled.span`
+  background: ${props => {
+    switch(props.type) {
+      case 'age': return '#e3f2fd';
+      case 'region': return '#f3e5f5';
+      case 'date': return '#e8f5e8';
+      case 'participants': return '#fff3e0';
+      case 'status': return props.isRecruiting ? '#e8f5e8' : '#ffebee';
+      default: return '#f8f9fa';
+    }
+  }};
+  color: ${props => {
+    switch(props.type) {
+      case 'age': return '#1976d2';
+      case 'region': return '#7b1fa2';
+      case 'date': return '#2e7d32';
+      case 'participants': return '#f57c00';
+      case 'status': return props.isRecruiting ? '#2e7d32' : '#c62828';
+      default: return '#495057';
+    }
+  }};
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 `;
 
 const ImageCell = styled.div`
@@ -311,6 +392,39 @@ const StatusCell = styled.div`
     font-size: 10px;
     padding: 3px 6px;
   }
+`;
+
+const AuthorCell = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const AuthorImage = styled.img`
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e9ecef;
+`;
+
+const AuthorInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const AuthorName = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1.2;
+`;
+
+const AuthorMeta = styled.span`
+  font-size: 11px;
+  color: #6c757d;
+  line-height: 1.2;
 `;
 
 const Pagination = styled.div`
@@ -482,259 +596,26 @@ const CompanionList = () => {
     return trimmed.length > max ? trimmed.slice(0, max) + '…' : trimmed;
   };
 
-  // 임의의 동행모집 데이터 (총 25개)
-  const companionPosts = [
-    {
-      id: 1,
-      title: "제주도 3박4일 여행 같이 가실 분!",
-      ageGroup: "20대",
-      region: "제주",
-      date: "2024-02-15 ~ 2024-02-18",
-      description: "제주도 한라산과 성산일출봉을 함께 둘러보실 분 모집합니다. 렌터카로 이동하며 자유롭게 여행할 예정입니다.",
-      participants: { current: 2, max: 4 },
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
-    },
-    {
-      id: 2,
-      title: "서울 맛집 투어",
-      ageGroup: "30대",
-      region: "서울",
-      date: "2024-02-20 ~ 2024-02-21",
-      description: "서울의 숨은 맛집들을 찾아 떠나는 투어입니다. 홍대, 이태원, 강남 일대를 돌아다닐 예정이에요.",
-      participants: { current: 1, max: 3 },
-      image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop"
-    },
-    {
-      id: 3,
-      title: "부산 해운대 & 감천문화마을",
-      ageGroup: "20대",
-      region: "부산",
-      date: "2024-02-25 ~ 2024-02-26",
-      description: "부산의 대표 관광지들을 함께 둘러보실 분 모집합니다. 해운대 해수욕장과 감천문화마을을 중심으로!",
-      participants: { current: 3, max: 5 },
-      image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop"
-    },
-    {
-      id: 4,
-      title: "강릉 커피거리 & 정동진 해돋이",
-      ageGroup: "30대",
-      region: "강원",
-      date: "2024-03-01 ~ 2024-03-02",
-      description: "강릉의 유명한 커피거리와 정동진에서 해돋이를 보러 가실 분 모집합니다. 로맨틱한 여행을 원하시는 분들!",
-      participants: { current: 2, max: 4 },
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
-    },
-    {
-      id: 5,
-      title: "전주 한옥마을 & 한지체험",
-      ageGroup: "40대",
-      region: "전라",
-      date: "2024-03-05 ~ 2024-03-06",
-      description: "전주 한옥마을에서 전통문화를 체험하고 맛있는 전주비빔밥을 맛보러 가실 분 모집합니다.",
-      participants: { current: 4, max: 6 },
-      image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop"
-    },
-    {
-      id: 6,
-      title: "경주 불국사 & 첨성대",
-      ageGroup: "30대",
-      region: "경상",
-      date: "2024-03-10 ~ 2024-03-11",
-      description: "경주의 유네스코 세계문화유산을 함께 둘러보실 분 모집합니다. 역사에 관심있는 분들 환영!",
-      participants: { current: 1, max: 4 },
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
-    },
-    {
-      id: 7,
-      title: "인천 차이나타운 & 월미도",
-      ageGroup: "20대",
-      region: "인천",
-      date: "2024-03-15 ~ 2024-03-16",
-      description: "인천의 차이나타운과 월미도를 함께 둘러보실 분 모집합니다. 맛있는 중국음식도 함께!",
-      participants: { current: 2, max: 3 },
-      image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop"
-    },
-    {
-      id: 8,
-      title: "안동 하회마을 & 도산서원",
-      ageGroup: "40대",
-      region: "경상",
-      date: "2024-03-20 ~ 2024-03-21",
-      description: "안동 하회마을과 도산서원에서 유교문화를 체험하실 분 모집합니다. 전통문화에 관심있는 분들!",
-      participants: { current: 5, max: 6 },
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
-    },
-    {
-      id: 9,
-      title: "제주도 서귀포 & 중문관광단지",
-      ageGroup: "20대",
-      region: "제주",
-      date: "2024-03-22 ~ 2024-03-24",
-      description: "서귀포와 중문관광단지에서 휴양하실 분 모집합니다. 해변과 카페 투어 계획입니다.",
-      participants: { current: 1, max: 4 },
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop"
-    },
-    {
-      id: 10,
-      title: "부산 감천문화마을 & 태종대",
-      ageGroup: "30대",
-      region: "부산",
-      date: "2024-03-25 ~ 2024-03-26",
-      description: "감천문화마을과 태종대에서 부산의 매력을 느껴보실 분 모집합니다. 맛집 투어도 함께!",
-      participants: { current: 3, max: 5 },
-      image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop"
-    },
-    {
-      id: 11,
-      title: "강릉 커피거리 & 정동진 해돋이",
-      ageGroup: "20대",
-      region: "강원",
-      date: "2024-03-28 ~ 2024-03-29",
-      description: "강릉 커피거리와 정동진에서 해돋이를 보러 가실 분 모집합니다. 로맨틱한 여행!",
-      participants: { current: 2, max: 6 },
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
-    },
-    {
-      id: 12,
-      title: "전주 한지체험 & 전통시장 투어",
-      ageGroup: "30대",
-      region: "전라",
-      date: "2024-04-03 ~ 2024-04-04",
-      description: "전주에서 한지체험과 전통시장을 둘러보실 분 모집합니다. 전통문화 체험에 관심있는 분들!",
-      participants: { current: 4, max: 5 },
-      image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop"
-    },
-    {
-      id: 13,
-      title: "서울 이태원 & 한남동 카페투어",
-      ageGroup: "20대",
-      region: "서울",
-      date: "2024-04-08 ~ 2024-04-09",
-      description: "서울의 트렌디한 이태원과 한남동 카페들을 탐방하실 분 모집합니다. 인스타 감성 사진도 함께!",
-      participants: { current: 2, max: 4 },
-      image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop"
-    },
-    {
-      id: 14,
-      title: "제주도 성산일출봉 & 만장굴",
-      ageGroup: "30대",
-      region: "제주",
-      date: "2024-04-12 ~ 2024-04-14",
-      description: "제주도의 대표 관광지 성산일출봉과 만장굴을 함께 둘러보실 분 모집합니다. 3박4일 일정입니다.",
-      participants: { current: 1, max: 3 },
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
-    },
-    {
-      id: 15,
-      title: "부산 자갈치시장 & 국제시장",
-      ageGroup: "40대",
-      region: "부산",
-      date: "2024-04-16 ~ 2024-04-17",
-      description: "부산의 전통시장들을 탐방하며 맛있는 해산물을 맛보러 가실 분 모집합니다. 먹방 투어!",
-      participants: { current: 3, max: 6 },
-      image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop"
-    },
-    {
-      id: 16,
-      title: "강릉 오대산 & 월정사",
-      ageGroup: "30대",
-      region: "강원",
-      date: "2024-04-20 ~ 2024-04-21",
-      description: "강릉 오대산과 월정사에서 힐링하실 분 모집합니다. 자연 속에서 마음의 평화를 찾아보세요.",
-      participants: { current: 2, max: 4 },
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
-    },
-    {
-      id: 17,
-      title: "전주 한옥마을 & 전통문화체험",
-      ageGroup: "20대",
-      region: "전라",
-      date: "2024-04-25 ~ 2024-04-26",
-      description: "전주 한옥마을에서 전통문화를 체험하고 한지를 만들어보실 분 모집합니다.",
-      participants: { current: 1, max: 3 },
-      image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop"
-    },
-    {
-      id: 18,
-      title: "경주 보문관광단지 & 불국사",
-      ageGroup: "40대",
-      region: "경상",
-      date: "2024-04-30 ~ 2024-05-01",
-      description: "경주의 보문관광단지와 불국사를 함께 둘러보실 분 모집합니다. 가족 단위로도 환영!",
-      participants: { current: 4, max: 8 },
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
-    },
-    {
-      id: 19,
-      title: "인천 송도 & 영종도",
-      ageGroup: "20대",
-      region: "인천",
-      date: "2024-05-05 ~ 2024-05-06",
-      description: "인천 송도의 현대적인 건축물과 영종도의 자연을 함께 즐기실 분 모집합니다.",
-      participants: { current: 2, max: 4 },
-      image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop"
-    },
-    {
-      id: 20,
-      title: "제주도 한라산 등반",
-      ageGroup: "30대",
-      region: "제주",
-      date: "2024-05-10 ~ 2024-05-11",
-      description: "제주도 한라산을 함께 등반하실 분 모집합니다. 체력이 좋으신 분들만 신청해주세요!",
-      participants: { current: 1, max: 2 },
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
-    },
-    {
-      id: 21,
-      title: "부산 해운대 & 광안리",
-      ageGroup: "20대",
-      region: "부산",
-      date: "2024-05-15 ~ 2024-05-16",
-      description: "부산의 대표 해수욕장 해운대와 광안리를 함께 둘러보실 분 모집합니다. 바다 투어!",
-      participants: { current: 3, max: 5 },
-      image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop"
-    },
-    {
-      id: 22,
-      title: "강릉 정동진 & 강릉커피거리",
-      ageGroup: "30대",
-      region: "강원",
-      date: "2024-05-20 ~ 2024-05-21",
-      description: "강릉 정동진에서 해돋이를 보고 커피거리에서 힐링하실 분 모집합니다.",
-      participants: { current: 2, max: 4 },
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
-    },
-    {
-      id: 23,
-      title: "전주 전통시장 & 맛집투어",
-      ageGroup: "40대",
-      region: "전라",
-      date: "2024-05-25 ~ 2024-05-26",
-      description: "전주의 전통시장과 맛집들을 탐방하실 분 모집합니다. 먹방 투어로 함께해요!",
-      participants: { current: 4, max: 6 },
-      image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop"
-    },
-    {
-      id: 24,
-      title: "경주 첨성대 & 대릉원",
-      ageGroup: "30대",
-      region: "경상",
-      date: "2024-05-30 ~ 2024-05-31",
-      description: "경주의 첨성대와 대릉원을 함께 둘러보실 분 모집합니다. 역사에 관심있는 분들!",
-      participants: { current: 1, max: 3 },
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
-    },
-    {
-      id: 25,
-      title: "서울 북촌한옥마을 & 인사동",
-      ageGroup: "20대",
-      region: "서울",
-      date: "2024-06-05 ~ 2024-06-06",
-      description: "서울 북촌한옥마을과 인사동을 함께 둘러보실 분 모집합니다. 전통과 현대가 만나는 곳!",
-      participants: { current: 2, max: 4 },
-      image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop"
+  // localStorage에서 사용자가 등록한 게시물 불러오기
+  const getUserPosts = () => {
+    try {
+      return JSON.parse(localStorage.getItem('companionPosts')) || [];
+    } catch {
+      return [];
     }
-  ];
+  };
+
+  // mockData에서 가져온 기본 데이터를 사용
+  const completedDefaultPosts = fullCompanionPosts.map(fillMissingData);
+
+  // 완성된 기본 게시물을 localStorage에 저장 (CompanionDetail에서 사용하기 위해)
+  React.useEffect(() => {
+    localStorage.setItem('companionDefaultPosts', JSON.stringify(completedDefaultPosts));
+  }, []);
+
+  // 사용자 게시물과 완성된 기본 게시물 결합
+  const userPosts = getUserPosts();
+  const companionPosts = [...userPosts, ...completedDefaultPosts];
 
   // 필터링된 포스트 계산
   const filteredPosts = companionPosts.filter(post => {
@@ -769,69 +650,86 @@ const CompanionList = () => {
 
         <FilterSection>
           <FilterTitle>필터</FilterTitle>
-          <FilterGrid>
-            <FilterGroup>
-              <FilterLabel>검색</FilterLabel>
-              <SearchInput
-                type="text"
-                placeholder="제목, 지역, 내용으로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </FilterGroup>
 
+          {/* 검색창을 최상단으로 */}
+          <FilterGroup style={{ marginBottom: '20px' }}>
+            <FilterLabel>검색</FilterLabel>
+            <SearchInput
+              type="text"
+              placeholder="제목, 지역, 내용으로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </FilterGroup>
+
+          {/* 키워드들을 가로로 나열 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <FilterGroup>
               <FilterLabel>나이대</FilterLabel>
-              <FilterSelect value={selectedAge} onChange={(e) => setSelectedAge(e.target.value)}>
-                <option value="all">전체</option>
-                <option value="20대">20대</option>
-                <option value="30대">30대</option>
-                <option value="40대">40대</option>
-                <option value="50대+">50대+</option>
-              </FilterSelect>
+              <FilterTags>
+                {['all', ...ageGroups].map(age => (
+                  <FilterTag
+                    key={age}
+                    active={selectedAge === age}
+                    onClick={() => setSelectedAge(age)}
+                  >
+                    {age === 'all' ? '전체' : age}
+                  </FilterTag>
+                ))}
+              </FilterTags>
             </FilterGroup>
 
             <FilterGroup>
               <FilterLabel>지역</FilterLabel>
-              <FilterSelect value={selectedRegion} onChange={(e) => setSelectedRegion(e.target.value)}>
-                <option value="all">전체</option>
-                <option value="서울">서울</option>
-                <option value="경기">경기</option>
-                <option value="인천">인천</option>
-                <option value="강원">강원</option>
-                <option value="충청">충청</option>
-                <option value="전라">전라</option>
-                <option value="경상">경상</option>
-                <option value="제주">제주</option>
-                <option value="부산">부산</option>
-              </FilterSelect>
+              <FilterTags>
+                {['all', ...regions].map(region => (
+                  <FilterTag
+                    key={region}
+                    active={selectedRegion === region}
+                    onClick={() => setSelectedRegion(region)}
+                  >
+                    {region === 'all' ? '전체' : region}
+                  </FilterTag>
+                ))}
+              </FilterTags>
             </FilterGroup>
 
             <FilterGroup>
-              <FilterLabel>여행월</FilterLabel>
-              <FilterSelect value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
-                <option value="all">전체</option>
-                <option value="1월">1월</option>
-                <option value="2월">2월</option>
-                <option value="3월">3월</option>
-                <option value="4월">4월</option>
-                <option value="5월">5월</option>
-                <option value="6월">6월</option>
-                <option value="7월">7월</option>
-                <option value="8월">8월</option>
-                <option value="9월">9월</option>
-                <option value="10월">10월</option>
-                <option value="11월">11월</option>
-                <option value="12월">12월</option>
-              </FilterSelect>
+              <FilterLabel>여행일</FilterLabel>
+              <FilterTags>
+                {[
+                  { value: 'all', label: '전체' },
+                  { value: '2024-01', label: '1월' },
+                  { value: '2024-02', label: '2월' },
+                  { value: '2024-03', label: '3월' },
+                  { value: '2024-04', label: '4월' },
+                  { value: '2024-05', label: '5월' },
+                  { value: '2024-06', label: '6월' },
+                  { value: '2024-07', label: '7월' },
+                  { value: '2024-08', label: '8월' },
+                  { value: '2024-09', label: '9월' },
+                  { value: '2024-10', label: '10월' },
+                  { value: '2024-11', label: '11월' },
+                  { value: '2024-12', label: '12월' }
+                ].map(month => (
+                  <FilterTag
+                    key={month.value}
+                    active={selectedMonth === month.value}
+                    onClick={() => setSelectedMonth(month.value)}
+                  >
+                    {month.label}
+                  </FilterTag>
+                ))}
+              </FilterTags>
             </FilterGroup>
-          </FilterGrid>
+          </div>
         </FilterSection>
 
         <PostsSection>
           <TableHeader>
             <div>사진</div>
             <div>제목</div>
+            <div>작성자</div>
             <div>나이</div>
             <div>지역</div>
             <div>기간</div>
@@ -841,29 +739,76 @@ const CompanionList = () => {
 
           {currentPosts.length > 0 ? (
             currentPosts.map((post) => (
-              <TableRow key={post.id} onClick={() => navigate(`/companion/${post.id}`)}>
-                <ImageCell>
-                  <RepresentativeImage src={post.image} alt={post.title} />
-                </ImageCell>
-                <TitleCell>
-                  {post.title}
-                </TitleCell>
-                <AgeGroupCell>
-                  {post.ageGroup}
-                </AgeGroupCell>
-                <MetaCell>
-                  {post.region}
-                </MetaCell>
-                <DateCell>
-                  {post.date}
-                </DateCell>
-                <ParticipantsCell>
-                  {post.participants.current}/{post.participants.max}명
-                </ParticipantsCell>
-                <StatusCell isRecruiting={post.participants.current < post.participants.max}>
-                  {post.participants.current < post.participants.max ? '모집중' : '마감'}
-                </StatusCell>
-              </TableRow>
+              <Fragment key={post.id}>
+                {/* 데스크톱 테이블 뷰 */}
+                <TableRow onClick={() => navigate(`/companion/${post.id}`)}>
+                  <ImageCell>
+                    <RepresentativeImage src={post.image} alt={post.title} />
+                  </ImageCell>
+                  <TitleCell>
+                    {post.title}
+                  </TitleCell>
+                  <AuthorCell>
+                    {post.author && (
+                      <>
+                        <AuthorImage src={post.author.profileImage} alt={post.author.name} />
+                        <AuthorInfo>
+                          <AuthorName>{post.author.name}</AuthorName>
+                          <AuthorMeta>{post.author.age}세 · {post.author.location}</AuthorMeta>
+                        </AuthorInfo>
+                      </>
+                    )}
+                  </AuthorCell>
+                  <AgeGroupCell>
+                    {post.ageGroup}
+                  </AgeGroupCell>
+                  <MetaCell>
+                    {post.region}
+                  </MetaCell>
+                  <DateCell>
+                    {post.date}
+                  </DateCell>
+                  <ParticipantsCell>
+                    {post.participants.current}/{post.participants.max}명
+                  </ParticipantsCell>
+                  <StatusCell isRecruiting={post.participants.current < post.participants.max}>
+                    {post.participants.current < post.participants.max ? '모집중' : '마감'}
+                  </StatusCell>
+                </TableRow>
+
+                {/* 모바일 카드 뷰 */}
+                <MobileCard onClick={() => navigate(`/companion/${post.id}`)}>
+                  <MobileCardHeader>
+                    <MobileCardImage src={post.image} alt={post.title} />
+                    <MobileCardInfo>
+                      <MobileCardTitle>{post.title}</MobileCardTitle>
+                      {post.author && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                          <AuthorImage src={post.author.profileImage} alt={post.author.name} style={{ width: '30px', height: '30px' }} />
+                          <div>
+                            <AuthorName style={{ fontSize: '12px' }}>{post.author.name}</AuthorName>
+                            <AuthorMeta style={{ fontSize: '10px' }}>{post.author.age}세 · {post.author.location}</AuthorMeta>
+                          </div>
+                        </div>
+                      )}
+                    </MobileCardInfo>
+                  </MobileCardHeader>
+                  <MobileCardMeta>
+                    <MobileCardTag type="age">{post.ageGroup}</MobileCardTag>
+                    <MobileCardTag type="region">{post.region}</MobileCardTag>
+                    <MobileCardTag type="date">{post.date}</MobileCardTag>
+                    <MobileCardTag type="participants">
+                      {post.participants.current}/{post.participants.max}명
+                    </MobileCardTag>
+                    <MobileCardTag
+                      type="status"
+                      isRecruiting={post.participants.current < post.participants.max}
+                    >
+                      {post.participants.current < post.participants.max ? '모집중' : '마감'}
+                    </MobileCardTag>
+                  </MobileCardMeta>
+                </MobileCard>
+              </Fragment>
             ))
           ) : (
             <NoResults>

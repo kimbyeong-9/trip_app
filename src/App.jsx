@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navigation from './components/Navigation';
-import BottomNavigation from './components/BottomNavigation';
 import WebsiteFooter from './components/WebsiteFooter';
+import MobileNavigation from './components/MobileNavigation';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import Detail from './pages/Detail';
@@ -20,6 +20,17 @@ import UserProfile from './pages/UserProfile';
 import ProfileEdit from './pages/ProfileEdit';
 import './App.css';
 
+// 페이지 이동 시 스크롤을 맨 위로 이동하는 컴포넌트
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 function AppContent() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
@@ -29,12 +40,12 @@ function AppContent() {
   const isCompanionCreatePage = location.pathname === '/companion/create';
   const isCompanionDetailPage = location.pathname.startsWith('/companion/');
   const isTravelSchedulePage = location.pathname.startsWith('/travel-schedule');
-  const isTravelScheduleCreatePage = location.pathname === '/travel-schedule/create';
   const isUserProfilePage = location.pathname.startsWith('/profile/');
   const isProfileEditPage = location.pathname === '/profile-edit';
 
   return (
     <div className="App">
+      <ScrollToTop />
       {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionCreatePage && !isCompanionDetailPage && !isTravelSchedulePage && !isUserProfilePage && !isProfileEditPage && <Navigation />}
       <main className={isLoginPage || isForgotPasswordPage || isSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionDetailPage || isTravelSchedulePage || isUserProfilePage || isProfileEditPage ? "companion-main-content" : "main-content"}>
         <Routes>
@@ -56,7 +67,7 @@ function AppContent() {
         </Routes>
       </main>
       {!isLoginPage && !isForgotPasswordPage && !isSignupPage && <WebsiteFooter />}
-      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionListPage && !isCompanionCreatePage && !isCompanionDetailPage && !isTravelSchedulePage && !isUserProfilePage && !isProfileEditPage && <BottomNavigation />}
+      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && <MobileNavigation />}
     </div>
   );
 }
