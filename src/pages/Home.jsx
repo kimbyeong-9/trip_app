@@ -93,6 +93,75 @@ const ModalConfirmBtn = styled.button`
   }
 `;
 
+const FloatingButtons = styled.div`
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 1000;
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
+`;
+
+const FloatingButton = styled.button`
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 15px 35px rgba(255, 107, 53, 0.6);
+  }
+`;
+
+const ButtonTooltip = styled.div`
+  position: absolute;
+  right: 75px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+
+  ${FloatingButton}:hover & {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(-5px);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-left-color: rgba(0, 0, 0, 0.8);
+  }
+`;
+
 const Home = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -149,28 +218,28 @@ const Home = () => {
         selectedRegion={selectedRegion}
       />
 
+      {/* 동행모집 채팅방 섹션 */}
+      <ChatRoomsSection
+        chatRooms={chatRooms}
+      />
+
       {/* 여행 일정 섹션 */}
-      <ItinerarySection 
+      <ItinerarySection
         itineraryCards={itineraryCards}
         searchTerm={searchTerm}
         selectedRegion={selectedRegion}
       />
 
       {/* 여행 매거진 섹션 */}
-      <MagazineSection 
+      <MagazineSection
         magazineCards={magazineCards}
         searchTerm={searchTerm}
         selectedRegion={selectedRegion}
       />
 
       {/* 관광공사 추천여행지 섹션 */}
-      <TourismSection 
+      <TourismSection
         tourismCards={tourismCards}
-      />
-
-      {/* 동행모집 채팅방 섹션 */}
-      <ChatRoomsSection 
-        chatRooms={chatRooms}
       />
 
       {/* 준비중인 서비스 모달 */}
@@ -191,6 +260,7 @@ const Home = () => {
           </ServiceModal>
         </ModalOverlay>
       )}
+
     </HomePage>
   );
 };

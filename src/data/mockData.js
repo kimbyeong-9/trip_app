@@ -14,7 +14,7 @@ export const companionCards = [
     region: "서울",
     ageGroup: "30대",
     date: "2024-02-20 ~ 2024-02-21",
-    image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop"
+    image: "https://images.unsplash.com/photo-1574126154517-d1e0d89ef734?w=400&h=300&fit=crop"
   },
   {
     id: 3,
@@ -58,7 +58,7 @@ export const itineraryCards = [
     region: "서울",
     author: "서울러버",
     date: "2024-01-10~2024-01-12",
-    image: "https://images.unsplash.com/photo-1578521066916-1a0296214b14?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
     description: "서울의 대표 명소들을 효율적으로 돌아보는 완벽한 코스입니다. 경복궁, 북촌한옥마을, 인사동, 명동을 포함한 핫플레이스까지!",
     views: 1524,
     likes: 89,
@@ -142,7 +142,7 @@ export const itineraryCards = [
     region: "인천",
     author: "인천탐험가",
     date: "2024-03-10~2024-03-11",
-    image: "https://images.unsplash.com/photo-1548695607-9c73430ba065?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop",
     description: "인천의 이국적인 분위기를 느낄 수 있는 차이나타운과 월미도 테마파크 코스입니다.",
     views: 1921,
     likes: 134,
@@ -156,7 +156,7 @@ export const itineraryCards = [
     region: "충청",
     author: "힐링여행자",
     date: "2024-03-15~2024-03-17",
-    image: "https://images.unsplash.com/photo-1512134353576-6db37dcae5de?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop",
     description: "충청도의 유명 온천지에서 몸과 마음을 힐링할 수 있는 여행 코스입니다.",
     views: 1368,
     likes: 95,
@@ -198,7 +198,7 @@ export const itineraryCards = [
     region: "부산",
     author: "문화탐방가",
     date: "2024-04-20~2024-04-21",
-    image: "https://images.unsplash.com/photo-1515859005217-8a1f08870f59?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
     description: "부산의 대표 관광지 감천문화마을의 알록달록한 벽화마을을 탐방하는 여행입니다.",
     views: 1834,
     likes: 152,
@@ -212,7 +212,7 @@ export const itineraryCards = [
     region: "강원",
     author: "레일바이크러",
     date: "2024-05-01~2024-05-02",
-    image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
     description: "춘천의 아름다운 자연 속에서 레일바이크를 타며 힐링하는 여행 코스입니다.",
     views: 1596,
     likes: 121,
@@ -240,7 +240,7 @@ export const itineraryCards = [
     region: "전라",
     author: "야경매니아",
     date: "2024-05-15~2024-05-17",
-    image: "https://images.unsplash.com/photo-1527004760525-c8c64e0b8b89?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop",
     description: "여수의 아름다운 밤바다와 야경을 감상할 수 있는 로맨틱한 여행 코스입니다.",
     views: 1945,
     likes: 164,
@@ -268,7 +268,7 @@ export const itineraryCards = [
     region: "서울",
     author: "서울등산러",
     date: "2024-06-01~2024-06-02",
-    image: "https://images.unsplash.com/photo-1464822759844-d150ad23829e?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1549693578-d683be217e58?w=400&h=300&fit=crop",
     description: "서울 시민들의 대표 휴식처 북한산에서 등반과 힐링을 동시에 즐기는 여행입니다.",
     views: 1712,
     likes: 137,
@@ -282,7 +282,7 @@ export const itineraryCards = [
     region: "제주",
     author: "일출헌터",
     date: "2024-06-10~2024-06-12",
-    image: "https://images.unsplash.com/photo-1512134353576-6db37dcae5de?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
     description: "성산일출봉에서 장엄한 일출을 감상하고 우도까지 둘러보는 제주 동부 투어입니다.",
     views: 1889,
     likes: 158,
@@ -340,49 +340,199 @@ export const magazineCards = [
     id: 1,
     title: "가을 단풍 명소 베스트 10",
     region: "전국",
+    category: "국내여행",
     author: "여행매거진",
     date: "2025-10-01",
+    description: "전국의 아름다운 가을 단풍을 만날 수 있는 최고의 명소들을 소개합니다.",
+    views: 1250,
     image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
   },
   {
     id: 2,
     title: "서울 숨은 맛집 발견기",
     region: "서울",
+    category: "맛집",
     author: "맛집헌터",
     date: "2025-09-28",
+    description: "서울 골목골목에 숨어있는 진짜 맛집들을 찾아 떠나는 미식 여행.",
+    views: 980,
     image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
   },
   {
     id: 3,
     title: "제주도 카페 투어 가이드",
     region: "제주",
+    category: "문화",
     author: "카페투어",
     date: "2025-09-25",
+    description: "제주도만의 특별한 분위기를 가진 카페들을 소개하는 완벽 가이드.",
+    views: 756,
     image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop"
   },
   {
     id: 4,
     title: "부산 해운대 완전정복",
     region: "부산",
+    category: "액티비티",
     author: "해변러버",
     date: "2025-09-22",
+    description: "부산 해운대에서 즐길 수 있는 다양한 액티비티와 볼거리를 총정리.",
+    views: 1134,
     image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop"
   },
   {
     id: 5,
     title: "강원도 겨울 스키장 가이드",
     region: "강원",
+    category: "액티비티",
     author: "스키매니아",
     date: "2025-09-20",
+    description: "강원도 최고의 스키장들과 겨울 스포츠를 즐기는 완벽 가이드.",
+    views: 892,
     image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
   },
   {
     id: 6,
     title: "전주 한옥마을 숙박 추천",
     region: "전라",
+    category: "문화",
     author: "전통문화",
     date: "2025-09-18",
+    description: "전주 한옥마을에서 전통의 멋을 느낄 수 있는 최고의 숙박시설들.",
+    views: 643,
     image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
+  },
+  {
+    id: 7,
+    title: "경기도 당일치기 여행 코스",
+    region: "경기",
+    category: "국내여행",
+    author: "당일여행",
+    date: "2025-09-15",
+    description: "서울에서 가까운 경기도의 당일치기로 즐길 수 있는 완벽 코스.",
+    views: 567,
+    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop"
+  },
+  {
+    id: 8,
+    title: "인천 차이나타운 먹거리 투어",
+    region: "인천",
+    category: "맛집",
+    author: "먹방여행자",
+    date: "2025-09-12",
+    description: "인천 차이나타운의 진짜 맛을 찾아 떠나는 먹거리 투어 가이드.",
+    views: 721,
+    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop"
+  },
+  {
+    id: 9,
+    title: "충청도 온천 힐링 여행",
+    region: "충청",
+    category: "국내여행",
+    author: "힐링여행",
+    date: "2025-09-10",
+    description: "몸과 마음이 편안해지는 충청도 최고의 온천들을 소개합니다.",
+    views: 834,
+    image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop"
+  },
+  {
+    id: 10,
+    title: "경상도 사찰 순례길",
+    region: "경상",
+    category: "문화",
+    author: "사찰순례",
+    date: "2025-09-08",
+    description: "마음의 평안을 찾을 수 있는 경상도의 아름다운 사찰들.",
+    views: 456,
+    image: "https://images.unsplash.com/photo-1541698444083-023c97d3f4b6?w=400&h=300&fit=crop"
+  },
+  {
+    id: 11,
+    title: "서울 한강 사이클링 코스",
+    region: "서울",
+    category: "액티비티",
+    author: "사이클링매니아",
+    date: "2025-09-05",
+    description: "서울 한강을 따라 즐기는 최고의 사이클링 코스를 안내합니다.",
+    views: 612,
+    image: "https://images.unsplash.com/photo-1549693578-d683be217e58?w=400&h=300&fit=crop"
+  },
+  {
+    id: 12,
+    title: "제주 해녀 체험 프로그램",
+    region: "제주",
+    category: "문화",
+    author: "제주문화",
+    date: "2025-09-03",
+    description: "제주의 전통 해녀 문화를 직접 체험할 수 있는 특별한 프로그램.",
+    views: 789,
+    image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop"
+  },
+  {
+    id: 13,
+    title: "부산 자갈치시장 맛집 탐방",
+    region: "부산",
+    category: "맛집",
+    author: "부산맛집",
+    date: "2025-09-01",
+    description: "부산 자갈치시장에서만 맛볼 수 있는 신선한 해산물 맛집들.",
+    views: 923,
+    image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop"
+  },
+  {
+    id: 14,
+    title: "강원도 설악산 등반 가이드",
+    region: "강원",
+    category: "액티비티",
+    author: "산악여행",
+    date: "2025-08-30",
+    description: "설악산의 아름다운 자연을 만끽할 수 있는 등반 코스 완벽 가이드.",
+    views: 1087,
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
+  },
+  {
+    id: 15,
+    title: "전주 비빔밥 맛집 순례",
+    region: "전라",
+    category: "맛집",
+    author: "전주맛집",
+    date: "2025-08-28",
+    description: "전주 비빔밥의 진수를 맛볼 수 있는 최고의 맛집들을 소개합니다.",
+    views: 578,
+    image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=300&fit=crop"
+  },
+  {
+    id: 16,
+    title: "경기도 아침고요수목원",
+    region: "경기",
+    category: "국내여행",
+    author: "자연여행",
+    date: "2025-08-25",
+    description: "사계절 아름다운 꽃과 나무를 감상할 수 있는 아침고요수목원.",
+    views: 445,
+    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop"
+  },
+  {
+    id: 17,
+    title: "인천 송도 센트럴파크",
+    region: "인천",
+    category: "문화",
+    author: "도시여행",
+    date: "2025-08-23",
+    description: "도심 속 자연을 만끽할 수 있는 송도 센트럴파크의 모든 것.",
+    views: 367,
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop"
+  },
+  {
+    id: 18,
+    title: "충청도 공주 백제문화단지",
+    region: "충청",
+    category: "문화",
+    author: "역사여행",
+    date: "2025-08-20",
+    description: "백제의 찬란한 문화를 체험할 수 있는 공주 백제문화단지 탐방기.",
+    views: 632,
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop"
   }
 ];
 
@@ -392,49 +542,161 @@ export const tourismCards = [
     id: 1,
     title: "서울 명동",
     description: "서울의 대표적인 쇼핑과 관광지",
-    image: "https://images.unsplash.com/photo-1549693578-d683be217e58?w=300&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1549693578-d683be217e58?w=300&h=200&fit=crop",
+    region: "서울",
+    keywords: ["쇼핑", "도시", "관광"]
   },
   {
     id: 2,
     title: "제주 한라산",
     description: "제주도의 상징인 한라산 등반",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop",
+    region: "제주",
+    keywords: ["등산", "자연", "산"]
   },
   {
     id: 3,
     title: "부산 해운대",
     description: "부산의 대표적인 해변 관광지",
-    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=300&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=300&h=200&fit=crop",
+    region: "부산",
+    keywords: ["바다", "해변", "휴양"]
   },
   {
     id: 4,
     title: "강원 설악산",
     description: "강원도의 아름다운 설악산",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop",
+    region: "강원",
+    keywords: ["등산", "자연", "산", "단풍"]
   },
   {
     id: 5,
     title: "경주 불국사",
     description: "신라의 역사가 살아있는 불국사",
-    image: "https://images.unsplash.com/photo-1541698444083-023c97d3f4b6?w=300&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1541698444083-023c97d3f4b6?w=300&h=200&fit=crop",
+    region: "경상",
+    keywords: ["역사", "문화", "사찰"]
   },
   {
     id: 6,
     title: "전주 한옥마을",
     description: "전통 한옥의 아름다움을 느낄 수 있는 곳",
-    image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=300&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=300&h=200&fit=crop",
+    region: "전라",
+    keywords: ["역사", "문화", "전통", "한옥"]
   },
   {
     id: 7,
     title: "인천 차이나타운",
     description: "인천의 다문화 특색을 느낄 수 있는 곳",
-    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=300&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=300&h=200&fit=crop",
+    region: "경기",
+    keywords: ["문화", "음식", "쇼핑"]
   },
   {
     id: 8,
     title: "안동 하회마을",
     description: "유네스코 세계문화유산 하회마을",
-    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=300&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=300&h=200&fit=crop",
+    region: "경상",
+    keywords: ["역사", "문화", "전통", "마을"]
+  },
+  {
+    id: 9,
+    title: "서울 북촌한옥마을",
+    description: "서울 도심 속 전통 한옥마을",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop",
+    region: "서울",
+    keywords: ["역사", "문화", "전통", "한옥"]
+  },
+  {
+    id: 10,
+    title: "제주 성산일출봉",
+    description: "제주도 동쪽 끝 일출 명소",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop",
+    region: "제주",
+    keywords: ["자연", "일출", "해안"]
+  },
+  {
+    id: 11,
+    title: "부산 감천문화마을",
+    description: "부산의 산토리니라 불리는 컬러풀한 마을",
+    image: "https://images.unsplash.com/photo-1574126154517-d1e0d89ef734?w=300&h=200&fit=crop",
+    region: "부산",
+    keywords: ["문화", "마을", "예술"]
+  },
+  {
+    id: 12,
+    title: "강원 남이섬",
+    description: "겨울연가 촬영지로 유명한 낭만적인 섬",
+    image: "https://images.unsplash.com/photo-1515859005217-8a1f08870f59?w=300&h=200&fit=crop",
+    region: "강원",
+    keywords: ["자연", "휴양", "섬"]
+  },
+  {
+    id: 13,
+    title: "서울 경복궁",
+    description: "조선왕조의 법궁, 대한민국 대표 궁궐",
+    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=300&h=200&fit=crop",
+    region: "서울",
+    keywords: ["역사", "문화", "궁궐", "전통"]
+  },
+  {
+    id: 14,
+    title: "제주 우도",
+    description: "소가 누워있는 모양의 아름다운 섬",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop",
+    region: "제주",
+    keywords: ["자연", "섬", "바다", "휴양"]
+  },
+  {
+    id: 15,
+    title: "부산 용두산공원",
+    description: "부산타워가 있는 부산의 대표 공원",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop",
+    region: "부산",
+    keywords: ["도시", "관광", "전망"]
+  },
+  {
+    id: 16,
+    title: "강원 춘천호",
+    description: "춘천 시내를 흐르는 아름다운 호수",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop",
+    region: "강원",
+    keywords: ["자연", "호수", "휴양"]
+  },
+  {
+    id: 17,
+    title: "전라 여수 밤바다",
+    description: "아름다운 야경으로 유명한 여수 해안",
+    image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=300&h=200&fit=crop",
+    region: "전라",
+    keywords: ["바다", "야경", "휴양"]
+  },
+  {
+    id: 18,
+    title: "경상 포항 호미곶",
+    description: "한국 최동단 일출 명소",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop",
+    region: "경상",
+    keywords: ["자연", "일출", "해안"]
+  },
+  {
+    id: 19,
+    title: "충청 단양팔경",
+    description: "단양강 일대의 아름다운 8경",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop",
+    region: "충청",
+    keywords: ["자연", "강", "명승"]
+  },
+  {
+    id: 20,
+    title: "서울 홍대거리",
+    description: "젊음과 열정이 넘치는 문화거리",
+    image: "https://images.unsplash.com/photo-1549693578-d683be217e58?w=300&h=200&fit=crop",
+    region: "서울",
+    keywords: ["문화", "쇼핑", "음식", "도시"]
   }
 ];
 
@@ -456,7 +718,7 @@ export const chatRooms = [
     id: 3,
     title: "서울 맛집",
     members: 23,
-    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
   },
   {
     id: 4,
@@ -564,7 +826,7 @@ export const fullCompanionPosts = [
     date: "2024-02-20 ~ 2024-02-21",
     description: "서울의 숨은 맛집들을 찾아 떠나는 투어입니다. 홍대, 이태원, 강남 일대를 돌아다닐 예정이에요.",
     participants: { current: 1, max: 3 },
-    image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1574126154517-d1e0d89ef734?w=400&h=300&fit=crop",
     author: {
       name: "이맛집",
       profileImage: "https://images.unsplash.com/photo-1494790108755-2616b612b950?w=100&h=100&fit=crop&crop=face",

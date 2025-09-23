@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 // Styled Components
@@ -25,6 +26,29 @@ const SectionHeader = styled.div`
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+`;
+
+const ViewAllButton = styled.button`
+  background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.6);
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px 20px;
+    font-size: 12px;
   }
 `;
 
@@ -94,15 +118,120 @@ const Description = styled.p`
   line-height: 1.5;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+`;
+
+const ModalContainer = styled.div`
+  background: white;
+  max-width: 400px;
+  width: 100%;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+`;
+
+const ModalIcon = styled.div`
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: bounce 2s infinite;
+
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-10px);
+    }
+    60% {
+      transform: translateY(-5px);
+    }
+  }
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const ModalMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+`;
+
+const ModalButton = styled.button`
+  background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.6);
+  }
+`;
+
 const TourismSection = ({ tourismCards }) => {
+  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+
+  const handleCardClick = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleViewAll = () => {
+    navigate('/tourism-list');
+  };
+
   return (
     <TourismSectionContainer>
       <SectionHeader>
         <h2>관광공사 추천여행지</h2>
+        <ViewAllButton onClick={handleViewAll}>
+          전체보기
+        </ViewAllButton>
       </SectionHeader>
       <TourismCards>
         {tourismCards.map((card) => (
-          <TourismCard key={card.id}>
+          <TourismCard key={card.id} onClick={handleCardClick}>
             <CardImage src={card.image} alt={card.title} />
             <CardContent>
               <PlaceName>{card.title}</PlaceName>
@@ -111,6 +240,24 @@ const TourismSection = ({ tourismCards }) => {
           </TourismCard>
         ))}
       </TourismCards>
+
+      {/* 준비중 모달 */}
+      {showModal && (
+        <ModalOverlay onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+          <ModalContainer>
+            <ModalIcon>🚧</ModalIcon>
+            <ModalTitle>준비중입니다</ModalTitle>
+            <ModalMessage>
+              관광공사 추천여행지 상세 정보는<br />
+              현재 준비중입니다.<br />
+              조금만 기다려주세요!
+            </ModalMessage>
+            <ModalButton onClick={handleCloseModal}>
+              확인
+            </ModalButton>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
     </TourismSectionContainer>
   );
 };

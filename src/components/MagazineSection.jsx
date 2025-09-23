@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import MagazineDetailModal from './MagazineDetailModal';
 
 // Styled Components
 const MagazineSectionContainer = styled.div`
@@ -162,6 +164,24 @@ const NoResultsText = styled.p`
 `;
 
 const MagazineSection = ({ magazineCards, searchTerm, selectedRegion }) => {
+  const navigate = useNavigate();
+  const [selectedMagazine, setSelectedMagazine] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewAll = () => {
+    navigate('/magazines');
+  };
+
+  const handleMagazineClick = (magazine) => {
+    setSelectedMagazine(magazine);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedMagazine(null);
+  };
+
   // 카드 필터링 함수
   const searchAndFilterCards = (cards, searchTerm, selectedRegion) => {
     let filtered = cards;
@@ -203,13 +223,13 @@ const MagazineSection = ({ magazineCards, searchTerm, selectedRegion }) => {
     <MagazineSectionContainer>
       <SectionHeader>
         <h2>여행 매거진</h2>
-        <ViewAllButton>전체보기</ViewAllButton>
+        <ViewAllButton onClick={handleViewAll}>전체보기</ViewAllButton>
       </SectionHeader>
 
       <MagazineCards>
         {filteredMagazineCards.length > 0 ? (
           filteredMagazineCards.map((card) => (
-            <MagazineCard key={card.id}>
+            <MagazineCard key={card.id} onClick={() => handleMagazineClick(card)}>
               <CardImage src={card.image} alt={card.title} />
               <LocationBadge>{card.region}</LocationBadge>
               <CardContent>
@@ -229,6 +249,14 @@ const MagazineSection = ({ magazineCards, searchTerm, selectedRegion }) => {
           </NoResultsMessage>
         )}
       </MagazineCards>
+
+      {/* 매거진 상세 모달 */}
+      {isModalOpen && selectedMagazine && (
+        <MagazineDetailModal
+          magazine={selectedMagazine}
+          onClose={handleCloseModal}
+        />
+      )}
     </MagazineSectionContainer>
   );
 };

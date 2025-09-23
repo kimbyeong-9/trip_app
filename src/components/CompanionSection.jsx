@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 // Styled Components
 const CompanionSectionContainer = styled.div`
-  padding: 60px 20px;
+  padding: 10px 20px;
   background: #f8f9fa;
 `;
 

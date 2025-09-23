@@ -81,13 +81,16 @@ const ProfileAvatar = styled.div`
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: 2px solid #e9ecef;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  color: white;
+  font-weight: 600;
+  font-size: 36px;
 
   @media (max-width: 768px) {
     width: 100px;
@@ -392,7 +395,7 @@ const TripCard = styled.div`
   border-radius: 12px;
   border: 1px solid #f0f0f0;
   transition: all 0.3s ease;
-  cursor: pointer;
+  position: relative;
 
   &:hover {
     transform: translateY(-2px);
@@ -429,6 +432,82 @@ const TripMeta = styled.p`
   font-weight: 500;
   margin: 0;
   font-size: 14px;
+`;
+
+const EmptyMessage = styled.div`
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  font-size: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px dashed #dee2e6;
+`;
+
+const TripManageButtons = styled.div`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  ${TripCard}:hover & {
+    opacity: 1;
+  }
+`;
+
+const ManageButton = styled.button`
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+
+  &.edit {
+    background: #28a745;
+    color: white;
+  }
+
+  &.delete {
+    background: #dc3545;
+    color: white;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const AddButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
 `;
 
 const NotFound = styled.div`
@@ -723,6 +802,62 @@ const UserProfile = () => {
 
   const currentUser = getCurrentUser();
 
+  // 내가 올린 동행모집 가져오기
+  const getMyCompanionPosts = () => {
+    const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
+    const userName = currentUser?.user?.name;
+    if (!userName) return [];
+    return storedPosts.filter(post => post.author === userName);
+  };
+
+  // 내가 올린 여행일정 가져오기
+  const getMyTravelSchedules = () => {
+    const storedSchedules = JSON.parse(localStorage.getItem('travelSchedules')) || [];
+    const userName = currentUser?.user?.name;
+    if (!userName) return [];
+    return storedSchedules.filter(schedule => schedule.author === userName);
+  };
+
+  // 동행모집 삭제 함수
+  const deleteCompanionPost = (postId) => {
+    if (window.confirm('정말로 이 동행모집을 삭제하시겠습니까?')) {
+      const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
+      const updatedPosts = storedPosts.filter(post => post.id !== postId);
+      localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
+      window.location.reload(); // 페이지 새로고침으로 목록 업데이트
+    }
+  };
+
+  // 여행일정 삭제 함수
+  const deleteTravelSchedule = (scheduleId) => {
+    if (window.confirm('정말로 이 여행일정을 삭제하시겠습니까?')) {
+      const storedSchedules = JSON.parse(localStorage.getItem('travelSchedules')) || [];
+      const updatedSchedules = storedSchedules.filter(schedule => schedule.id !== scheduleId);
+      localStorage.setItem('travelSchedules', JSON.stringify(updatedSchedules));
+      window.location.reload(); // 페이지 새로고침으로 목록 업데이트
+    }
+  };
+
+  // 동행모집 수정 함수
+  const editCompanionPost = (postId) => {
+    navigate(`/companion/edit/${postId}`);
+  };
+
+  // 여행일정 수정 함수
+  const editTravelSchedule = (scheduleId) => {
+    navigate(`/travel-schedule/edit/${scheduleId}`);
+  };
+
+  // 새 동행모집 추가
+  const addNewCompanionPost = () => {
+    navigate('/companion/create');
+  };
+
+  // 새 여행일정 추가
+  const addNewTravelSchedule = () => {
+    navigate('/travel-schedule/create');
+  };
+
   // 마이페이지용 데이터 (본인 프로필일 때만 사용)
   const myPageData = {
     points: 15000,
@@ -850,7 +985,25 @@ const UserProfile = () => {
   };
 
   // 현재 사용자의 프로필 데이터 가져오기
-  const user = userProfileData[username] || userProfileData['user'];
+  let user = userProfileData[username];
+
+  // 본인 프로필인 경우 실제 저장된 데이터 사용
+  if (username === 'user' && currentUser?.user) {
+    user = {
+      ...userProfileData['user'],
+      name: currentUser.user.name || userProfileData['user'].name,
+      bio: currentUser.user.bio || userProfileData['user'].bio,
+      location: currentUser.user.location || userProfileData['user'].location,
+      interests: currentUser.user.interests || userProfileData['user'].interests,
+      profileImage: currentUser.user.profileImage || userProfileData['user'].profileImage,
+      email: currentUser.user.email || userProfileData['user'].email,
+      phone: currentUser.user.phone || userProfileData['user'].phone
+    };
+  }
+
+  if (!user) {
+    user = userProfileData['user'];
+  }
 
   if (!user) {
     return (
@@ -875,7 +1028,11 @@ const UserProfile = () => {
             <ProfileMain>
               <ProfileLeft>
                 <ProfileAvatar>
-                  <img src={user.profileImage} alt={user.name} />
+                  {user.profileImage ? (
+                    <img src={user.profileImage} alt={user.name} />
+                  ) : (
+                    user.name.charAt(0)
+                  )}
                 </ProfileAvatar>
 
                 {username === 'user' && (
@@ -964,20 +1121,130 @@ const UserProfile = () => {
 
             {/* 일반 프로필 정보 */}
 
-            <RecentTripsSection>
-              <SectionTitle>최근 여행</SectionTitle>
-              <TripCards>
-                {user.recentTrips.map((trip) => (
-                  <TripCard key={trip.id} onClick={() => navigate(`/companion/${trip.id}`)}>
-                    <TripImage src={trip.image} alt={trip.title} />
-                    <TripInfo>
-                      <TripTitle>{trip.title}</TripTitle>
-                      <TripMeta>{trip.region} • {trip.date}</TripMeta>
-                    </TripInfo>
-                  </TripCard>
-                ))}
-              </TripCards>
-            </RecentTripsSection>
+            {/* 내가 올린 게시물들 */}
+            {username === 'user' && (
+              <>
+                {/* 내가 올린 동행모집 */}
+                <RecentTripsSection>
+                  <SectionHeader>
+                    <SectionTitle>내가 올린 동행모집</SectionTitle>
+                    <AddButton onClick={addNewCompanionPost}>
+                      <span>+</span>
+                      새 동행모집 등록
+                    </AddButton>
+                  </SectionHeader>
+                  <TripCards>
+                    {getMyCompanionPosts().length > 0 ? (
+                      getMyCompanionPosts().map((post) => (
+                        <TripCard key={post.id}>
+                          <TripImage
+                            src={post.image}
+                            alt={post.title}
+                            onClick={() => navigate(`/companion/${post.id}`)}
+                            style={{cursor: 'pointer'}}
+                          />
+                          <TripInfo onClick={() => navigate(`/companion/${post.id}`)} style={{cursor: 'pointer'}}>
+                            <TripTitle>{post.title}</TripTitle>
+                            <TripMeta>{post.region} • {post.date}</TripMeta>
+                          </TripInfo>
+                          <TripManageButtons>
+                            <ManageButton
+                              className="edit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                editCompanionPost(post.id);
+                              }}
+                            >
+                              수정
+                            </ManageButton>
+                            <ManageButton
+                              className="delete"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteCompanionPost(post.id);
+                              }}
+                            >
+                              삭제
+                            </ManageButton>
+                          </TripManageButtons>
+                        </TripCard>
+                      ))
+                    ) : (
+                      <EmptyMessage>아직 올린 동행모집이 없습니다.</EmptyMessage>
+                    )}
+                  </TripCards>
+                </RecentTripsSection>
+
+                {/* 내가 올린 여행일정 */}
+                <RecentTripsSection>
+                  <SectionHeader>
+                    <SectionTitle>내가 올린 여행일정</SectionTitle>
+                    <AddButton onClick={addNewTravelSchedule}>
+                      <span>+</span>
+                      새 여행일정 등록
+                    </AddButton>
+                  </SectionHeader>
+                  <TripCards>
+                    {getMyTravelSchedules().length > 0 ? (
+                      getMyTravelSchedules().map((schedule) => (
+                        <TripCard key={schedule.id}>
+                          <TripImage
+                            src={schedule.image}
+                            alt={schedule.title}
+                            onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
+                            style={{cursor: 'pointer'}}
+                          />
+                          <TripInfo onClick={() => navigate(`/travel-schedule/${schedule.id}`)} style={{cursor: 'pointer'}}>
+                            <TripTitle>{schedule.title}</TripTitle>
+                            <TripMeta>{schedule.region} • {schedule.date}</TripMeta>
+                          </TripInfo>
+                          <TripManageButtons>
+                            <ManageButton
+                              className="edit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                editTravelSchedule(schedule.id);
+                              }}
+                            >
+                              수정
+                            </ManageButton>
+                            <ManageButton
+                              className="delete"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTravelSchedule(schedule.id);
+                              }}
+                            >
+                              삭제
+                            </ManageButton>
+                          </TripManageButtons>
+                        </TripCard>
+                      ))
+                    ) : (
+                      <EmptyMessage>아직 올린 여행일정이 없습니다.</EmptyMessage>
+                    )}
+                  </TripCards>
+                </RecentTripsSection>
+              </>
+            )}
+
+            {/* 다른 사용자 프로필 정보 */}
+            {username !== 'user' && user.recentTrips && (
+              <RecentTripsSection>
+                <SectionTitle>최근 여행</SectionTitle>
+                <TripCards>
+                  {user.recentTrips.map((trip) => (
+                    <TripCard key={trip.id} onClick={() => navigate(`/companion/${trip.id}`)}>
+                      <TripImage src={trip.image} alt={trip.title} />
+                      <TripInfo>
+                        <TripTitle>{trip.title}</TripTitle>
+                        <TripMeta>{trip.region} • {trip.date}</TripMeta>
+                      </TripInfo>
+                    </TripCard>
+                  ))}
+                </TripCards>
+              </RecentTripsSection>
+            )}
           </ProfileSections>
         </ProfileContent>
       </UserProfileContainer>

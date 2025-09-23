@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 // Styled Components
 const ItinerarySectionContainer = styled.div`
-  padding: 60px 20px;
+  padding: 20px 20px 60px 20px;
   background: #f8f9fa;
 `;
 

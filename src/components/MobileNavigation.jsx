@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -61,8 +61,70 @@ const NavLabel = styled.span`
   max-width: 100%;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+`;
+
+const ModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px 30px 30px 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+`;
+
+const ModalIcon = styled.div`
+  font-size: 64px;
+  margin-bottom: 20px;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const ModalMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+`;
+
+const ModalButton = styled.button`
+  background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.6);
+  }
+`;
+
 const MobileNavigation = () => {
   const location = useLocation();
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
 
   const navItems = [
     {
@@ -81,9 +143,9 @@ const MobileNavigation = () => {
       icon: '👥'
     },
     {
-      path: '/companion-list',
-      label: '동행모집',
-      icon: '🤝'
+      path: '/chat-rooms',
+      label: '채팅방',
+      icon: '💬'
     },
     {
       path: '/gallery-shop',
@@ -99,6 +161,17 @@ const MobileNavigation = () => {
     return location.pathname.startsWith(path);
   };
 
+  const handleNavClick = (e, path) => {
+    if (path === '/gallery-shop') {
+      e.preventDefault();
+      setShowGalleryModal(true);
+    }
+  };
+
+  const closeGalleryModal = () => {
+    setShowGalleryModal(false);
+  };
+
   return (
     <MobileNavContainer>
       <NavList>
@@ -107,12 +180,30 @@ const MobileNavigation = () => {
             key={item.path}
             to={item.path}
             className={isActive(item.path) ? 'active' : ''}
+            onClick={(e) => handleNavClick(e, item.path)}
           >
             <NavIcon>{item.icon}</NavIcon>
             <NavLabel>{item.label}</NavLabel>
           </NavItem>
         ))}
       </NavList>
+
+      {/* 갤러리샵 준비중 모달 */}
+      {showGalleryModal && (
+        <ModalOverlay onClick={(e) => e.target === e.currentTarget && closeGalleryModal()}>
+          <ModalContainer>
+            <ModalIcon>🎨</ModalIcon>
+            <ModalTitle>갤러리샵 준비중</ModalTitle>
+            <ModalMessage>
+              갤러리샵 서비스는 현재 준비중입니다.<br />
+              더욱 멋진 서비스로 찾아뵙겠습니다!
+            </ModalMessage>
+            <ModalButton onClick={closeGalleryModal}>
+              확인
+            </ModalButton>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
     </MobileNavContainer>
   );
 };

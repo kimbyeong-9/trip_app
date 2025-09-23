@@ -12,12 +12,17 @@ import ForgotPassword from './pages/ForgotPassword';
 import Signup from './pages/Signup';
 import CompanionList from './pages/CompanionList';
 import CompanionCreate from './pages/CompanionCreate';
+import CompanionEdit from './pages/CompanionEdit';
 import CompanionDetail from './pages/CompanionDetail';
 import TravelScheduleList from './pages/TravelScheduleList';
 import TravelScheduleDetail from './pages/TravelScheduleDetail';
 import TravelScheduleCreate from './pages/TravelScheduleCreate';
+import TravelScheduleEdit from './pages/TravelScheduleEdit';
 import UserProfile from './pages/UserProfile';
 import ProfileEdit from './pages/ProfileEdit';
+import MagazineList from './pages/MagazineList';
+import Community from './pages/Community';
+import TourismList from './pages/TourismList';
 import './App.css';
 
 // 페이지 이동 시 스크롤을 맨 위로 이동하는 컴포넌트
@@ -38,6 +43,7 @@ function AppContent() {
   const isSignupPage = location.pathname === '/signup';
   const isCompanionListPage = location.pathname === '/companion-list';
   const isCompanionCreatePage = location.pathname === '/companion/create';
+  const isCompanionEditPage = location.pathname.startsWith('/companion/edit/');
   const isCompanionDetailPage = location.pathname.startsWith('/companion/');
   const isTravelSchedulePage = location.pathname.startsWith('/travel-schedule');
   const isUserProfilePage = location.pathname.startsWith('/profile/');
@@ -46,8 +52,8 @@ function AppContent() {
   return (
     <div className="App">
       <ScrollToTop />
-      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionCreatePage && !isCompanionDetailPage && !isTravelSchedulePage && !isUserProfilePage && !isProfileEditPage && <Navigation />}
-      <main className={isLoginPage || isForgotPasswordPage || isSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionDetailPage || isTravelSchedulePage || isUserProfilePage || isProfileEditPage ? "companion-main-content" : "main-content"}>
+      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionCreatePage && !isCompanionEditPage && !isCompanionDetailPage && !isTravelSchedulePage && !isUserProfilePage && !isProfileEditPage && <Navigation />}
+      <main className={isLoginPage || isForgotPasswordPage || isSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionEditPage || isCompanionDetailPage || isTravelSchedulePage || isUserProfilePage || isProfileEditPage ? "companion-main-content" : "main-content"}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
@@ -58,12 +64,17 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/companion-list" element={<CompanionList />} />
           <Route path="/companion/create" element={<CompanionCreate />} />
+          <Route path="/companion/edit/:id" element={<CompanionEdit />} />
           <Route path="/companion/:id" element={<CompanionDetail />} />
           <Route path="/travel-schedules" element={<TravelScheduleList />} />
           <Route path="/travel-schedule/:id" element={<TravelScheduleDetail />} />
           <Route path="/travel-schedule/create" element={<TravelScheduleCreate />} />
+          <Route path="/travel-schedule/edit/:id" element={<TravelScheduleEdit />} />
           <Route path="/profile/:username" element={<UserProfile />} />
           <Route path="/profile-edit" element={<ProfileEdit />} />
+          <Route path="/magazines" element={<MagazineList />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/tourism-list" element={<TourismList />} />
         </Routes>
       </main>
       {!isLoginPage && !isForgotPasswordPage && !isSignupPage && <WebsiteFooter />}

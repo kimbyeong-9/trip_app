@@ -34,6 +34,42 @@ const ProfileImageSection = styled.div`
   margin-bottom: 40px;
 `;
 
+const ImageButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+`;
+
+const ImageActionButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+
+  &.default {
+    background: #6c757d;
+
+    &:hover {
+      background: #5a6268;
+      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+    }
+  }
+`;
+
 const ProfileImageContainer = styled.div`
   position: relative;
   display: inline-block;
@@ -53,6 +89,13 @@ const ProfileImage = styled.div`
   font-size: 60px;
   margin: 0 auto;
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const ChangeImageButton = styled.button`
@@ -241,10 +284,11 @@ const ProfileEdit = () => {
   const [formData, setFormData] = useState({
     name: currentUser?.user?.name || '홍길동',
     email: currentUser?.user?.email || 'hong@example.com',
-    phone: '010-1234-5678',
-    bio: '여행을 사랑하는 사용자입니다. 새로운 곳을 탐험하고 좋은 사람들과 만나는 것을 좋아해요.',
-    location: '서울',
-    interests: ['여행', '사진', '맛집', '문화']
+    phone: currentUser?.user?.phone || '010-1234-5678',
+    bio: currentUser?.user?.bio || '여행을 사랑하는 사용자입니다. 새로운 곳을 탐험하고 좋은 사람들과 만나는 것을 좋아해요.',
+    location: currentUser?.user?.location || '서울',
+    interests: currentUser?.user?.interests || ['여행', '사진', '맛집', '문화'],
+    profileImage: currentUser?.user?.profileImage || null
   });
 
   const handleInputChange = (e) => {
@@ -257,9 +301,53 @@ const ProfileEdit = () => {
 
   const handleSave = (e) => {
     e.preventDefault();
-    // 여기서 실제 프로필 업데이트 로직을 구현
-    alert('프로필이 저장되었습니다!');
-    navigate('/profile/user');
+
+    try {
+      // 현재 로그인 데이터 가져오기
+      const localData = localStorage.getItem('loginData');
+      const sessionData = sessionStorage.getItem('loginData');
+
+      if (localData) {
+        const updatedData = JSON.parse(localData);
+        // 사용자 정보 업데이트
+        updatedData.user = {
+          ...updatedData.user,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          bio: formData.bio,
+          location: formData.location,
+          interests: formData.interests,
+          profileImage: formData.profileImage
+        };
+        // localStorage에 저장
+        localStorage.setItem('loginData', JSON.stringify(updatedData));
+      }
+
+      if (sessionData) {
+        const updatedData = JSON.parse(sessionData);
+        // 사용자 정보 업데이트
+        updatedData.user = {
+          ...updatedData.user,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          bio: formData.bio,
+          location: formData.location,
+          interests: formData.interests,
+          profileImage: formData.profileImage
+        };
+        // sessionStorage에 저장
+        sessionStorage.setItem('loginData', JSON.stringify(updatedData));
+      }
+
+      alert('프로필이 성공적으로 저장되었습니다!');
+      navigate('/');
+
+    } catch (error) {
+      console.error('프로필 저장 중 오류가 발생했습니다:', error);
+      alert('프로필 저장에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const handleCancel = () => {
@@ -267,8 +355,30 @@ const ProfileEdit = () => {
   };
 
   const handleImageChange = () => {
-    // 이미지 변경 로직 (실제로는 파일 업로드 구현)
-    alert('이미지 변경 기능은 준비 중입니다!');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setFormData(prev => ({
+            ...prev,
+            profileImage: e.target.result
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleResetToDefault = () => {
+    setFormData(prev => ({
+      ...prev,
+      profileImage: null
+    }));
   };
 
   const handleAddInterest = (e) => {
@@ -301,12 +411,26 @@ const ProfileEdit = () => {
           <ProfileImageSection>
             <ProfileImageContainer>
               <ProfileImage>
-                {formData.name.charAt(0)}
+                {formData.profileImage ? (
+                  <img src={formData.profileImage} alt="프로필 이미지" />
+                ) : (
+                  formData.name.charAt(0)
+                )}
               </ProfileImage>
               <ChangeImageButton onClick={handleImageChange} title="이미지 변경">
                 📷
               </ChangeImageButton>
             </ProfileImageContainer>
+            <ImageButtonGroup>
+              <ImageActionButton onClick={handleImageChange}>
+                <span>📷</span>
+                이미지 변경
+              </ImageActionButton>
+              <ImageActionButton className="default" onClick={handleResetToDefault}>
+                <span>👤</span>
+                기본 이미지로 변경
+              </ImageActionButton>
+            </ImageButtonGroup>
           </ProfileImageSection>
 
           <Form onSubmit={handleSave}>
@@ -382,7 +506,7 @@ const ProfileEdit = () => {
                 <AddInterestInput
                   type="text"
                   placeholder="관심사 추가..."
-                  onKeyPress={handleAddInterest}
+                  onKeyDown={handleAddInterest}
                 />
               </InterestTags>
             </FormGroup>

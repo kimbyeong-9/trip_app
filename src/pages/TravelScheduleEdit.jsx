@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 
 // Styled Components
-const TravelScheduleCreatePage = styled.div`
+const TravelScheduleEditPage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
   padding-top: 70px;
 `;
 
-const CreateContainer = styled.div`
+const EditContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
 `;
 
-const CreateHeader = styled.div`
+const EditHeader = styled.div`
   text-align: center;
   margin-bottom: 40px;
   padding-bottom: 20px;
@@ -40,7 +40,7 @@ const PageSubtitle = styled.p`
   margin: 0;
 `;
 
-const CreateForm = styled.form`
+const EditForm = styled.form`
   background: white;
   border-radius: 16px;
   padding: 40px;
@@ -105,10 +105,9 @@ const FormTextarea = styled.textarea`
   font-size: 14px;
   color: #495057;
   background: white;
-  transition: all 0.3s ease;
   resize: vertical;
   min-height: 120px;
-  font-family: inherit;
+  transition: all 0.3s ease;
 
   &:focus {
     outline: none;
@@ -121,23 +120,6 @@ const FormTextarea = styled.textarea`
   }
 `;
 
-const FormSelect = styled.select`
-  padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #495057;
-  background: white;
-  transition: all 0.3s ease;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-`;
-
 const FormRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -145,56 +127,49 @@ const FormRow = styled.div`
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 15px;
   }
 `;
 
 const ImageUploadArea = styled.div`
   border: 2px dashed #e9ecef;
   border-radius: 8px;
-  padding: 40px 20px;
+  padding: 30px 20px;
   text-align: center;
-  background: #f8f9fa;
-  transition: all 0.3s ease;
   cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
 
   &:hover {
-    border-color: #667eea;
-    background: #f0f4ff;
-  }
-
-  &.active {
     border-color: #667eea;
     background: #f0f4ff;
   }
 `;
 
 const ImageUploadText = styled.p`
-  font-size: 16px;
   color: #6c757d;
-  margin: 0 0 10px 0;
+  margin: 0 0 5px 0;
+  font-size: 16px;
 `;
 
 const ImageUploadHint = styled.p`
-  font-size: 14px;
   color: #adb5bd;
   margin: 0;
+  font-size: 12px;
 `;
 
 const PreviewImage = styled.img`
-  width: 100%;
-  max-width: 300px;
+  max-width: 100%;
   height: 200px;
   object-fit: cover;
   border-radius: 8px;
-  border: 1px solid #e9ecef;
   margin-top: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: 15px;
   justify-content: center;
+  gap: 20px;
   margin-top: 40px;
   padding-top: 30px;
   border-top: 1px solid #e9ecef;
@@ -246,9 +221,18 @@ const CancelButton = styled.button`
   }
 `;
 
-const TravelScheduleCreate = () => {
+const NotFoundMessage = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+  font-size: 18px;
+`;
+
+const TravelScheduleEdit = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scheduleFound, setScheduleFound] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     region: '',
@@ -259,20 +243,33 @@ const TravelScheduleCreate = () => {
     author: ''
   });
 
-  // 로그인된 사용자 정보 가져오기
-  const getLoginData = () => {
-    const localData = localStorage.getItem('loginData');
-    const sessionData = sessionStorage.getItem('loginData');
-    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
-  };
+  // 기존 여행일정 데이터 로드
+  useEffect(() => {
+    const loadScheduleData = () => {
+      const storedSchedules = JSON.parse(localStorage.getItem('travelSchedules')) || [];
+      const schedule = storedSchedules.find(s => s.id === parseInt(id));
 
-  const loginData = getLoginData();
+      if (schedule) {
+        // 날짜 분리
+        const [startDate, endDate] = schedule.date.split('~');
 
-  React.useEffect(() => {
-    if (loginData && loginData.user.name) {
-      setFormData(prev => ({ ...prev, author: loginData.user.name }));
-    }
-  }, []);
+        setFormData({
+          title: schedule.title || '',
+          region: schedule.region || '',
+          startDate: startDate || '',
+          endDate: endDate || '',
+          description: schedule.description || schedule.detailedDescription || '',
+          image: schedule.image || '',
+          author: schedule.author || ''
+        });
+        setScheduleFound(true);
+      } else {
+        setScheduleFound(false);
+      }
+    };
+
+    loadScheduleData();
+  }, [id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -307,91 +304,96 @@ const TravelScheduleCreate = () => {
     setIsSubmitting(true);
 
     try {
-      // 새 여행 일정 생성
-      const newSchedule = {
-        id: Date.now(),
-        title: formData.title,
-        region: formData.region,
-        date: `${formData.startDate}~${formData.endDate}`,
-        description: formData.description,
-        detailedDescription: formData.description,
-        image: formData.image || 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
-        author: formData.author || '여행자',
-        views: Math.floor(Math.random() * 100) + 10,
-        likes: Math.floor(Math.random() * 50) + 5,
-        createdAt: new Date().toISOString(),
-        tags: ['여행', '일정', formData.region]
-      };
+      // 기존 여행일정 업데이트
+      const storedSchedules = JSON.parse(localStorage.getItem('travelSchedules')) || [];
+      const scheduleIndex = storedSchedules.findIndex(s => s.id === parseInt(id));
 
-      // localStorage에 저장
-      const existingSchedules = JSON.parse(localStorage.getItem('travelSchedules')) || [];
-      existingSchedules.unshift(newSchedule); // 맨 앞에 추가
-      localStorage.setItem('travelSchedules', JSON.stringify(existingSchedules));
+      if (scheduleIndex !== -1) {
+        // 기존 일정 유지하면서 수정된 필드만 업데이트
+        storedSchedules[scheduleIndex] = {
+          ...storedSchedules[scheduleIndex],
+          title: formData.title,
+          region: formData.region,
+          date: `${formData.startDate}~${formData.endDate}`,
+          description: formData.description,
+          detailedDescription: formData.description,
+          image: formData.image || storedSchedules[scheduleIndex].image,
+          updatedAt: new Date().toISOString(),
+          tags: ['여행', '일정', formData.region]
+        };
 
-      setTimeout(() => {
-        alert('여행 일정이 성공적으로 등록되었습니다!');
-        navigate('/travel-schedules');
-      }, 1000);
+        localStorage.setItem('travelSchedules', JSON.stringify(storedSchedules));
 
+        setTimeout(() => {
+          setIsSubmitting(false);
+          alert('여행 일정이 성공적으로 수정되었습니다!');
+          navigate('/profile/user');
+        }, 1000);
+      }
     } catch (error) {
-      console.error('여행 일정 등록 실패:', error);
-      alert('여행 일정 등록에 실패했습니다. 다시 시도해주세요.');
+      console.error('여행 일정 수정 실패:', error);
+      alert('여행 일정 수정에 실패했습니다. 다시 시도해주세요.');
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/travel-schedules');
+    navigate('/profile/user');
   };
 
-  return (
-    <TravelScheduleCreatePage>
-      <CreateContainer>
-        <CreateHeader>
-          <PageTitle>여행 일정 등록</PageTitle>
-          <PageSubtitle>새로운 여행 일정을 등록하고 다른 사람들과 공유해보세요</PageSubtitle>
-        </CreateHeader>
+  if (!scheduleFound) {
+    return (
+      <TravelScheduleEditPage>
+        <Navigation />
+        <EditContainer>
+          <NotFoundMessage>
+            수정할 여행일정을 찾을 수 없습니다.
+            <br />
+            <CancelButton onClick={() => navigate('/profile/user')} style={{ marginTop: '20px' }}>
+              마이페이지로 돌아가기
+            </CancelButton>
+          </NotFoundMessage>
+        </EditContainer>
+      </TravelScheduleEditPage>
+    );
+  }
 
-        <CreateForm onSubmit={handleSubmit}>
+  return (
+    <TravelScheduleEditPage>
+      <Navigation />
+      <EditContainer>
+        <EditHeader>
+          <PageTitle>여행 일정 수정</PageTitle>
+          <PageSubtitle>여행 일정 정보를 수정해보세요</PageSubtitle>
+        </EditHeader>
+
+        <EditForm onSubmit={handleSubmit}>
           <FormSection>
             <SectionTitle>기본 정보</SectionTitle>
             <FormRow>
               <FormGroup>
-                <FormLabel>여행 제목 *</FormLabel>
+                <FormLabel>제목 *</FormLabel>
                 <FormInput
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  placeholder="여행 제목을 입력하세요"
+                  placeholder="여행 일정 제목을 입력하세요"
                   required
                 />
               </FormGroup>
               <FormGroup>
-                <FormLabel>여행 지역 *</FormLabel>
-                <FormSelect
+                <FormLabel>지역 *</FormLabel>
+                <FormInput
+                  type="text"
                   name="region"
                   value={formData.region}
                   onChange={handleInputChange}
+                  placeholder="여행 지역을 입력하세요"
                   required
-                >
-                  <option value="">지역을 선택하세요</option>
-                  <option value="서울">서울</option>
-                  <option value="부산">부산</option>
-                  <option value="제주도">제주도</option>
-                  <option value="강원도">강원도</option>
-                  <option value="경기도">경기도</option>
-                  <option value="충청도">충청도</option>
-                  <option value="전라도">전라도</option>
-                  <option value="경상도">경상도</option>
-                  <option value="해외">해외</option>
-                </FormSelect>
+                />
               </FormGroup>
             </FormRow>
-          </FormSection>
-
-          <FormSection>
-            <SectionTitle>여행 일정</SectionTitle>
             <FormRow>
               <FormGroup>
                 <FormLabel>시작일 *</FormLabel>
@@ -462,14 +464,13 @@ const TravelScheduleCreate = () => {
               취소
             </CancelButton>
             <SubmitButton type="submit" disabled={isSubmitting}>
-              {isSubmitting ? '등록 중...' : '일정 등록'}
+              {isSubmitting ? '수정 중...' : '일정 수정'}
             </SubmitButton>
           </ButtonGroup>
-        </CreateForm>
-      </CreateContainer>
-    </TravelScheduleCreatePage>
+        </EditForm>
+      </EditContainer>
+    </TravelScheduleEditPage>
   );
 };
 
-export default TravelScheduleCreate;
-
+export default TravelScheduleEdit;
