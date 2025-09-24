@@ -205,12 +205,12 @@ const ModalButton = styled.button`
   }
 `;
 
-const TourismSection = ({ tourismCards }) => {
+const TourismSection = ({ tourismCards, onCardClick }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
 
-  const handleCardClick = () => {
-    setShowModal(true);
+  const handleCardClick = (card) => {
+    onCardClick(`/tourism/${card.id}`);
   };
 
   const handleCloseModal = () => {
@@ -231,7 +231,7 @@ const TourismSection = ({ tourismCards }) => {
       </SectionHeader>
       <TourismCards>
         {tourismCards.map((card) => (
-          <TourismCard key={card.id} onClick={handleCardClick}>
+          <TourismCard key={card.id} onClick={() => handleCardClick(card)}>
             <CardImage src={card.image} alt={card.title} />
             <CardContent>
               <PlaceName>{card.title}</PlaceName>

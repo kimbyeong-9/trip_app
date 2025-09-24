@@ -168,6 +168,22 @@ const Home = () => {
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
+
+  // 카드 클릭 핸들러
+  const handleCardClick = (navigateTo) => {
+    if (!isLoggedIn()) {
+      setShowLoginModal(true);
+      return;
+    }
+    navigate(navigateTo);
+  };
 
   // URL 파라미터에서 지역 정보 읽기
   useEffect(() => {
@@ -197,6 +213,15 @@ const Home = () => {
     setShowServiceModal(false);
   };
 
+  const closeLoginModal = () => {
+    setShowLoginModal(false);
+  };
+
+  const goToLogin = () => {
+    setShowLoginModal(false);
+    navigate('/login');
+  };
+
   return (
     <HomePage>
       <RegionCategories 
@@ -205,22 +230,25 @@ const Home = () => {
       />
       
       {/* 대형 이미지 슬라이더 섹션 */}
-      <HeroSlider 
+      <HeroSlider
         heroSlides={heroSlides}
         showServiceModal={showServiceModal}
         setShowServiceModal={setShowServiceModal}
+        onCardClick={handleCardClick}
       />
       
       {/* 함께 동행해요 섹션 */}
-      <CompanionSection 
+      <CompanionSection
         companionCards={companionCards}
         searchTerm={searchTerm}
         selectedRegion={selectedRegion}
+        onCardClick={handleCardClick}
       />
 
       {/* 동행모집 채팅방 섹션 */}
       <ChatRoomsSection
         chatRooms={chatRooms}
+        onCardClick={handleCardClick}
       />
 
       {/* 여행 일정 섹션 */}
@@ -228,6 +256,7 @@ const Home = () => {
         itineraryCards={itineraryCards}
         searchTerm={searchTerm}
         selectedRegion={selectedRegion}
+        onCardClick={handleCardClick}
       />
 
       {/* 여행 매거진 섹션 */}
@@ -235,11 +264,13 @@ const Home = () => {
         magazineCards={magazineCards}
         searchTerm={searchTerm}
         selectedRegion={selectedRegion}
+        onCardClick={handleCardClick}
       />
 
       {/* 관광공사 추천여행지 섹션 */}
       <TourismSection
         tourismCards={tourismCards}
+        onCardClick={handleCardClick}
       />
 
       {/* 준비중인 서비스 모달 */}
@@ -254,6 +285,24 @@ const Home = () => {
                 조금만 기다려주세요!
               </ModalMessage>
               <ModalConfirmBtn onClick={closeServiceModal}>
+                확인
+              </ModalConfirmBtn>
+            </ModalContent>
+          </ServiceModal>
+        </ModalOverlay>
+      )}
+
+      {/* 로그인 필요 모달 */}
+      {showLoginModal && (
+        <ModalOverlay>
+          <ServiceModal>
+            <ModalContent>
+              <ModalIcon>🔐</ModalIcon>
+              <ModalTitle>로그인이 필요합니다</ModalTitle>
+              <ModalMessage>
+                로그인 후 이용가능 합니다
+              </ModalMessage>
+              <ModalConfirmBtn onClick={goToLogin}>
                 확인
               </ModalConfirmBtn>
             </ModalContent>

@@ -326,16 +326,28 @@ const GalleryModalButton = styled.button`
   }
 `;
 
-const ChatRoomsSection = ({ chatRooms }) => {
+const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
+
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const handleSubMenuClick = (path) => {
+    if (!isLoggedIn()) {
+      onCardClick(path);
+      setIsMenuOpen(false);
+      return;
+    }
+
     if (path === '/gallery-shop') {
       setShowGalleryModal(true);
     } else {
@@ -355,7 +367,7 @@ const ChatRoomsSection = ({ chatRooms }) => {
       </SectionHeader>
       <ChatRooms>
         {chatRooms.map((room) => (
-          <ChatRoomCard key={room.id}>
+          <ChatRoomCard key={room.id} onClick={() => onCardClick(`/chat-room/${room.id}`)}>
             <RoomImage src={room.image} alt={room.title} />
             <RoomInfo>
               <RoomTitle>{room.title}</RoomTitle>
@@ -420,7 +432,13 @@ const ChatRoomsSection = ({ chatRooms }) => {
           </SubMenuButton>
         </SubMenuContainer>
 
-        <CompanionButton onClick={() => navigate('/companion-list')}>
+        <CompanionButton onClick={() => {
+          if (!isLoggedIn()) {
+            onCardClick('/companion-list');
+          } else {
+            navigate('/companion-list');
+          }
+        }}>
           <CompanionIcon>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M16 4C18.2091 4 20 5.79086 20 8C20 10.2091 18.2091 12 16 12C13.7909 12 12 10.2091 12 8C12 5.79086 13.7909 4 16 4Z" fill="white"/>

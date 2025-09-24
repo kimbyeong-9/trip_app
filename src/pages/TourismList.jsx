@@ -263,12 +263,102 @@ const PaginationButton = styled.button`
   }
 `;
 
+const LoginModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+`;
+
+const LoginModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px 30px 30px 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+`;
+
+const LoginModalIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 20px;
+`;
+
+const LoginModalTitle = styled.h3`
+  font-size: 24px;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const LoginModalMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 25px 0;
+  line-height: 1.5;
+`;
+
+const LoginModalButtons = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+`;
+
+const LoginModalButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+
+  ${props => props.primary ? `
+    background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(76, 175, 80, 0.6);
+    }
+  ` : `
+    background: white;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+
+    &:hover {
+      background: #f8f9fa;
+      color: #495057;
+    }
+  `}
+`;
+
 const TourismList = () => {
   const navigate = useNavigate();
   const [selectedRegion, setSelectedRegion] = useState('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const itemsPerPage = 9;
+
+  // 로그인 상태 확인
+  const getLoginData = () => {
+    const localData = localStorage.getItem('loginData');
+    const sessionData = sessionStorage.getItem('loginData');
+    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+  };
+
+  const loginData = getLoginData();
+  const isLoggedIn = loginData && loginData.isLoggedIn;
 
   const regions = ['전체', '서울', '부산', '제주', '강원', '경기', '전라', '경상', '충청'];
 
@@ -282,11 +372,20 @@ const TourismList = () => {
   const paginatedCards = filteredCards.slice(startIndex, startIndex + itemsPerPage);
 
   const handleCardClick = () => {
-    setShowModal(true);
+    if (isLoggedIn) {
+      setShowModal(true);
+    } else {
+      setShowLoginModal(true);
+    }
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
+  };
+
+  const handleLoginClick = () => {
+    setShowLoginModal(false);
+    navigate('/login');
   };
 
   const handleFilterChange = (value) => {
@@ -382,6 +481,21 @@ const TourismList = () => {
             </ModalButton>
           </ModalContainer>
         </ModalOverlay>
+      )}
+
+      {/* 로그인 모달 */}
+      {showLoginModal && (
+        <LoginModal onClick={() => setShowLoginModal(false)}>
+          <LoginModalContainer onClick={(e) => e.stopPropagation()}>
+            <LoginModalIcon>🔒</LoginModalIcon>
+            <LoginModalTitle>로그인이 필요합니다</LoginModalTitle>
+            <LoginModalMessage>로그인 후 이용가능 합니다</LoginModalMessage>
+            <LoginModalButtons>
+              <LoginModalButton primary onClick={handleLoginClick}>로그인</LoginModalButton>
+              <LoginModalButton onClick={() => setShowLoginModal(false)}>취소</LoginModalButton>
+            </LoginModalButtons>
+          </LoginModalContainer>
+        </LoginModal>
       )}
     </TourismListPage>
   );

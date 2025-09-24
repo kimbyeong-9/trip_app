@@ -163,7 +163,7 @@ const NoResultsText = styled.p`
   margin: 0;
 `;
 
-const MagazineSection = ({ magazineCards, searchTerm, selectedRegion }) => {
+const MagazineSection = ({ magazineCards, searchTerm, selectedRegion, onCardClick }) => {
   const navigate = useNavigate();
   const [selectedMagazine, setSelectedMagazine] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -173,8 +173,7 @@ const MagazineSection = ({ magazineCards, searchTerm, selectedRegion }) => {
   };
 
   const handleMagazineClick = (magazine) => {
-    setSelectedMagazine(magazine);
-    setIsModalOpen(true);
+    onCardClick(`/magazine/${magazine.id}`);
   };
 
   const handleCloseModal = () => {

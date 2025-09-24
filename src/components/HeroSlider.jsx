@@ -109,10 +109,16 @@ const PauseButton = styled.button`
   }
 `;
 
-const HeroSlider = ({ heroSlides, showServiceModal, setShowServiceModal }) => {
+const HeroSlider = ({ heroSlides, showServiceModal, setShowServiceModal, onCardClick }) => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
 
   // 자동 슬라이드
   useEffect(() => {
@@ -133,16 +139,32 @@ const HeroSlider = ({ heroSlides, showServiceModal, setShowServiceModal }) => {
   const handleSlideClick = (slideId) => {
     switch(slideId) {
       case 1: // 할인쿠폰
-        setShowServiceModal(true);
+        if (!isLoggedIn()) {
+          onCardClick('/coupon');
+        } else {
+          setShowServiceModal(true);
+        }
         break;
       case 2: // 버스대절
-        setShowServiceModal(true);
+        if (!isLoggedIn()) {
+          onCardClick('/bus-rental');
+        } else {
+          setShowServiceModal(true);
+        }
         break;
       case 3: // 여행보험
-        setShowServiceModal(true);
+        if (!isLoggedIn()) {
+          onCardClick('/travel-insurance');
+        } else {
+          setShowServiceModal(true);
+        }
         break;
       case 4: // 동행모집
-        navigate('/companion-list');
+        if (!isLoggedIn()) {
+          onCardClick('/companion-list');
+        } else {
+          navigate('/companion-list');
+        }
         break;
       default:
         break;

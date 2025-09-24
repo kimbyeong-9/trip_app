@@ -461,6 +461,14 @@ const TravelScheduleList = () => {
     }
   };
 
+  const handleCardClick = (scheduleId) => {
+    if (isLoggedIn) {
+      navigate(`/travel-schedule/${scheduleId}`);
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
   const handleLoginClick = () => {
     setShowLoginModal(false);
     navigate('/login');
@@ -558,7 +566,7 @@ const TravelScheduleList = () => {
             {currentSchedules.map((schedule) => (
               <ScheduleCard
                 key={schedule.id}
-                onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
+                onClick={() => handleCardClick(schedule.id)}
               >
                 <ScheduleImage src={schedule.image} alt={schedule.title} />
                 <ScheduleContent>
@@ -648,7 +656,7 @@ const TravelScheduleList = () => {
           <ModalContent onClick={(e) => e.stopPropagation()}>
             <ModalIcon>🔒</ModalIcon>
             <ModalTitle>로그인이 필요합니다</ModalTitle>
-            <ModalMessage>여행 일정을 등록하려면 로그인해주세요.</ModalMessage>
+            <ModalMessage>로그인 후 이용가능 합니다</ModalMessage>
             <ModalButtons>
               <ModalButton primary onClick={handleLoginClick}>로그인</ModalButton>
               <ModalButton onClick={() => setShowLoginModal(false)}>취소</ModalButton>

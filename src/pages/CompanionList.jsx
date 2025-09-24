@@ -572,6 +572,14 @@ const CompanionList = () => {
     }
   };
 
+  const handleCardClick = (postId) => {
+    if (isLoggedIn) {
+      navigate(`/companion/${postId}`);
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
   const handleLoginClick = () => {
     setShowLoginModal(false);
     navigate('/login');
@@ -729,7 +737,7 @@ const CompanionList = () => {
             currentPosts.map((post) => (
               <Fragment key={post.id}>
                 {/* 데스크톱 테이블 뷰 */}
-                <TableRow onClick={() => navigate(`/companion/${post.id}`)}>
+                <TableRow onClick={() => handleCardClick(post.id)}>
                   <ImageCell>
                     <RepresentativeImage src={post.image} alt={post.title} />
                   </ImageCell>
@@ -765,7 +773,7 @@ const CompanionList = () => {
                 </TableRow>
 
                 {/* 모바일 카드 뷰 */}
-                <MobileCard onClick={() => navigate(`/companion/${post.id}`)}>
+                <MobileCard onClick={() => handleCardClick(post.id)}>
                   <MobileCardHeader>
                     <MobileCardImage src={post.image} alt={post.title} />
                     <MobileCardInfo>
@@ -843,7 +851,7 @@ const CompanionList = () => {
           <ModalContent onClick={(e) => e.stopPropagation()}>
             <ModalIcon>🔒</ModalIcon>
             <ModalTitle>로그인이 필요합니다</ModalTitle>
-            <ModalMessage>동행모집 글을 작성하려면 로그인해주세요.</ModalMessage>
+            <ModalMessage>로그인 후 이용가능 합니다</ModalMessage>
             <ModalButtons>
               <ModalButton primary onClick={handleLoginClick}>로그인</ModalButton>
               <ModalButton onClick={() => setShowLoginModal(false)}>취소</ModalButton>

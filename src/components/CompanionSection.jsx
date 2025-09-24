@@ -162,7 +162,7 @@ const NoResultsText = styled.p`
   margin: 0;
 `;
 
-const CompanionSection = ({ companionCards, searchTerm, selectedRegion }) => {
+const CompanionSection = ({ companionCards, searchTerm, selectedRegion, onCardClick }) => {
   const navigate = useNavigate();
 
   // 카드 필터링 함수
@@ -213,7 +213,7 @@ const CompanionSection = ({ companionCards, searchTerm, selectedRegion }) => {
       <CompanionCards>
         {filteredCompanionCards.length > 0 ? (
           filteredCompanionCards.map((card) => (
-            <CompanionCard key={card.id} onClick={() => navigate(`/companion/${card.id}`)}>
+            <CompanionCard key={card.id} onClick={() => onCardClick(`/companion/${card.id}`)}>
               <CardImage src={card.image} alt={card.title} />
               <LocationBadge>{card.region}</LocationBadge>
               <CardContent>

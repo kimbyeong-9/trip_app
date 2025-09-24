@@ -32,7 +32,6 @@ const Booking = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('예약 정보:', { ...guestInfo, ...bookingDetails, paymentMethod });
     alert('예약이 완료되었습니다!');
   };
 

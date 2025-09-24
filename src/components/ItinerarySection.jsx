@@ -277,7 +277,7 @@ const NoResultsText = styled.p`
   margin: 0;
 `;
 
-const ItinerarySection = ({ itineraryCards, searchTerm, selectedRegion }) => {
+const ItinerarySection = ({ itineraryCards, searchTerm, selectedRegion, onCardClick }) => {
   const navigate = useNavigate();
 
   // 카드 필터링 함수
@@ -327,7 +327,7 @@ const ItinerarySection = ({ itineraryCards, searchTerm, selectedRegion }) => {
       <ItineraryCards>
         {filteredItineraryCards.length > 0 ? (
           filteredItineraryCards.map((card) => (
-            <ItineraryCard key={card.id} onClick={() => navigate(`/travel-schedule/${card.id}`)}>
+            <ItineraryCard key={card.id} onClick={() => onCardClick(`/travel-schedule/${card.id}`)}>
               <CardImage src={card.image} alt={card.title} />
               <LocationBadge>{card.region}</LocationBadge>
               <CardContent>

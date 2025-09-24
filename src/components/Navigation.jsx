@@ -739,6 +739,7 @@ const Navigation = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [loginData, setLoginData] = useState(null);
   const [showNoResultsModal, setShowNoResultsModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [noResultsMessage, setNoResultsMessage] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
