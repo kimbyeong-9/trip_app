@@ -1,5 +1,309 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+
+// Styled Components (로그인 페이지와 동일한 디자인)
+const SignupContainer = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+`;
+
+
+const SignupCard = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  position: relative;
+`;
+
+const Logo = styled.div`
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
+const Title = styled.h2`
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+`;
+
+const Subtitle = styled.p`
+  color: #6c757d;
+  margin-bottom: 30px;
+  font-size: 16px;
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const FormGroup = styled.div`
+  position: relative;
+  text-align: left;
+`;
+
+const FormRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+`;
+
+const Label = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 14px;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  &::placeholder {
+    color: #adb5bd;
+  }
+
+  &.error {
+    border-color: #dc3545;
+  }
+
+  &:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.6;
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  background-color: white;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  &:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.6;
+  }
+`;
+
+const PasswordInputContainer = styled.div`
+  position: relative;
+`;
+
+const PasswordToggle = styled.button`
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 5px;
+
+  &:hover {
+    color: #667eea;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const TermsSection = styled.div`
+  text-align: left;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  background-color: #f8f9fa;
+`;
+
+const TermsItem = styled.div`
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #2c3e50;
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    accent-color: #667eea;
+  }
+
+  &:hover {
+    color: #667eea;
+  }
+`;
+
+const SubmitButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  border: 1px solid #fcc;
+`;
+
+const SignupFooter = styled.div`
+  margin-top: 30px;
+  color: #6c757d;
+  font-size: 14px;
+
+  button {
+    color: #667eea;
+    background: none;
+    border: none;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 5px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+`;
+
+const LoadingSpinner = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const BackArrowButton = styled.button`
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid #667eea;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #667eea;
+  font-size: 18px;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateX(-2px);
+  }
+`;
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -109,227 +413,215 @@ const Signup = () => {
   };
 
   return (
-    <div className="signup-page-fullscreen">
-      <div className="signup-header-fullscreen">
-        <button className="back-button-center" onClick={() => navigate(-1)}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-      </div>
+    <SignupContainer>
+      <SignupCard>
+        <BackArrowButton onClick={() => navigate(-1)}>
+          ←
+        </BackArrowButton>
+        <Logo onClick={() => navigate('/')}>여행대로</Logo>
+        <Title>회원가입</Title>
+        <Subtitle>새로운 여행의 시작, 함께해요!</Subtitle>
 
-      <div className="signup-content">
-        <div className="signup-welcome">
-          <h2>여행대로 회원가입</h2>
-          <p>새로운 여행의 시작, 함께해요!</p>
-        </div>
+        <Form onSubmit={handleSubmit}>
+          {error && <ErrorMessage>{error}</ErrorMessage>}
 
-        <div className="signup-form">
-          <form onSubmit={handleSubmit}>
-            {error && <div className="error-message">{error}</div>}
-            
-            <div className="form-group">
-              <label htmlFor="name">이름 *</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="이름을 입력하세요"
-                required
-                disabled={isLoading}
-                className={error && error.includes('이름') ? 'error' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">이메일 *</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="이메일을 입력하세요"
-                required
-                disabled={isLoading}
-                className={error && error.includes('이메일') ? 'error' : ''}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">비밀번호 *</label>
-              <div className="password-input-container">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="비밀번호를 입력하세요 (6자 이상)"
-                  required
-                  disabled={isLoading}
-                  className={error && error.includes('비밀번호') ? 'error' : ''}
-                />
-                <button
-                  type="button"
-                  className="password-toggle-button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                  title={showPassword ? "비밀번호 숨기기" : "비밀번호 보이기"}
-                >
-                  {showPassword ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.94 17.94C16.2306 19.243 14.1491 19.9649 12 20C5 20 1 12 1 12C2.24389 9.68192 4.231 7.81663 6.62 6.68M9.9 4.24C10.5883 4.0789 11.2931 3.99836 12 4C19 4 23 12 23 12C22.393 13.1356 21.6691 14.2048 20.84 15.19M14.12 14.12C13.8454 14.4148 13.5141 14.6512 13.1462 14.8151C12.7782 14.9791 12.3809 15.0673 11.9781 15.0744C11.5753 15.0815 11.1749 15.0074 10.8016 14.8565C10.4283 14.7056 10.0887 14.4811 9.80385 14.1962C9.51897 13.9113 9.29439 13.5717 9.14351 13.1984C8.99262 12.8251 8.91853 12.4247 8.92563 12.0219C8.93274 11.6191 9.02091 11.2218 9.18488 10.8538C9.34884 10.4858 9.58525 10.1546 9.88 9.88" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M1 1L23 23" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="12" cy="12" r="3" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword">비밀번호 확인 *</label>
-              <div className="password-input-container">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  placeholder="비밀번호를 다시 입력하세요"
-                  required
-                  disabled={isLoading}
-                  className={error && error.includes('일치하지') ? 'error' : ''}
-                />
-                <button
-                  type="button"
-                  className="password-toggle-button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={isLoading}
-                  title={showConfirmPassword ? "비밀번호 숨기기" : "비밀번호 보이기"}
-                >
-                  {showConfirmPassword ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.94 17.94C16.2306 19.243 14.1491 19.9649 12 20C5 20 1 12 1 12C2.24389 9.68192 4.231 7.81663 6.62 6.68M9.9 4.24C10.5883 4.0789 11.2931 3.99836 12 4C19 4 23 12 23 12C22.393 13.1356 21.6691 14.2048 20.84 15.19M14.12 14.12C13.8454 14.4148 13.5141 14.6512 13.1462 14.8151C12.7782 14.9791 12.3809 15.0673 11.9781 15.0744C11.5753 15.0815 11.1749 15.0074 10.8016 14.8565C10.4283 14.7056 10.0887 14.4811 9.80385 14.1962C9.51897 13.9113 9.29439 13.5717 9.14351 13.1984C8.99262 12.8251 8.91853 12.4247 8.92563 12.0219C8.93274 11.6191 9.02091 11.2218 9.18488 10.8538C9.34884 10.4858 9.58525 10.1546 9.88 9.88" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M1 1L23 23" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="12" cy="12" r="3" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="phone">휴대폰 번호</label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="010-1234-5678"
-                disabled={isLoading}
-                className={error && error.includes('휴대폰') ? 'error' : ''}
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="birthDate">생년월일</label>
-                <input
-                  type="date"
-                  id="birthDate"
-                  name="birthDate"
-                  value={formData.birthDate}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="gender">성별</label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                >
-                  <option value="">선택안함</option>
-                  <option value="male">남성</option>
-                  <option value="female">여성</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="terms-section">
-              <div className="terms-item">
-                <label className="checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    disabled={isLoading}
-                  />
-                  <span>이용약관에 동의합니다 (필수)</span>
-                </label>
-              </div>
-              
-              <div className="terms-item">
-                <label className="checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    checked={agreePrivacy}
-                    onChange={(e) => setAgreePrivacy(e.target.checked)}
-                    disabled={isLoading}
-                  />
-                  <span>개인정보 처리방침에 동의합니다 (필수)</span>
-                </label>
-              </div>
-            </div>
-
-            <button 
-              type="submit" 
-              className="signup-submit"
+          <FormGroup>
+            <Label htmlFor="name">이름 *</Label>
+            <Input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="이름을 입력하세요"
+              required
               disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="loading-spinner">
-                  <span className="spinner"></span>
-                  회원가입 중...
-                </span>
-              ) : (
-                '회원가입'
-              )}
-            </button>
-          </form>
+              className={error && error.includes('이름') ? 'error' : ''}
+            />
+          </FormGroup>
 
-          <div className="signup-footer">
-            <p>
-              이미 계정이 있으신가요? 
-              <button 
-                className="login-link" 
-                onClick={handleLoginRedirect}
+          <FormGroup>
+            <Label htmlFor="email">이메일 *</Label>
+            <Input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="이메일을 입력하세요"
+              required
+              disabled={isLoading}
+              className={error && error.includes('이메일') ? 'error' : ''}
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="password">비밀번호 *</Label>
+            <PasswordInputContainer>
+              <Input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="비밀번호를 입력하세요 (6자 이상)"
+                required
+                disabled={isLoading}
+                className={error && error.includes('비밀번호') ? 'error' : ''}
+              />
+              <PasswordToggle
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
                 disabled={isLoading}
               >
-                로그인
-              </button>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94L17.94 17.94z"/>
+                    <path d="m1 1 22 22"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19l-6.84-6.84z"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
+              </PasswordToggle>
+            </PasswordInputContainer>
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="confirmPassword">비밀번호 확인 *</Label>
+            <PasswordInputContainer>
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                placeholder="비밀번호를 다시 입력하세요"
+                required
+                disabled={isLoading}
+                className={error && error.includes('일치하지') ? 'error' : ''}
+              />
+              <PasswordToggle
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={isLoading}
+              >
+                {showConfirmPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94L17.94 17.94z"/>
+                    <path d="m1 1 22 22"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19l-6.84-6.84z"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
+              </PasswordToggle>
+            </PasswordInputContainer>
+          </FormGroup>
+
+          <FormGroup>
+            <Label htmlFor="phone">휴대폰 번호</Label>
+            <Input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              placeholder="010-1234-5678"
+              disabled={isLoading}
+              className={error && error.includes('휴대폰') ? 'error' : ''}
+            />
+          </FormGroup>
+
+          <FormRow>
+            <FormGroup>
+              <Label htmlFor="birthDate">생년월일</Label>
+              <Input
+                type="date"
+                id="birthDate"
+                name="birthDate"
+                value={formData.birthDate}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="gender">성별</Label>
+              <Select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleInputChange}
+                disabled={isLoading}
+              >
+                <option value="">선택안함</option>
+                <option value="male">남성</option>
+                <option value="female">여성</option>
+              </Select>
+            </FormGroup>
+          </FormRow>
+
+          <TermsSection>
+            <TermsItem>
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  disabled={isLoading}
+                />
+                <span>이용약관에 동의합니다 (필수)</span>
+              </CheckboxLabel>
+            </TermsItem>
+
+            <TermsItem>
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={agreePrivacy}
+                  onChange={(e) => setAgreePrivacy(e.target.checked)}
+                  disabled={isLoading}
+                />
+                <span>개인정보 처리방침에 동의합니다 (필수)</span>
+              </CheckboxLabel>
+            </TermsItem>
+          </TermsSection>
+
+          <SubmitButton
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <LoadingSpinner>
+                <span className="spinner"></span>
+                회원가입 중...
+              </LoadingSpinner>
+            ) : (
+              '회원가입'
+            )}
+          </SubmitButton>
+        </Form>
+
+        <SignupFooter>
+          <p>
+            이미 계정이 있으신가요?
+            <button
+              onClick={handleLoginRedirect}
+              disabled={isLoading}
+            >
+              로그인
+            </button>
+          </p>
+        </SignupFooter>
+      </SignupCard>
+    </SignupContainer>
   );
 };
 

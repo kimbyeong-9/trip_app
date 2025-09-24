@@ -235,7 +235,6 @@ const MagazineSection = ({ magazineCards, searchTerm, selectedRegion }) => {
               <CardContent>
                 <CardTitle>{card.title}</CardTitle>
                 <CardMeta>
-                  <Author>작성자: {card.author}</Author>
                   <Date>{card.date}</Date>
                 </CardMeta>
               </CardContent>

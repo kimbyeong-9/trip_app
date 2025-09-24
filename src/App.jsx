@@ -23,6 +23,10 @@ import ProfileEdit from './pages/ProfileEdit';
 import MagazineList from './pages/MagazineList';
 import Community from './pages/Community';
 import TourismList from './pages/TourismList';
+import Settings from './pages/Settings';
+import Notice from './pages/Notice';
+import CustomerSupport from './pages/CustomerSupport';
+import FAQ from './pages/FAQ';
 import './App.css';
 
 // 페이지 이동 시 스크롤을 맨 위로 이동하는 컴포넌트
@@ -75,9 +79,13 @@ function AppContent() {
           <Route path="/magazines" element={<MagazineList />} />
           <Route path="/community" element={<Community />} />
           <Route path="/tourism-list" element={<TourismList />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/notice" element={<Notice />} />
+          <Route path="/customer-support" element={<CustomerSupport />} />
+          <Route path="/faq" element={<FAQ />} />
         </Routes>
       </main>
-      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && <WebsiteFooter />}
+      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isProfileEditPage && <WebsiteFooter />}
       {!isLoginPage && !isForgotPasswordPage && !isSignupPage && <MobileNavigation />}
     </div>
   );

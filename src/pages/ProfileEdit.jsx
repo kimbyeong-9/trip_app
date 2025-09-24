@@ -4,30 +4,99 @@ import styled from 'styled-components';
 
 const ProfileEditContainer = styled.div`
   min-height: 100vh;
-  background: #f8f9fa;
-  padding-top: 70px;
+  background: white;
+  padding: 0;
+`;
+
+const Header = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  margin-bottom: 10px;
+`;
+
+const BackButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+const HeaderTitle = styled.h1`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
 `;
 
 const ProfileEditContent = styled.div`
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0;
 `;
 
 const ProfileEditCard = styled.div`
   background: white;
-  border-radius: 20px;
+  border-radius: 12px;
   padding: 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  position: relative;
+  min-height: calc(100vh - 40px);
+  border: 2px solid #e9ecef;
+  margin: 20px;
 `;
 
-const Title = styled.h1`
-  font-size: 28px;
+const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+  position: relative;
+`;
+
+const CardBackButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+const CardTitle = styled.h1`
+  font-size: 24px;
   font-weight: 700;
   color: #2c3e50;
-  text-align: center;
-  margin: 0 0 30px 0;
+  margin: 0;
 `;
+
 
 const ProfileImageSection = styled.div`
   text-align: center;
@@ -406,7 +475,12 @@ const ProfileEdit = () => {
     <ProfileEditContainer>
       <ProfileEditContent>
         <ProfileEditCard>
-          <Title>프로필 편집</Title>
+          <CardHeader>
+            <CardBackButton onClick={() => navigate(-1)}>
+              ← 뒤로가기
+            </CardBackButton>
+            <CardTitle>프로필 편집</CardTitle>
+          </CardHeader>
           
           <ProfileImageSection>
             <ProfileImageContainer>

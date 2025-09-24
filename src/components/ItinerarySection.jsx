@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 // Styled Components
 const ItinerarySectionContainer = styled.div`
-  padding: 20px 20px 60px 20px;
+  padding: 10px 20px 30px 20px;
   background: #f8f9fa;
 `;
 
@@ -12,7 +12,7 @@ const SectionHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
@@ -77,6 +77,11 @@ const ItineraryCard = styled.div`
   cursor: pointer;
   position: relative;
   min-width: 300px;
+  max-width: 300px;
+  width: 300px;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
   flex-shrink: 0;
 
   &:hover {
@@ -110,32 +115,142 @@ const LocationBadge = styled.div`
 
 const CardContent = styled.div`
   padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 `;
 
 const CardTitle = styled.h3`
   font-size: 18px;
   font-weight: 600;
   color: #2c3e50;
-  margin: 0 0 15px 0;
+  margin: 0 0 8px 0;
   line-height: 1.4;
+  height: 50px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 `;
 
-const CardMeta = styled.div`
+const AuthorInfo = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 14px;
-  color: #6c757d;
+  gap: 12px;
+  margin-bottom: 8px;
 `;
 
-const Author = styled.span`
-  background: #f8f9fa;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: 500;
+const AuthorAvatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: none;
+  }
+`;
+
+const AuthorName = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  flex: 1;
 `;
 
 const Date = styled.span`
+  font-weight: 500;
+`;
+
+const DateMeta = styled.div`
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+  margin-top: 4px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const ViewsLikes = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 6px;
+`;
+
+const ViewsLikesItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const EyeIcon = styled.span`
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+  position: relative;
+  display: inline-block;
+  width: 16px;
+  height: 10px;
+  background: white;
+  border: 1px solid #6c757d;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: #6c757d;
+    border-radius: 50%;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+  }
+`;
+
+const HeartIconSmall = styled.span`
+  font-size: 14px;
+  color: #e74c3c;
+  transition: all 0.3s ease;
+
+  &::before {
+    content: '♥';
+  }
+`;
+
+const Count = styled.span`
+  font-size: 13px;
+  color: #6c757d;
   font-weight: 500;
 `;
 
@@ -217,10 +332,37 @@ const ItinerarySection = ({ itineraryCards, searchTerm, selectedRegion }) => {
               <LocationBadge>{card.region}</LocationBadge>
               <CardContent>
                 <CardTitle>{card.title}</CardTitle>
-                <CardMeta>
-                  <Author>작성자: {card.author}</Author>
-                  <Date>{card.date}</Date>
-                </CardMeta>
+                <AuthorInfo>
+                  <AuthorAvatar>
+                    {card.author && typeof card.author === 'object' && card.author.profileImage ? (
+                      <img src={card.author.profileImage} alt={typeof card.author === 'object' ? card.author.name : card.author} />
+                    ) : (
+                      typeof card.author === 'object'
+                        ? (card.author.name ? card.author.name.charAt(0) : 'U')
+                        : (card.author ? card.author.charAt(0) : 'U')
+                    )}
+                  </AuthorAvatar>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '2px' }}>작성자</div>
+                    <AuthorName>
+                      {card.author
+                        ? (typeof card.author === 'object' ? card.author.name : card.author)
+                        : '익명'
+                      }
+                    </AuthorName>
+                  </div>
+                </AuthorInfo>
+                <ViewsLikes>
+                  <ViewsLikesItem>
+                    <EyeIcon />
+                    <Count>{card.views || 0}</Count>
+                  </ViewsLikesItem>
+                  <ViewsLikesItem>
+                    <HeartIconSmall />
+                    <Count>{card.likes || 0}</Count>
+                  </ViewsLikesItem>
+                </ViewsLikes>
+                <DateMeta>{card.date}</DateMeta>
               </CardContent>
             </ItineraryCard>
           ))

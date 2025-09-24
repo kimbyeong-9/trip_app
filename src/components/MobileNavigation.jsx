@@ -130,7 +130,7 @@ const MobileNavigation = () => {
     {
       path: '/',
       label: '홈',
-      icon: '🏠'
+      icon: '⌂'
     },
     {
       path: '/travel-schedules',
@@ -145,12 +145,12 @@ const MobileNavigation = () => {
     {
       path: '/chat-rooms',
       label: '채팅방',
-      icon: '💬'
+      icon: '◯'
     },
     {
       path: '/gallery-shop',
       label: '갤러리샵',
-      icon: '🖼️'
+      icon: '◊'
     }
   ];
 

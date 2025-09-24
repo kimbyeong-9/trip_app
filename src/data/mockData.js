@@ -56,7 +56,10 @@ export const itineraryCards = [
     id: 1,
     title: "서울 2박3일 완벽 코스",
     region: "서울",
-    author: "서울러버",
+    author: {
+      name: "서울러버",
+      profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
+    },
     date: "2024-01-10~2024-01-12",
     image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
     description: "서울의 대표 명소들을 효율적으로 돌아보는 완벽한 코스입니다. 경복궁, 북촌한옥마을, 인사동, 명동을 포함한 핫플레이스까지!",
@@ -70,7 +73,10 @@ export const itineraryCards = [
     id: 2,
     title: "제주도 4박5일 자유여행",
     region: "제주",
-    author: "제주매니아",
+    author: {
+      name: "제주매니아",
+      profileImage: "https://images.unsplash.com/photo-1494790108755-2616b612b1d1?w=100&h=100&fit=crop&crop=face"
+    },
     date: "2024-01-15~2024-01-19",
     image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
     description: "제주도의 숨은 명소와 맛집을 찾아 떠나는 자유여행 코스입니다. 한라산, 성산일출봉, 우도까지 완주!",

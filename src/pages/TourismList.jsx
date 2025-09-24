@@ -307,7 +307,7 @@ const TourismList = () => {
         </PageHeader>
 
         <FilterSection>
-          <FilterTitle>지역별 필터</FilterTitle>
+          <FilterTitle>지역별 맞춤 검색</FilterTitle>
           <FilterTags>
             {regions.map(region => (
               <FilterTag

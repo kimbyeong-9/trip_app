@@ -203,33 +203,56 @@ const NavButton = styled.button`
   }
 `;
 
-const LoginButton = styled(Link)`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  text-decoration: none;
-  padding: 10px 20px;
-  border-radius: 25px;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-    text-decoration: none;
-    color: white;
-  }
+const AuthButtons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
   @media (max-width: 768px) {
     display: none;
   }
 `;
 
+const AuthLoginButton = styled(Link)`
+  padding: 8px 16px;
+  border: 1px solid #3498db;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #3498db;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: transparent;
+
+  &:hover {
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+  }
+`;
+
+const AuthSignupButton = styled(Link)`
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #1f5f99 100%);
+    transform: translateY(-1px);
+    text-decoration: none;
+  }
+`;
+
 const SideMenu = styled.div`
   position: fixed;
   top: 0;
-  left: ${props => props.isOpen ? '0' : '-300px'};
+  left: ${props => props.$isOpen ? '0' : '-300px'};
   width: 300px;
   height: 100vh;
   background: white;
@@ -240,7 +263,7 @@ const SideMenu = styled.div`
 
   @media (max-width: 480px) {
     width: 100%;
-    left: ${props => props.isOpen ? '0' : '-100%'};
+    left: ${props => props.$isOpen ? '0' : '-100%'};
   }
 `;
 
@@ -331,19 +354,53 @@ const MenuItem = styled(Link)`
 `;
 
 const LogoutButton = styled.button`
-  background: none;
-  border: none;
-  color: #dc3545;
+  background: none !important;
+  border: none !important;
+  color: #dc3545 !important;
   cursor: pointer;
   padding: 15px 0;
   width: 100%;
   text-align: left;
   font-size: 16px;
-  border-bottom: 1px solid #f8f9fa;
+  border-bottom: 1px solid #f8f9fa !important;
   transition: color 0.3s ease;
+  outline: none !important;
+  text-decoration: none !important;
+  position: relative;
+  box-shadow: none !important;
 
   &:hover {
-    color: #c82333;
+    color: #c82333 !important;
+    text-decoration: none !important;
+    border-bottom: 1px solid #f8f9fa !important;
+    background: none !important;
+  }
+
+  &:focus {
+    outline: none !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid #f8f9fa !important;
+  }
+
+  &:active {
+    outline: none !important;
+    text-decoration: none !important;
+    border-bottom: 1px solid #f8f9fa !important;
+  }
+
+  &:before,
+  &:after {
+    content: none !important;
+  }
+
+  &:visited {
+    color: #dc3545 !important;
+    text-decoration: none !important;
+  }
+
+  &:link {
+    text-decoration: none !important;
   }
 `;
 
@@ -355,8 +412,8 @@ const Overlay = styled.div`
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
-  opacity: ${props => props.isOpen ? 1 : 0};
-  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  visibility: ${props => props.$isOpen ? 'visible' : 'hidden'};
   transition: all 0.3s ease;
 `;
 
@@ -470,9 +527,9 @@ const MobileSearchBar = styled.div`
   padding: 15px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 999;
-  transform: translateY(${props => props.isOpen ? '0' : '-100%'});
-  opacity: ${props => props.isOpen ? 1 : 0};
-  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transform: translateY(${props => props.$isOpen ? '0' : '-100%'});
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  visibility: ${props => props.$isOpen ? 'visible' : 'hidden'};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   @media (min-width: 769px) {
@@ -536,9 +593,9 @@ const NotificationDropdown = styled.div`
   max-height: 400px;
   overflow-y: auto;
   z-index: 1001;
-  transform: ${props => props.isOpen ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.95)'};
-  opacity: ${props => props.isOpen ? 1 : 0};
-  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transform: ${props => props.$isOpen ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.95)'};
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  visibility: ${props => props.$isOpen ? 'visible' : 'hidden'};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   @media (max-width: 480px) {
@@ -639,7 +696,7 @@ const NotificationItem = styled.div`
 `;
 
 const NotificationItemContent = styled.div`
-  margin-left: ${props => props.unread ? '12px' : '0'};
+  margin-left: ${props => props.$unread ? '12px' : '0'};
 `;
 
 const NotificationItemTitle = styled.h4`
@@ -829,7 +886,6 @@ const Navigation = () => {
       localStorage.removeItem('loginData');
       sessionStorage.removeItem('loginData');
       setLoginData(null);
-      alert('로그아웃되었습니다.');
       navigate('/');
     }
   };
@@ -859,7 +915,7 @@ const Navigation = () => {
               <SearchForm onSubmit={handleSearch}>
                 <SearchInput
                   type="text"
-                  placeholder="여행지, 일정, 동행을 검색해보세요"
+                  placeholder="여행지, 일정, 동행 검색..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -886,80 +942,82 @@ const Navigation = () => {
             </svg>
           </MobileSearchIcon>
 
-          <NotificationButton>
-            <NavButton
-              className="notification-button"
-              onClick={handleNotificationClick}
-              title="알림"
-              style={{ position: 'relative' }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {unreadCount > 0 && (
-                <NotificationBadge style={{
-                  position: 'absolute',
-                  top: '-2px',
-                  right: '-2px',
-                  fontSize: '10px',
-                  minWidth: '16px',
-                  height: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {unreadCount}
-                </NotificationBadge>
-              )}
-            </NavButton>
-
-            <NotificationDropdown isOpen={isNotificationOpen}>
-              <NotificationHeader>
-                <NotificationTitle>알림</NotificationTitle>
-                <NotificationCloseButton onClick={() => setIsNotificationOpen(false)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </NotificationCloseButton>
-              </NotificationHeader>
-
-              <NotificationList>
-                {notifications.length > 0 ? (
-                  notifications.map(notification => (
-                    <NotificationItem
-                      key={notification.id}
-                      className={!notification.isRead ? 'unread' : ''}
-                      onClick={() => {
-                        // 알림 클릭 시 처리 로직
-                        console.log('Notification clicked:', notification.id);
-                      }}
-                    >
-                      <NotificationItemContent unread={!notification.isRead}>
-                        <NotificationItemTitle>
-                          {notification.title}
-                        </NotificationItemTitle>
-                        <NotificationItemMessage>
-                          {notification.message}
-                        </NotificationItemMessage>
-                        <NotificationItemTime>
-                          {notification.time}
-                        </NotificationItemTime>
-                      </NotificationItemContent>
-                    </NotificationItem>
-                  ))
-                ) : (
-                  <NotificationEmpty>
-                    새로운 알림이 없습니다.
-                  </NotificationEmpty>
+          {loginData && (
+            <NotificationButton>
+              <NavButton
+                className="notification-button"
+                onClick={handleNotificationClick}
+                title="알림"
+                style={{ position: 'relative' }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {unreadCount > 0 && (
+                  <NotificationBadge style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    fontSize: '10px',
+                    minWidth: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    {unreadCount}
+                  </NotificationBadge>
                 )}
-              </NotificationList>
-            </NotificationDropdown>
-          </NotificationButton>
+              </NavButton>
+
+              <NotificationDropdown $isOpen={isNotificationOpen}>
+                <NotificationHeader>
+                  <NotificationTitle>알림</NotificationTitle>
+                  <NotificationCloseButton onClick={() => setIsNotificationOpen(false)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </NotificationCloseButton>
+                </NotificationHeader>
+
+                <NotificationList>
+                  {notifications.length > 0 ? (
+                    notifications.map(notification => (
+                      <NotificationItem
+                        key={notification.id}
+                        className={!notification.isRead ? 'unread' : ''}
+                        onClick={() => {
+                          // 알림 클릭 시 처리 로직
+                          console.log('Notification clicked:', notification.id);
+                        }}
+                      >
+                        <NotificationItemContent $unread={!notification.isRead}>
+                          <NotificationItemTitle>
+                            {notification.title}
+                          </NotificationItemTitle>
+                          <NotificationItemMessage>
+                            {notification.message}
+                          </NotificationItemMessage>
+                          <NotificationItemTime>
+                            {notification.time}
+                          </NotificationItemTime>
+                        </NotificationItemContent>
+                      </NotificationItem>
+                    ))
+                  ) : (
+                    <NotificationEmpty>
+                      새로운 알림이 없습니다.
+                    </NotificationEmpty>
+                  )}
+                </NotificationList>
+              </NotificationDropdown>
+            </NotificationButton>
+          )}
 
           {loginData ? (
             <NavButton
-              onClick={() => navigate(`/profile/${loginData.user.username || 'user'}`)}
+              onClick={() => navigate('/profile/user')}
               title="프로필"
             >
               <ProfileAvatar>
@@ -967,19 +1025,20 @@ const Navigation = () => {
               </ProfileAvatar>
             </NavButton>
           ) : (
-            <LoginButton to="/login">
-              로그인
-            </LoginButton>
+            <AuthButtons>
+              <AuthLoginButton to="/login">로그인</AuthLoginButton>
+              <AuthSignupButton to="/signup">회원가입</AuthSignupButton>
+            </AuthButtons>
           )}
         </NavRight>
       </NavContainer>
 
       {/* 모바일 검색창 */}
-      <MobileSearchBar isOpen={isMobileSearchOpen}>
+      <MobileSearchBar $isOpen={isMobileSearchOpen}>
         <MobileSearchForm onSubmit={handleMobileSearch}>
           <MobileSearchInput
             type="text"
-            placeholder="여행지, 일정, 동행을 검색해보세요"
+            placeholder="여행지, 일정, 동행 검색..."
             value={mobileSearchQuery}
             onChange={(e) => setMobileSearchQuery(e.target.value)}
             autoFocus={isMobileSearchOpen}
@@ -992,7 +1051,7 @@ const Navigation = () => {
         </MobileSearchForm>
       </MobileSearchBar>
 
-      <SideMenu isOpen={isMenuOpen}>
+      <SideMenu $isOpen={isMenuOpen}>
         <SideMenuHeader>
           <SideMenuTitle>메뉴</SideMenuTitle>
           <CloseButton onClick={() => setIsMenuOpen(false)}>
@@ -1003,7 +1062,13 @@ const Navigation = () => {
         <SideMenuContent>
           {loginData ? (
             <>
-              <SideProfileSection>
+              <SideProfileSection
+                onClick={() => {
+                  navigate('/profile/user');
+                  setIsMenuOpen(false);
+                }}
+                style={{cursor: 'pointer'}}
+              >
                 <ProfileAvatar>
                   {loginData.user.name ? loginData.user.name.charAt(0) : 'U'}
                 </ProfileAvatar>
@@ -1013,11 +1078,11 @@ const Navigation = () => {
               <MenuItem to="/" onClick={() => setIsMenuOpen(false)}>
                 홈
               </MenuItem>
-              <MenuItem to="/travel-schedules" onClick={() => setIsMenuOpen(false)}>
-                여행 일정
+              <MenuItem to="/notice" onClick={() => setIsMenuOpen(false)}>
+                공지사항
               </MenuItem>
-              <MenuItem to="/companion-list" onClick={() => setIsMenuOpen(false)}>
-                동행 모집
+              <MenuItem to="/faq" onClick={() => setIsMenuOpen(false)}>
+                자주 묻는 질문
               </MenuItem>
               <MenuItem to="/settings" onClick={() => setIsMenuOpen(false)}>
                 설정
@@ -1031,11 +1096,11 @@ const Navigation = () => {
               <MenuItem to="/" onClick={() => setIsMenuOpen(false)}>
                 홈
               </MenuItem>
-              <MenuItem to="/travel-schedules" onClick={() => setIsMenuOpen(false)}>
-                여행 일정
+              <MenuItem to="/notice" onClick={() => setIsMenuOpen(false)}>
+                공지사항
               </MenuItem>
-              <MenuItem to="/companion-list" onClick={() => setIsMenuOpen(false)}>
-                동행 모집
+              <MenuItem to="/faq" onClick={() => setIsMenuOpen(false)}>
+                자주 묻는 질문
               </MenuItem>
               <MenuItem to="/login" onClick={() => setIsMenuOpen(false)}>
                 로그인
@@ -1050,7 +1115,7 @@ const Navigation = () => {
 
       {/* 오버레이 */}
       <Overlay
-        isOpen={isMenuOpen || isNotificationOpen}
+        $isOpen={isMenuOpen || isNotificationOpen}
         onClick={() => {
           setIsMenuOpen(false);
           setIsNotificationOpen(false);

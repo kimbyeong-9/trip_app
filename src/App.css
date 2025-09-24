@@ -73,18 +73,17 @@ body {
 }
 
 .login-main-content {
-  padding-top: 70px;
+  padding: 0;
   width: 100%;
   flex: 1;
-  background-color: #f8f9fa;
-  min-height: calc(100vh - 150px);
+  background: none;
+  min-height: 100vh;
   overflow-x: hidden;
-  padding-bottom: 0;
 }
 
 @media (max-width: 1024px) {
   .login-main-content {
-    padding-bottom: 80px;
+    padding: 0;
   }
 }
 

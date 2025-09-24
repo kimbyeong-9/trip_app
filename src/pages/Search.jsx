@@ -59,7 +59,7 @@ const Search = () => {
 
       <div className="search-content">
         <div className="filters-sidebar">
-          <h3>필터</h3>
+          <h3>맞춤 검색</h3>
           
           <div className="filter-section">
             <h4>가격 범위</h4>

@@ -10,6 +10,7 @@ const LoginContainer = styled.div`
   align-items: center;
   justify-content: center;
   padding: 20px;
+  position: relative;
 `;
 
 const LoginCard = styled.div`
@@ -18,8 +19,9 @@ const LoginCard = styled.div`
   padding: 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
   text-align: center;
+  position: relative;
 `;
 
 const Logo = styled.div`
@@ -31,6 +33,16 @@ const Logo = styled.div`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 `;
 
 const Subtitle = styled.p`
@@ -153,13 +165,19 @@ const Divider = styled.div`
   }
 `;
 
+const SocialButtonsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
 const SocialButton = styled.button`
   width: 100%;
-  padding: 15px;
-  border: 2px solid #e9ecef;
+  padding: 15px 20px;
+  border: 2px solid ${props => props.borderColor || '#e9ecef'};
   border-radius: 12px;
-  background: white;
-  color: #2c3e50;
+  background: ${props => props.bgColor || 'white'};
+  color: ${props => props.textColor || '#2c3e50'};
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -167,12 +185,43 @@ const SocialButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  min-height: 56px;
 
   &:hover {
-    border-color: #667eea;
-    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px ${props => props.shadowColor || 'rgba(0, 0, 0, 0.15)'};
+    border-color: ${props => props.hoverBorderColor || props.borderColor || '#667eea'};
   }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const SocialIcon = styled.img`
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SocialIconText = styled.span`
+  font-size: 18px;
+  font-weight: bold;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${props => props.color || '#333'};
+  line-height: 1;
 `;
 
 const SignupLink = styled.div`
@@ -240,6 +289,30 @@ const TestButton = styled.button`
     background: #5a6fd8;
   }
 `;
+
+const BackArrowButton = styled.button`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid #667eea;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #667eea;
+  font-size: 18px;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateX(-2px);
+  }
+`;
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -338,30 +411,117 @@ const Login = () => {
 
   const handleSocialLogin = (provider) => {
     setIsLoading(true);
-    
-    // 소셜 로그인 시뮬레이션
-    setTimeout(() => {
-      const socialData = {
-        isLoggedIn: true,
-        user: {
-          email: `user@${provider}.com`,
-          name: `${provider} 사용자`,
-          provider: provider
-        },
-        loginTime: new Date().toISOString()
+
+    try {
+      // 각 소셜 플랫폼별 로그인 URL (데모용)
+      // 실제 운영 시에는 환경변수에서 CLIENT_ID를 가져와야 합니다
+      const loginUrls = {
+        '카카오톡': 'https://kauth.kakao.com/oauth/authorize?' + new URLSearchParams({
+          client_id: process.env.REACT_APP_KAKAO_CLIENT_ID || 'demo_kakao_client_id',
+          redirect_uri: `${window.location.origin}/auth/kakao/callback`,
+          response_type: 'code',
+          scope: 'profile_nickname,profile_image,account_email'
+        }),
+        '네이버': 'https://nid.naver.com/oauth2.0/authorize?' + new URLSearchParams({
+          response_type: 'code',
+          client_id: process.env.REACT_APP_NAVER_CLIENT_ID || 'demo_naver_client_id',
+          redirect_uri: `${window.location.origin}/auth/naver/callback`,
+          state: Math.random().toString(36).substring(7)
+        }),
+        '구글': 'https://accounts.google.com/oauth/authorize?' + new URLSearchParams({
+          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || 'demo_google_client_id',
+          redirect_uri: `${window.location.origin}/auth/google/callback`,
+          response_type: 'code',
+          scope: 'openid profile email',
+          access_type: 'offline'
+        })
       };
 
-      localStorage.setItem('loginData', JSON.stringify(socialData));
-      alert(`${provider}로 로그인되었습니다!`);
-      navigate('/');
+      const loginUrl = loginUrls[provider];
+
+      if (loginUrl) {
+        // 새 창으로 소셜 로그인 페이지 열기
+        const popup = window.open(
+          loginUrl,
+          `${provider}_login`,
+          'width=500,height=600,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no'
+        );
+
+        // 팝업 차단 확인
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
+          setIsLoading(false);
+          return;
+        }
+
+        let loginCompleted = false;
+
+        // 팝업 창 모니터링
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+
+            if (!loginCompleted) {
+              // 사용자가 팝업을 닫았지만 로그인을 완료하지 않은 경우
+              setIsLoading(false);
+              return;
+            }
+
+            // 실제로는 콜백에서 처리하지만, 데모를 위한 시뮬레이션
+            setTimeout(() => {
+              const socialData = {
+                isLoggedIn: true,
+                user: {
+                  email: `user@${provider.toLowerCase().replace('톡', '')}.com`,
+                  name: `${provider} 사용자`,
+                  provider: provider,
+                  profileImage: `https://via.placeholder.com/100?text=${provider.charAt(0)}`
+                },
+                loginTime: new Date().toISOString()
+              };
+
+              localStorage.setItem('loginData', JSON.stringify(socialData));
+              alert(`${provider}로 로그인되었습니다! 환영합니다!`);
+              navigate('/');
+            }, 500);
+          }
+        }, 1000);
+
+        // 데모를 위한 자동 로그인 시뮬레이션 (3초 후)
+        setTimeout(() => {
+          if (!popup.closed) {
+            loginCompleted = true;
+            popup.close();
+          }
+        }, 3000);
+
+        // 10초 후 자동으로 정리
+        setTimeout(() => {
+          if (!popup.closed) {
+            popup.close();
+            clearInterval(checkClosed);
+            setIsLoading(false);
+          }
+        }, 10000);
+
+      } else {
+        throw new Error('지원하지 않는 소셜 플랫폼입니다.');
+      }
+
+    } catch (error) {
+      console.error('소셜 로그인 오류:', error);
+      alert('소셜 로그인 중 오류가 발생했습니다.');
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
     <LoginContainer>
       <LoginCard>
-        <Logo>여행대로</Logo>
+        <BackArrowButton onClick={() => navigate(-1)}>
+          ←
+        </BackArrowButton>
+        <Logo onClick={() => navigate('/')}>여행대로</Logo>
         <Subtitle>여행대로에 오신 것을 환영합니다!</Subtitle>
 
         <Form onSubmit={handleEmailLogin}>
@@ -392,7 +552,18 @@ const Login = () => {
               onClick={() => setShowPassword(!showPassword)}
               disabled={isLoading}
             >
-              {showPassword ? '🙈' : '👁️'}
+              {showPassword ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94L17.94 17.94z"/>
+                  <path d="m1 1 22 22"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19l-6.84-6.84z"/>
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              )}
             </PasswordToggle>
           </InputGroup>
 
@@ -413,20 +584,56 @@ const Login = () => {
 
         <Divider>또는</Divider>
 
-        <SocialButton onClick={() => handleSocialLogin('카카오톡')} disabled={isLoading}>
-          🟡 카카오톡으로 로그인
-        </SocialButton>
+        <SocialButtonsContainer>
+          <SocialButton
+            onClick={() => handleSocialLogin('카카오톡')}
+            disabled={isLoading}
+            bgColor="#FEE500"
+            textColor="#191919"
+            borderColor="#FEE500"
+            hoverBorderColor="#E6CF00"
+            shadowColor="rgba(254, 229, 0, 0.4)"
+          >
+            <SocialIcon
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDJDNSAyIDEgNS4zIDEgOS4zQzEgMTEuOCAyLjYgMTQgNS4yIDE1LjNMNC4yIDE4LjhDNC4xIDE5IDQuMyAxOS4yIDQuNSAxOS4xTDguOSAxNi41QzkuMyAxNi42IDkuNiAxNi42IDEwIDE2LjZDMTUgMTYuNiAxOSAxMy4zIDE5IDkuM0MxOSA1LjMgMTUgMiAxMCAyWiIgZmlsbD0iIzAwMCIvPgo8L3N2Zz4K"
+              alt="카카오톡"
+            />
+            카카오톡으로 로그인
+          </SocialButton>
 
-        <SocialButton onClick={() => handleSocialLogin('네이버')} disabled={isLoading}>
-          🟢 네이버로 로그인
-        </SocialButton>
+          <SocialButton
+            onClick={() => handleSocialLogin('네이버')}
+            disabled={isLoading}
+            bgColor="#03C75A"
+            textColor="white"
+            borderColor="#03C75A"
+            hoverBorderColor="#02B74C"
+            shadowColor="rgba(3, 199, 90, 0.4)"
+          >
+            <SocialIconText color="white">N</SocialIconText>
+            네이버로 로그인
+          </SocialButton>
 
-        <SocialButton onClick={() => handleSocialLogin('구글')} disabled={isLoading}>
-          🔍 구글로 로그인
-        </SocialButton>
+          <SocialButton
+            onClick={() => handleSocialLogin('구글')}
+            disabled={isLoading}
+            bgColor="white"
+            textColor="#333"
+            borderColor="#DADCE0"
+            hoverBorderColor="#9AA0A6"
+            shadowColor="rgba(66, 133, 244, 0.3)"
+          >
+            <SocialIcon
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNCA5LjVjMy4wNCAwIDUuMDEgMS4wNyA2Ljc1IDIuODJsNS4wMy01LjAzQzMzIDQuNDQgMjguNzQgMiAyNCAyQzE0LjY0IDIgNi45OSA3Ljk0IDQuMTcgMTYuMzNsNi4wMiA0LjY2QzEyLjE1IDEzLjE1IDE3LjYgOS41IDI0IDkuNXoiIGZpbGw9IiNFQTQzMzUiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNCAzOC41Yy02LjQgMC0xMS44NS0zLjY1LTEzLjgxLTkuNDlsLTYuMDIgNC42N0M2Ljk5IDQyLjA2IDE0LjY0IDQ4IDI0IDQ4YzQuNzQgMCA5LTIuNDQgMTEuNzgtNS4yMmwtNS42MS00LjM2QzI4LjExIDM4LjAxIDI2LjE2IDM4LjUgMjQgMzguNXoiIGZpbGw9IiMzNEE4NTMiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik00Ni4xIDI0YzAtMS42OS0uMTctMi45Ni0uNTctNC4yNEgyNHY5LjAyaDEyLjM5Yy0uNSAyLjk2LTIuMTkgNS4wMy00LjUgNi41MWw1LjYxIDQuMzZDNDAuNzQgMzYuMjIgNDYuMSAzMC42NSA0Ni4xIDI0eiIgZmlsbD0iIzQyODVGNCIvPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTEwLjE5IDIwLjk5Yy0uMjctMS4xMS0uNDMtMi4yOS0uNDMtMy40OWMwLTEuMi4xNi0yLjM4LjQzLTMuNDlsLTYuMDItNC42NkMzLjQ3IDE0LjM5IDIgMTkgMiAyNGMwIDUgMS40NyA5LjYxIDQuMTcgMTQuNjZsNi4wMi00LjY3eiIgZmlsbD0iI0ZCQkMwNSIvPgo8L3N2Zz4K"
+              alt="구글"
+            />
+            구글로 로그인
+          </SocialButton>
+        </SocialButtonsContainer>
 
         <SignupLink>
-          아직 계정이 없으신가요? <a href="#" onClick={(e) => { e.preventDefault(); handleSignup(); }}>회원가입</a>
+          아직 계정이 없으신가요? <a href="#" onClick={(e) => { e.preventDefault(); handleSignup(); }}>회원가입</a><br/>
+          <a href="#" onClick={(e) => { e.preventDefault(); handleForgotPassword(); }} style={{color: '#667eea', textDecoration: 'none', fontSize: '14px', marginTop: '8px', display: 'inline-block'}}>비밀번호를 잊어버리셨습니까?</a>
         </SignupLink>
 
         <TestAccounts>

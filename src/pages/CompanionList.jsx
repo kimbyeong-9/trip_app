@@ -71,18 +71,6 @@ const FilterTitle = styled.h3`
   margin: 0 0 20px 0;
 `;
 
-const FilterGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-`;
-
 const FilterGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -649,7 +637,7 @@ const CompanionList = () => {
         </PageHeader>
 
         <FilterSection>
-          <FilterTitle>필터</FilterTitle>
+          <FilterTitle>맞춤 검색</FilterTitle>
 
           {/* 검색창을 최상단으로 */}
           <FilterGroup style={{ marginBottom: '20px' }}>
@@ -814,7 +802,7 @@ const CompanionList = () => {
             <NoResults>
               <NoResultsIcon>🔍</NoResultsIcon>
               <NoResultsTitle>검색 결과가 없습니다</NoResultsTitle>
-              <NoResultsText>다른 검색어나 필터를 시도해보세요</NoResultsText>
+              <NoResultsText>다른 검색어나 키워드를 시도해보세요</NoResultsText>
             </NoResults>
           )}
         </PostsSection>

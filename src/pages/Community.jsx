@@ -182,6 +182,28 @@ const StoryText = styled.p`
   line-height: 1.6;
   color: #495057;
   margin: 0 0 15px 0;
+  display: ${props => props.expanded ? 'block' : '-webkit-box'};
+  -webkit-line-clamp: ${props => props.expanded ? 'unset' : '2'};
+  -webkit-box-orient: vertical;
+  overflow: ${props => props.expanded ? 'visible' : 'hidden'};
+  text-overflow: ellipsis;
+`;
+
+const ReadMoreButton = styled.button`
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 15px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: #0056b3;
+    text-decoration: underline;
+  }
 `;
 
 const StoryImage = styled.img`
@@ -483,6 +505,35 @@ const CommentSubmitButton = styled.button`
   }
 `;
 
+const CategorySection = styled.div`
+  margin-bottom: 20px;
+`;
+
+const CategoryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+`;
+
+const CategoryButton = styled.button`
+  padding: 8px 12px;
+  border: 2px solid ${props => props.selected ? '#667eea' : '#e9ecef'};
+  background: ${props => props.selected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
+  color: ${props => props.selected ? 'white' : '#495057'};
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+
+  &:hover {
+    border-color: #667eea;
+    background: ${props => props.selected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa'};
+  }
+`;
+
 const Community = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -492,7 +543,25 @@ const Community = () => {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedStoryId, setSelectedStoryId] = useState(null);
   const [newComment, setNewComment] = useState('');
-  const [stories, setStories] = useState([
+  const [expandedStories, setExpandedStories] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const categories = [
+    { key: 'kids', label: '아이들과 함께' },
+    { key: 'restaurant', label: '맛집' },
+    { key: 'cafe', label: '카페' },
+    { key: 'experience', label: '체험' },
+    { key: 'festival', label: '축제' },
+    { key: 'sports', label: '스포츠' },
+    { key: 'resort', label: '리조트' },
+    { key: 'historical', label: '역사' },
+    { key: 'nature', label: '자연' },
+    { key: 'tourism', label: '관광' },
+    { key: 'architecture', label: '건축' }
+  ];
+
+  // 초기 스토리 데이터를 함수로 생성 (번역을 위해)
+  const getInitialStories = () => [
     {
       id: 1,
       author: '여행러버',
@@ -500,7 +569,7 @@ const Community = () => {
       date: '2024-01-15',
       content: '오늘 제주도에서 정말 아름다운 일몰을 봤어요! 성산일출봉에서 바라본 바다가 정말 환상적이었습니다. 다음에는 더 오래 머물고 싶어요.',
       image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop',
-      tags: ['제주도', '일몰', '성산일출봉'],
+      tags: ['제주도', '일몼', '성산일출봉'],
       likes: 24,
       comments: [
         { id: 1, author: '바다러버', text: '정말 아름다운 일몰이네요!' },
@@ -515,7 +584,7 @@ const Community = () => {
       date: '2024-01-12',
       content: '설악산 등반 완료! 힘들었지만 정상에서 본 풍경은 정말 잊을 수 없을 것 같아요. 겨울 설경이 이렇게 아름다울 줄 몰랐네요.',
       image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
-      tags: ['설악산', '등반', '겨울여행'],
+      tags: ['설악산', '등산', '겨울여행'],
       likes: 18,
       comments: [
         { id: 1, author: '등산러버', text: '겨울 설악산 정말 아름답죠!' }
@@ -538,7 +607,10 @@ const Community = () => {
       ],
       liked: true
     }
-  ]);
+  ];
+
+  const [stories, setStories] = useState(getInitialStories());
+
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
@@ -565,6 +637,7 @@ const Community = () => {
     setShowCreateModal(false);
     setStoryText('');
     setStoryImage('');
+    setSelectedCategory('');
   };
 
   const handleImageUpload = (e) => {
@@ -579,22 +652,43 @@ const Community = () => {
   };
 
   const handleSubmitStory = () => {
-    if (!storyText.trim()) return;
+    if (!storyText.trim() || !selectedCategory) {
+      alert('카테고리를 선택해주세요');
+      return;
+    }
+
+    // 현재 로그인한 사용자 정보 가져오기
+    const getCurrentUser = () => {
+      const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+      if (loginData) {
+        return JSON.parse(loginData);
+      }
+      return null;
+    };
+
+    const currentUser = getCurrentUser();
 
     const newStory = {
-      id: stories.length + 1,
-      author: '나',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&h=50&fit=crop&crop=face',
+      id: Date.now(), // 더 고유한 ID 생성
+      author: currentUser?.user?.name || '익명',
+      avatar: currentUser?.user?.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&h=50&fit=crop&crop=face',
       date: new Date().toISOString().split('T')[0],
       content: storyText,
       image: storyImage,
-      tags: ['여행', '스토리'],
+      tags: [selectedCategory, '여행', '스토리'],
+      category: selectedCategory,
       likes: 0,
       comments: [],
       liked: false
     };
 
     setStories([newStory, ...stories]);
+
+    // 폼 초기화
+    setStoryText('');
+    setStoryImage('');
+    setSelectedCategory('');
+
     handleCloseModal();
   };
 
@@ -616,7 +710,7 @@ const Community = () => {
   };
 
   const handleReport = (id) => {
-    alert('신고가 접수되었습니다.');
+    alert('신고가 접수되었습니다');
     setOpenMenuId(null);
   };
 
@@ -658,9 +752,15 @@ const Community = () => {
   };
 
   const handleProfileClick = (authorName) => {
-    // 작성자 이름을 URL에 안전한 형태로 변환
-    const username = authorName.replace(/\s+/g, '-').toLowerCase();
-    navigate(`/profile/${username}`);
+    // 작성자 이름을 그대로 사용 (한글 이름 유지)
+    navigate(`/profile/${authorName}`);
+  };
+
+  const toggleStoryExpansion = (storyId) => {
+    setExpandedStories(prev => ({
+      ...prev,
+      [storyId]: !prev[storyId]
+    }));
   };
 
   const formatDate = (dateString) => {
@@ -676,9 +776,9 @@ const Community = () => {
     <CommunityPage>
       <Container>
         <PageHeader>
-          <PageTitle>여행 커뮤니티</PageTitle>
+          <PageTitle>커뮤니티</PageTitle>
           <CreateButton onClick={handleCreateStory}>
-            스토리 등록
+스토리 작성
           </CreateButton>
         </PageHeader>
 
@@ -701,7 +801,7 @@ const Community = () => {
                 {openMenuId === story.id && (
                   <MenuDropdown onClick={(e) => e.stopPropagation()}>
                     <MenuOption onClick={() => handleReport(story.id)} className="danger">
-                      신고하기
+                      신고
                     </MenuOption>
                     <MenuOption onClick={() => handleHide(story.id)}>
                       숨기기
@@ -711,7 +811,14 @@ const Community = () => {
               </StoryHeader>
 
               <StoryContent>
-                <StoryText>{story.content}</StoryText>
+                <StoryText expanded={expandedStories[story.id]}>
+                  {story.content}
+                </StoryText>
+                {story.content.length > 100 && (
+                  <ReadMoreButton onClick={() => toggleStoryExpansion(story.id)}>
+                    {expandedStories[story.id] ? '접기' : '더 보기'}
+                  </ReadMoreButton>
+                )}
                 {story.image && (
                   <StoryImage src={story.image} alt="여행 사진" />
                 )}
@@ -731,7 +838,7 @@ const Community = () => {
                     {story.liked ? '♥' : '♡'} {story.likes}
                   </ActionButton>
                   <ActionButton onClick={() => handleComment(story.id)}>
-                    댓글달기 {story.comments.length}
+                    댓글 {story.comments.length}
                   </ActionButton>
                 </LeftActions>
                 <RightActions>
@@ -749,16 +856,31 @@ const Community = () => {
         <CreateStoryModal onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
           <ModalContainer>
             <ModalHeader>
-              <ModalTitle>여행 스토리 작성</ModalTitle>
+              <ModalTitle>스토리 작성</ModalTitle>
               <CloseButton onClick={handleCloseModal}>✕</CloseButton>
             </ModalHeader>
+
+            <CategorySection>
+              <FormLabel>카테고리 선택</FormLabel>
+              <CategoryGrid>
+                {categories.map((category) => (
+                  <CategoryButton
+                    key={category.key}
+                    selected={selectedCategory === category.key}
+                    onClick={() => setSelectedCategory(category.key)}
+                  >
+                    {category.label}
+                  </CategoryButton>
+                ))}
+              </CategoryGrid>
+            </CategorySection>
 
             <FormGroup>
               <FormLabel>스토리 내용</FormLabel>
               <FormTextarea
                 value={storyText}
                 onChange={(e) => setStoryText(e.target.value)}
-                placeholder="여행에서의 특별한 순간을 공유해보세요..."
+                placeholder="오늘의 여행 경험을 공유해주세요..."
               />
             </FormGroup>
 
@@ -772,7 +894,7 @@ const Community = () => {
                   id="story-image"
                 />
                 <label htmlFor="story-image">
-                  <UploadText>📷 클릭하여 사진을 업로드하세요</UploadText>
+                  <UploadText>사진을 여기에 끌어다 놓거나 클릭하세요</UploadText>
                 </label>
                 {storyImage && (
                   <PreviewImage src={storyImage} alt="미리보기" />
@@ -782,9 +904,9 @@ const Community = () => {
 
             <SubmitButton
               onClick={handleSubmitStory}
-              disabled={!storyText.trim()}
+              disabled={!storyText.trim() || !selectedCategory}
             >
-              스토리 올리기
+게시하기
             </SubmitButton>
           </ModalContainer>
         </CreateStoryModal>
@@ -823,7 +945,7 @@ const Community = () => {
                 onClick={handleSubmitComment}
                 disabled={!newComment.trim()}
               >
-                등록
+등록
               </CommentSubmitButton>
             </CommentInput>
           </CommentContainer>

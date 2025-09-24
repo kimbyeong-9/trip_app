@@ -206,6 +206,34 @@ const ScheduleTag = styled.span`
   white-space: nowrap;
 `;
 
+const AuthorInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e9ecef;
+`;
+
+const AuthorAvatar = styled.div`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const AuthorName = styled.span`
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+`;
+
 const NoResults = styled.div`
   text-align: center;
   padding: 60px 20px;
@@ -396,7 +424,12 @@ const TravelScheduleList = () => {
     const matchesSearch = searchTerm === '' ||
       schedule.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       schedule.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (schedule.author && schedule.author.toLowerCase().includes(searchTerm.toLowerCase()));
+      (schedule.author &&
+        (typeof schedule.author === 'string' ?
+          schedule.author.toLowerCase().includes(searchTerm.toLowerCase()) :
+          schedule.author.name && schedule.author.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
 
     return matchesRegion && matchesMonth && matchesSearch;
   }).sort((a, b) => {
@@ -533,10 +566,26 @@ const TravelScheduleList = () => {
                   <ScheduleMeta>
                     <ScheduleTag type="region">{schedule.region}</ScheduleTag>
                     <ScheduleTag type="date">{schedule.date}</ScheduleTag>
-                    {schedule.author && (
-                      <ScheduleTag type="author">by {schedule.author}</ScheduleTag>
-                    )}
                   </ScheduleMeta>
+
+                  {/* 작성자 정보 */}
+                  {schedule.author && (
+                    <AuthorInfo>
+                      <AuthorAvatar>
+                        <img
+                          src={typeof schedule.author === 'string' ?
+                            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" :
+                            schedule.author.profileImage
+                          }
+                          alt={typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
+                        />
+                      </AuthorAvatar>
+                      <AuthorName>
+                        {typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
+                      </AuthorName>
+                    </AuthorInfo>
+                  )}
+
                   {schedule.views && (
                     <ScheduleStats>
                       <ScheduleStat>
@@ -559,7 +608,7 @@ const TravelScheduleList = () => {
           <NoResults>
             <NoResultsIcon>📅</NoResultsIcon>
             <NoResultsTitle>검색 결과가 없습니다</NoResultsTitle>
-            <NoResultsText>다른 검색어나 필터를 시도해보세요</NoResultsText>
+            <NoResultsText>다른 검색어나 맞춤 검색을 시도해보세요</NoResultsText>
           </NoResults>
         )}
 

@@ -472,4 +472,3 @@ const TravelScheduleCreate = () => {
 };
 
 export default TravelScheduleCreate;
-
