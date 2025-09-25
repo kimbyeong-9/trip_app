@@ -129,13 +129,6 @@ const CardMeta = styled.div`
   color: #6c757d;
 `;
 
-const Author = styled.span`
-  background: #f8f9fa;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: 500;
-`;
-
 const Date = styled.span`
   font-weight: 500;
 `;
@@ -163,7 +156,7 @@ const NoResultsText = styled.p`
   margin: 0;
 `;
 
-const MagazineSection = ({ magazineCards, searchTerm, selectedRegion, onCardClick }) => {
+const MagazineSection = ({ magazineCards, selectedRegion, onCardClick }) => {
   const navigate = useNavigate();
   const [selectedMagazine, setSelectedMagazine] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -172,8 +165,21 @@ const MagazineSection = ({ magazineCards, searchTerm, selectedRegion, onCardClic
     navigate('/magazines');
   };
 
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
+
   const handleMagazineClick = (magazine) => {
-    onCardClick(`/magazine/${magazine.id}`);
+    if (isLoggedIn()) {
+      // 로그인된 상태에서는 상세 모달 표시
+      setSelectedMagazine(magazine);
+      setIsModalOpen(true);
+    } else {
+      // 로그인되지 않은 상태에서는 로그인 모달 표시
+      onCardClick(`/magazine/${magazine.id}`);
+    }
   };
 
   const handleCloseModal = () => {
@@ -182,7 +188,7 @@ const MagazineSection = ({ magazineCards, searchTerm, selectedRegion, onCardClic
   };
 
   // 카드 필터링 함수
-  const searchAndFilterCards = (cards, searchTerm, selectedRegion) => {
+  const filterCards = (cards, selectedRegion) => {
     let filtered = cards;
     const regionMapping = {
       'seoul': '서울',
@@ -195,28 +201,16 @@ const MagazineSection = ({ magazineCards, searchTerm, selectedRegion, onCardClic
       'gyeongsang': '경상',
       'incheon': '인천'
     };
-    
+
     if (selectedRegion !== 'all') {
       filtered = filtered.filter(card => card.region === regionMapping[selectedRegion]);
     }
-    
-    if (searchTerm.trim()) {
-      filtered = filtered.filter(card => {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-          card.title.toLowerCase().includes(searchLower) ||
-          card.region.toLowerCase().includes(searchLower) ||
-          (card.author && card.author.toLowerCase().includes(searchLower)) ||
-          (card.date && card.date.includes(searchTerm))
-        );
-      });
-    }
-    
+
     return filtered;
   };
 
   // 필터링된 카드들
-  const filteredMagazineCards = searchAndFilterCards(magazineCards, searchTerm, selectedRegion);
+  const filteredMagazineCards = filterCards(magazineCards, selectedRegion);
 
   return (
     <MagazineSectionContainer>

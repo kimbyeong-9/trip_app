@@ -1271,10 +1271,13 @@ const UserProfile = () => {
 
   // 내가 올린 여행일정 가져오기
   const getMyTravelSchedules = () => {
-    const storedSchedules = JSON.parse(localStorage.getItem('travelSchedules')) || [];
+    const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
     const userName = currentUser?.user?.name;
     if (!userName) return [];
-    return storedSchedules.filter(schedule => schedule.author === userName);
+    // 사용자 일정은 author.name으로 저장되므로 이를 확인
+    return storedSchedules.filter(schedule =>
+      schedule.author?.name === userName || schedule.author === userName
+    );
   };
 
   // 동행모집 삭제 함수
@@ -1820,7 +1823,7 @@ const UserProfile = () => {
                           />
                           <TripInfo onClick={() => navigate(`/travel-schedule/${schedule.id}`)} style={{cursor: 'pointer'}}>
                             <TripTitle>{schedule.title}</TripTitle>
-                            <TripMeta>{schedule.region} • {schedule.date}</TripMeta>
+                            <TripMeta>{schedule.region} • {schedule.duration || schedule.date || `${schedule.startDate} ~ ${schedule.endDate}`}</TripMeta>
                           </TripInfo>
                           <TripManageButtons>
                             <ManageButton

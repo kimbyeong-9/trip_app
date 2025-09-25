@@ -162,11 +162,11 @@ const NoResultsText = styled.p`
   margin: 0;
 `;
 
-const CompanionSection = ({ companionCards, searchTerm, selectedRegion, onCardClick }) => {
+const CompanionSection = ({ companionCards, selectedRegion, onCardClick }) => {
   const navigate = useNavigate();
 
   // 카드 필터링 함수
-  const searchAndFilterCards = (cards, searchTerm, selectedRegion) => {
+  const filterCards = (cards, selectedRegion) => {
     let filtered = cards;
     const regionMapping = {
       'seoul': '서울',
@@ -179,29 +179,16 @@ const CompanionSection = ({ companionCards, searchTerm, selectedRegion, onCardCl
       'gyeongsang': '경상',
       'incheon': '인천'
     };
-    
+
     if (selectedRegion !== 'all') {
       filtered = filtered.filter(card => card.region === regionMapping[selectedRegion]);
     }
-    
-    if (searchTerm.trim()) {
-      filtered = filtered.filter(card => {
-        const searchLower = searchTerm.toLowerCase();
-        return (
-          card.title.toLowerCase().includes(searchLower) ||
-          card.region.toLowerCase().includes(searchLower) ||
-          (card.author && card.author.toLowerCase().includes(searchLower)) ||
-          (card.ageGroup && card.ageGroup.toLowerCase().includes(searchLower)) ||
-          (card.date && card.date.includes(searchTerm))
-        );
-      });
-    }
-    
+
     return filtered;
   };
 
   // 필터링된 카드들
-  const filteredCompanionCards = searchAndFilterCards(companionCards, searchTerm, selectedRegion);
+  const filteredCompanionCards = filterCards(companionCards, selectedRegion);
 
   return (
     <CompanionSectionContainer>

@@ -515,7 +515,7 @@ const Settings = () => {
                   초기화 중...
                 </>
               ) : (
-초기화
+                "초기화"
               )}
             </Button>
             <Button
@@ -528,7 +528,7 @@ const Settings = () => {
                   저장 중...
                 </>
               ) : (
-저장
+                "저장"
               )}
             </Button>
           </ButtonGroup>

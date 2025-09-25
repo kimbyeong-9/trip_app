@@ -197,9 +197,9 @@ const SubMenuContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 15px;
-  transform: ${props => props.isOpen ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.8)'};
-  opacity: ${props => props.isOpen ? 1 : 0};
-  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transform: ${props => props.$isOpen ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.8)'};
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  visibility: ${props => props.$isOpen ? 'visible' : 'hidden'};
   transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   align-items: center;
 `;
@@ -400,7 +400,7 @@ const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
           <CompanionText className="menu-text">메뉴</CompanionText>
         </MenuButton>
 
-        <SubMenuContainer isOpen={isMenuOpen}>
+        <SubMenuContainer $isOpen={isMenuOpen}>
           <SubMenuButton
             color="#667eea"
             onClick={() => handleSubMenuClick('/community')}

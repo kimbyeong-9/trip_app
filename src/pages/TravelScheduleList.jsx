@@ -384,6 +384,235 @@ const ScheduleStat = styled.div`
   }
 `;
 
+// 일정 작성 방법 선택 모달 스타일
+const CreateModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const CreateModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px 30px 30px 30px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+`;
+
+const CreateModalIcon = styled.div`
+  font-size: 64px;
+  margin-bottom: 20px;
+`;
+
+const CreateModalTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const CreateModalMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+`;
+
+const CreateOptionsContainer = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 20px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+`;
+
+const CreateOptionButton = styled.button`
+  background: ${props => props.primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
+  color: ${props => props.primary ? 'white' : '#667eea'};
+  border: 2px solid #667eea;
+  padding: 15px 25px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: ${props => props.primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#667eea'};
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+const CreateOptionIcon = styled.div`
+  font-size: 24px;
+`;
+
+const CreateOptionText = styled.span`
+  font-size: 14px;
+`;
+
+const CreateCancelButton = styled.button`
+  background: white;
+  color: #6c757d;
+  border: 2px solid #e9ecef;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f8f9fa;
+    color: #495057;
+  }
+`;
+
+const DatePickerModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const DatePickerModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+`;
+
+const DatePickerTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const DatePickerMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+`;
+
+const DateInputContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 30px;
+`;
+
+const DateInputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+`;
+
+const DateLabel = styled.label`
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+`;
+
+const DateInput = styled.input`
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+`;
+
+const DateButtonGroup = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+`;
+
+const DateConfirmButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+`;
+
+const DateCancelButton = styled.button`
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #5a6268;
+  }
+`;
+
 const TravelScheduleList = () => {
   const navigate = useNavigate();
   const [selectedRegion, setSelectedRegion] = useState('all');
@@ -391,6 +620,10 @@ const TravelScheduleList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedStartDate, setSelectedStartDate] = useState('');
+  const [selectedEndDate, setSelectedEndDate] = useState('');
   const [sortBy, setSortBy] = useState('latest'); // 'latest', 'popular'
   const schedulesPerPage = 9;
 
@@ -407,7 +640,7 @@ const TravelScheduleList = () => {
   // 사용자가 등록한 여행 일정 불러오기
   const getUserSchedules = () => {
     try {
-      return JSON.parse(localStorage.getItem('travelSchedules')) || [];
+      return JSON.parse(localStorage.getItem('userSchedules')) || [];
     } catch {
       return [];
     }
@@ -420,7 +653,14 @@ const TravelScheduleList = () => {
   // 필터링 및 정렬된 일정 계산
   const filteredSchedules = allSchedules.filter(schedule => {
     const matchesRegion = selectedRegion === 'all' || schedule.region === selectedRegion;
-    const matchesMonth = selectedMonth === 'all' || schedule.date.includes(selectedMonth);
+
+    // 날짜 필터링 - 사용자 생성 일정과 기본 일정 모두 지원
+    let matchesMonth = selectedMonth === 'all';
+    if (!matchesMonth) {
+      const scheduleDate = schedule.date || schedule.startDate || '';
+      matchesMonth = scheduleDate.includes(selectedMonth);
+    }
+
     const matchesSearch = searchTerm === '' ||
       schedule.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       schedule.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -455,10 +695,37 @@ const TravelScheduleList = () => {
 
   const handleCreateSchedule = () => {
     if (isLoggedIn) {
-      navigate('/travel-schedule/create');
+      setShowCreateModal(true);
     } else {
       setShowLoginModal(true);
     }
+  };
+
+  const handleDirectCreate = () => {
+    setShowCreateModal(false);
+    setShowDatePicker(true);
+  };
+
+  const handleAICreate = () => {
+    setShowCreateModal(false);
+    // TODO: AI 일정 작성 페이지로 이동 (아직 구현되지 않음)
+    alert('AI 일정 작성 기능은 준비 중입니다.');
+  };
+
+  const handleDateConfirm = () => {
+    if (selectedStartDate && selectedEndDate) {
+      setShowDatePicker(false);
+      // 직접 일정 작성 페이지로 이동
+      navigate(`/direct-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+    } else {
+      alert('출발일과 도착일을 모두 선택해주세요.');
+    }
+  };
+
+  const handleDateCancel = () => {
+    setShowDatePicker(false);
+    setSelectedStartDate('');
+    setSelectedEndDate('');
   };
 
   const handleCardClick = (scheduleId) => {
@@ -663,6 +930,75 @@ const TravelScheduleList = () => {
             </ModalButtons>
           </ModalContent>
         </LoginModal>
+      )}
+
+      {/* 일정 생성 선택 모달 */}
+      {showCreateModal && (
+        <CreateModalOverlay onClick={() => setShowCreateModal(false)}>
+          <CreateModalContainer onClick={(e) => e.stopPropagation()}>
+            <CreateModalTitle>일정 작성 방법 선택</CreateModalTitle>
+            <CreateModalMessage>
+              어떤 방식으로 일정을 작성하시겠습니까?
+            </CreateModalMessage>
+
+            <CreateOptionsContainer>
+              <CreateOptionButton onClick={handleDirectCreate}>
+                <CreateOptionText>직접일정 작성</CreateOptionText>
+              </CreateOptionButton>
+
+              <CreateOptionButton primary onClick={handleAICreate}>
+                <CreateOptionText>AI 일정 작성</CreateOptionText>
+              </CreateOptionButton>
+            </CreateOptionsContainer>
+
+            <CreateCancelButton onClick={() => setShowCreateModal(false)}>
+              취소
+            </CreateCancelButton>
+          </CreateModalContainer>
+        </CreateModalOverlay>
+      )}
+
+      {/* 날짜 선택 모달 */}
+      {showDatePicker && (
+        <DatePickerModalOverlay onClick={() => setShowDatePicker(false)}>
+          <DatePickerModalContainer onClick={(e) => e.stopPropagation()}>
+            <DatePickerTitle>여행 날짜 선택</DatePickerTitle>
+            <DatePickerMessage>
+              여행 시작일과 종료일을 선택해주세요
+            </DatePickerMessage>
+
+            <DateInputContainer>
+              <DateInputGroup>
+                <DateLabel>출발일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={selectedStartDate}
+                  onChange={(e) => setSelectedStartDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </DateInputGroup>
+
+              <DateInputGroup>
+                <DateLabel>도착일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={selectedEndDate}
+                  onChange={(e) => setSelectedEndDate(e.target.value)}
+                  min={selectedStartDate || new Date().toISOString().split('T')[0]}
+                />
+              </DateInputGroup>
+            </DateInputContainer>
+
+            <DateButtonGroup>
+              <DateConfirmButton onClick={handleDateConfirm}>
+                확인
+              </DateConfirmButton>
+              <DateCancelButton onClick={handleDateCancel}>
+                취소
+              </DateCancelButton>
+            </DateButtonGroup>
+          </DatePickerModalContainer>
+        </DatePickerModalOverlay>
       )}
     </TravelScheduleListPage>
   );

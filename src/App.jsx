@@ -18,6 +18,7 @@ import TravelScheduleList from './pages/TravelScheduleList';
 import TravelScheduleDetail from './pages/TravelScheduleDetail';
 import TravelScheduleCreate from './pages/TravelScheduleCreate';
 import TravelScheduleEdit from './pages/TravelScheduleEdit';
+import DirectScheduleCreate from './pages/DirectScheduleCreate';
 import UserProfile from './pages/UserProfile';
 import ProfileEdit from './pages/ProfileEdit';
 import MagazineList from './pages/MagazineList';
@@ -50,14 +51,15 @@ function AppContent() {
   const isCompanionEditPage = location.pathname.startsWith('/companion/edit/');
   const isCompanionDetailPage = location.pathname.startsWith('/companion/');
   const isTravelSchedulePage = location.pathname.startsWith('/travel-schedule');
+  const isDirectScheduleCreatePage = location.pathname === '/direct-schedule-create';
   const isUserProfilePage = location.pathname.startsWith('/profile/');
   const isProfileEditPage = location.pathname === '/profile-edit';
 
   return (
     <div className="App">
       <ScrollToTop />
-      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionCreatePage && !isCompanionEditPage && !isCompanionDetailPage && !isTravelSchedulePage && !isUserProfilePage && !isProfileEditPage && <Navigation />}
-      <main className={isLoginPage || isForgotPasswordPage || isSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionEditPage || isCompanionDetailPage || isTravelSchedulePage || isUserProfilePage || isProfileEditPage ? "companion-main-content" : "main-content"}>
+      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionCreatePage && !isCompanionEditPage && !isCompanionDetailPage && !isTravelSchedulePage && !isDirectScheduleCreatePage && !isUserProfilePage && !isProfileEditPage && <Navigation />}
+      <main className={isLoginPage || isForgotPasswordPage || isSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionEditPage || isCompanionDetailPage || isTravelSchedulePage || isDirectScheduleCreatePage || isUserProfilePage || isProfileEditPage ? "companion-main-content" : "main-content"}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
@@ -74,6 +76,7 @@ function AppContent() {
           <Route path="/travel-schedule/:id" element={<TravelScheduleDetail />} />
           <Route path="/travel-schedule/create" element={<TravelScheduleCreate />} />
           <Route path="/travel-schedule/edit/:id" element={<TravelScheduleEdit />} />
+          <Route path="/direct-schedule-create" element={<DirectScheduleCreate />} />
           <Route path="/profile/:username" element={<UserProfile />} />
           <Route path="/profile-edit" element={<ProfileEdit />} />
           <Route path="/magazines" element={<MagazineList />} />

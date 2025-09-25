@@ -210,6 +210,91 @@ const HeartIcon = styled.span`
   }
 `;
 
+const TravelInfoSection = styled.div`
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  margin: 20px 0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+`;
+
+const TravelInfoTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f8f9fa;
+`;
+
+const TravelInfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+`;
+
+const TravelInfoItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const TravelInfoLabel = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #6c757d;
+`;
+
+const TravelInfoValue = styled.span`
+  font-size: 16px;
+  color: #2c3e50;
+  font-weight: 500;
+`;
+
+const TransportationTags = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const TransportationTag = styled.span`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const StatsSection = styled.div`
+  display: flex;
+  justify-content: space-around;
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 20px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`;
+
+const StatItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+`;
+
+const StatValue = styled.span`
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c3e50;
+`;
+
+const StatLabel = styled.span`
+  font-size: 12px;
+  color: #6c757d;
+`;
+
 const AuthorLabel = styled.span`
   font-size: 14px;
   color: #6c757d;
@@ -825,22 +910,75 @@ const TravelScheduleDetail = () => {
   };
 
   useEffect(() => {
-    // 실제 일정 데이터 로드 (현재는 샘플 데이터 사용)
-    setTimeout(() => {
-      setSchedule({
-        id: id,
-        title: "제주도 3박 4일 완벽 여행",
-        region: "제주도",
-        duration: "3박 4일",
-        description: "제주도의 아름다운 자연과 문화를 경험할 수 있는 완벽한 여행 일정입니다.",
-        author: {
-          name: "김여행",
-          profileImage: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
-        },
-        itinerary: sampleItinerary
-      });
-      setLoading(false);
-    }, 1000);
+    // 저장된 사용자 일정 데이터 로드
+    const loadUserSchedule = () => {
+      try {
+        // userSchedules에서 해당 ID의 일정 찾기
+        const userSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
+        const userSchedule = userSchedules.find(schedule => schedule.id === id);
+
+        if (userSchedule) {
+          // 사용자가 작성한 일정이 있는 경우
+          const formattedItinerary = [];
+
+          // dailyPlaces 데이터를 itinerary 형태로 변환
+          for (let day = 1; day <= userSchedule.totalDays; day++) {
+            const dayPlaces = userSchedule.places[day] || [];
+            if (dayPlaces.length > 0) {
+              formattedItinerary.push({
+                day: `${day}일차`,
+                places: dayPlaces
+              });
+            }
+          }
+
+          setSchedule({
+            id: userSchedule.id,
+            title: userSchedule.title,
+            region: userSchedule.region,
+            duration: userSchedule.duration,
+            description: userSchedule.description,
+            author: userSchedule.author,
+            itinerary: formattedItinerary,
+            transportation: userSchedule.transportation,
+            companions: userSchedule.companions,
+            accommodation: userSchedule.accommodation,
+            startDate: userSchedule.startDate,
+            endDate: userSchedule.endDate
+          });
+        } else {
+          // 기본 샘플 데이터 사용 (기존 mockData 일정들)
+          const mockSchedule = itineraryCards.find(card => card.id === parseInt(id));
+          if (mockSchedule) {
+            setSchedule({
+              id: id,
+              title: mockSchedule.title,
+              region: mockSchedule.region,
+              duration: mockSchedule.date ? `${mockSchedule.date}` : "여행 기간",
+              description: mockSchedule.description || "여행 일정에 대한 설명입니다.",
+              author: mockSchedule.author,
+              itinerary: sampleItinerary,
+              image: mockSchedule.image,
+              startDate: mockSchedule.date ? mockSchedule.date.split('~')[0] : '',
+              endDate: mockSchedule.date ? mockSchedule.date.split('~')[1] : '',
+              views: mockSchedule.views,
+              likes: mockSchedule.likes,
+              tags: mockSchedule.tags || []
+            });
+          } else {
+            // 일정을 찾을 수 없는 경우
+            setSchedule(null);
+          }
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('일정 데이터 로드 실패:', error);
+        setLoading(false);
+      }
+    };
+
+    loadUserSchedule();
   }, [id]);
 
   const handleBackClick = () => {
@@ -926,7 +1064,7 @@ const TravelScheduleDetail = () => {
     );
   }
 
-  if (!schedule) {
+  if (!schedule || !schedule.title) {
     return (
       <TravelScheduleDetailPage>
         <Navigation />
@@ -961,7 +1099,9 @@ const TravelScheduleDetail = () => {
           {/* 메인 이미지 추가 */}
           <ScheduleMainImage>
             <img
-              src={schedule.itinerary.day1.places[2]?.image || "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=300&fit=crop"}
+              src={
+                schedule.image || "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=300&fit=crop"
+              }
               alt={schedule.title}
             />
           </ScheduleMainImage>
@@ -971,29 +1111,128 @@ const TravelScheduleDetail = () => {
             <Badge>{schedule.region}</Badge>
             <Badge>{schedule.duration}</Badge>
           </ScheduleMeta>
+
+          {/* 통계 정보 */}
+          <StatsSection>
+            <StatItem>
+              <StatValue>{schedule.views || 1}</StatValue>
+              <StatLabel>조회</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatValue>{schedule.likes || 0}</StatValue>
+              <StatLabel>좋아요</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatValue>{
+                Array.isArray(schedule.itinerary)
+                  ? schedule.itinerary.reduce((total, day) => total + day.places.length, 0)
+                  : Object.values(schedule.itinerary || {}).reduce((total, day) => total + (day.places ? day.places.length : 0), 0)
+              }</StatValue>
+              <StatLabel>업로드</StatLabel>
+            </StatItem>
+          </StatsSection>
+
           <ScheduleDescription>{schedule.description}</ScheduleDescription>
 
           {/* 작성자 정보 */}
-          {schedule.author && (
-            <AuthorSection>
-              <AuthorLeftSection onClick={handleAuthorClick}>
-                <AuthorAvatar>
-                  <img src={schedule.author.profileImage} alt={schedule.author.name} />
-                </AuthorAvatar>
-                <AuthorInfo>
-                  <AuthorLabel>작성자</AuthorLabel>
-                  <AuthorName>{schedule.author.name}</AuthorName>
-                </AuthorInfo>
-              </AuthorLeftSection>
-              <AuthorActionButton onClick={handleLike} title="좋아요">
-                <HeartIcon $liked={isLiked} />
-              </AuthorActionButton>
-            </AuthorSection>
-          )}
+          <AuthorSection>
+            <AuthorLeftSection onClick={handleAuthorClick}>
+              <AuthorAvatar>
+                <img
+                  src={
+                    schedule.author?.profileImage ||
+                    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
+                  }
+                  alt={schedule.author?.name || "사용자"}
+                />
+              </AuthorAvatar>
+              <AuthorInfo>
+                <AuthorLabel>작성자</AuthorLabel>
+                <AuthorName>{schedule.author?.name || "여행자"}</AuthorName>
+              </AuthorInfo>
+            </AuthorLeftSection>
+            <AuthorActionButton onClick={handleLike} title="좋아요">
+              <HeartIcon $liked={isLiked} />
+            </AuthorActionButton>
+          </AuthorSection>
         </ScheduleOverview>
 
+        {/* 여행 상세 정보 */}
+        {(schedule.transportation || schedule.companions || schedule.accommodation || schedule.startDate) && (
+          <TravelInfoSection>
+            <TravelInfoTitle>여행 정보</TravelInfoTitle>
+            <TravelInfoGrid>
+              {schedule.startDate && schedule.endDate && (
+                <TravelInfoItem>
+                  <TravelInfoLabel>여행 기간</TravelInfoLabel>
+                  <TravelInfoValue>{schedule.startDate} ~ {schedule.endDate}</TravelInfoValue>
+                </TravelInfoItem>
+              )}
+
+              {schedule.transportation && schedule.transportation.length > 0 && (
+                <TravelInfoItem>
+                  <TravelInfoLabel>교통수단</TravelInfoLabel>
+                  <TransportationTags>
+                    {schedule.transportation.map((transport, index) => (
+                      <TransportationTag key={index}>{transport}</TransportationTag>
+                    ))}
+                  </TransportationTags>
+                </TravelInfoItem>
+              )}
+
+              {schedule.companions && (
+                <TravelInfoItem>
+                  <TravelInfoLabel>동행인</TravelInfoLabel>
+                  <TravelInfoValue>{schedule.companions}</TravelInfoValue>
+                </TravelInfoItem>
+              )}
+
+              {schedule.accommodation && (
+                <TravelInfoItem>
+                  <TravelInfoLabel>숙박</TravelInfoLabel>
+                  <TravelInfoValue>{schedule.accommodation}</TravelInfoValue>
+                </TravelInfoItem>
+              )}
+            </TravelInfoGrid>
+          </TravelInfoSection>
+        )}
+
         {/* 일차별 일정 */}
-        {Object.entries(schedule.itinerary).map(([day, dayData]) => (
+        {schedule.itinerary && Array.isArray(schedule.itinerary) ? (
+          // 새로운 사용자 작성 일정 형태 (배열)
+          schedule.itinerary.map((dayData, index) => (
+            <DaySection key={index}>
+              <DayHeader>
+                <DayTitle>{dayData.day}</DayTitle>
+              </DayHeader>
+              <PlacesContainer>
+                {dayData.places.map((place, placeIndex) => (
+                  <div key={placeIndex}>
+                    <PlaceCard onClick={() => handlePlaceClick(place)}>
+                      <PlaceImage>
+                        <img src={place.image} alt={place.name} />
+                      </PlaceImage>
+                      <PlaceInfo>
+                        <PlaceName>{place.name}</PlaceName>
+                        <PlaceCategory>{place.category}</PlaceCategory>
+                        <PlaceDescription>{place.description}</PlaceDescription>
+                      </PlaceInfo>
+                    </PlaceCard>
+
+                    {placeIndex < dayData.places.length - 1 && (
+                      <ArrowSection>
+                        <Arrow>↓</Arrow>
+                        <DistanceText>{place.distance || '도보 5분'}</DistanceText>
+                      </ArrowSection>
+                    )}
+                  </div>
+                ))}
+              </PlacesContainer>
+            </DaySection>
+          ))
+        ) : schedule.itinerary ? (
+          // 기존 샘플 데이터 형태 (객체)
+          Object.entries(schedule.itinerary).map(([day, dayData]) => (
           <DaySection key={day}>
             <DayHeader>
               <DayTitle>{day.replace('day', '')}일차</DayTitle>
@@ -1024,7 +1263,14 @@ const TravelScheduleDetail = () => {
               ))}
             </PlacesContainer>
           </DaySection>
-        ))}
+        ))
+        ) : (
+          <DaySection>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
+              일정 정보가 없습니다.
+            </div>
+          </DaySection>
+        )}
 
         {/* 하단 저장 버튼 */}
         <BottomSaveButton onClick={handleSave}>

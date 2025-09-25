@@ -209,8 +209,20 @@ const TourismSection = ({ tourismCards, onCardClick }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
 
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
+
   const handleCardClick = (card) => {
-    onCardClick(`/tourism/${card.id}`);
+    if (isLoggedIn()) {
+      // 로그인된 상태에서는 준비중 모달 표시
+      setShowModal(true);
+    } else {
+      // 로그인되지 않은 상태에서는 로그인 모달 표시
+      onCardClick(`/tourism/${card.id}`);
+    }
   };
 
   const handleCloseModal = () => {

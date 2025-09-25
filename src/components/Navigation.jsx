@@ -342,6 +342,13 @@ const MenuItem = styled(Link)`
   text-decoration: none;
   border-bottom: 1px solid #f8f9fa;
   transition: color 0.3s ease;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
 
   &:hover {
     color: #667eea;
@@ -891,6 +898,21 @@ const Navigation = () => {
     }
   };
 
+  const handleMenuClick = (path, e) => {
+    e.preventDefault();
+    if (!loginData) {
+      setShowLoginModal(true);
+    } else {
+      navigate(path);
+      setIsMenuOpen(false);
+    }
+  };
+
+  const handleLoginClick = () => {
+    setShowLoginModal(false);
+    navigate('/login');
+  };
+
   return (
     <NavigationContainer>
       <NavContainer>
@@ -1075,7 +1097,7 @@ const Navigation = () => {
                 </ProfileAvatar>
                 <ProfileName>{loginData.user.name} 여행자님</ProfileName>
               </SideProfileSection>
-              
+
               <MenuItem to="/" onClick={() => setIsMenuOpen(false)}>
                 홈
               </MenuItem>
@@ -1097,10 +1119,10 @@ const Navigation = () => {
               <MenuItem to="/" onClick={() => setIsMenuOpen(false)}>
                 홈
               </MenuItem>
-              <MenuItem to="/notice" onClick={() => setIsMenuOpen(false)}>
+              <MenuItem as="button" onClick={(e) => handleMenuClick('/notice', e)}>
                 공지사항
               </MenuItem>
-              <MenuItem to="/faq" onClick={() => setIsMenuOpen(false)}>
+              <MenuItem as="button" onClick={(e) => handleMenuClick('/faq', e)}>
                 자주 묻는 질문
               </MenuItem>
               <MenuItem to="/login" onClick={() => setIsMenuOpen(false)}>
@@ -1147,7 +1169,30 @@ const Navigation = () => {
         </NoResultsModal>
       )}
 
-      {/* 설정 모달 */}
+      {/* 로그인 모달 */}
+      {showLoginModal && (
+        <NoResultsModal onClick={() => setShowLoginModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalIcon>🔒</ModalIcon>
+            <ModalTitle>로그인이 필요합니다</ModalTitle>
+            <ModalMessage>로그인 후 이용가능 합니다</ModalMessage>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+              <ModalConfirmBtn onClick={handleLoginClick}>로그인</ModalConfirmBtn>
+              <ModalConfirmBtn
+                onClick={() => setShowLoginModal(false)}
+                style={{
+                  background: 'white',
+                  color: '#6c757d',
+                  border: '2px solid #e9ecef',
+                  boxShadow: 'none'
+                }}
+              >
+                취소
+              </ModalConfirmBtn>
+            </div>
+          </ModalContent>
+        </NoResultsModal>
+      )}
 
     </NavigationContainer>
   );
