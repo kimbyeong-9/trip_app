@@ -16,12 +16,16 @@ const ForgotPasswordContainer = styled.div`
 const ForgotPasswordCard = styled.div`
   background: white;
   border-radius: 20px;
-  padding: 40px;
+  padding: 50px 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 100%;
   max-width: 500px;
+  min-height: 480px;
   text-align: center;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 `;
 
 const Logo = styled.div`
@@ -310,7 +314,7 @@ const ForgotPassword = () => {
 
         {!success ? (
           <>
-            <Title>비밀번호 찾기</Title>
+            <Title>비밀번호 재설정</Title>
             <Subtitle>
               가입하신 이메일 주소를 입력하시면<br />
               비밀번호 재설정 링크를 보내드립니다.

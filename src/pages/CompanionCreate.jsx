@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 
@@ -260,7 +260,7 @@ const Button = styled.button`
   border: none;
   min-width: 120px;
 
-  ${props => props.primary ? `
+  ${props => props.$$primary ? `
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
@@ -359,7 +359,7 @@ const ModalButton = styled.button`
   transition: all 0.3s ease;
   border: none;
 
-  ${props => props.primary ? `
+  ${props => props.$$primary ? `
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
@@ -382,6 +382,7 @@ const ModalButton = styled.button`
 
 const CompanionCreate = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     title: '',
     startDate: '',
@@ -525,12 +526,16 @@ const CompanionCreate = () => {
   };
 
   const confirmCancel = () => {
-    navigate('/companion-list');
+    // UserProfile에서 온 경우 profile/user로, 그렇지 않으면 companion-list로 이동
+    const returnPath = location.state?.from || '/companion-list';
+    navigate(returnPath);
   };
 
   const confirmSubmit = () => {
     setShowSubmitModal(false);
-    navigate('/companion-list');
+    // UserProfile에서 온 경우 profile/user로, 그렇지 않으면 companion-list로 이동
+    const returnPath = location.state?.from || '/companion-list';
+    navigate(returnPath);
   };
 
   return (
@@ -748,7 +753,7 @@ const CompanionCreate = () => {
               <Button type="button" onClick={handleCancel}>
                 취소
               </Button>
-              <Button type="submit" primary disabled={isSubmitting}>
+              <Button type="submit" $primary disabled={isSubmitting}>
                 {isSubmitting ? '등록 중...' : '등록하기'}
               </Button>
             </ButtonGroup>
@@ -765,7 +770,7 @@ const CompanionCreate = () => {
             <ModalMessage>작성 중인 내용이 모두 사라집니다.</ModalMessage>
             <ModalButtons>
               <ModalButton onClick={() => setShowCancelModal(false)}>계속 작성</ModalButton>
-              <ModalButton primary onClick={confirmCancel}>취소하기</ModalButton>
+              <ModalButton $primary onClick={confirmCancel}>취소하기</ModalButton>
             </ModalButtons>
           </ModalContent>
         </Modal>
@@ -775,11 +780,10 @@ const CompanionCreate = () => {
       {showSubmitModal && (
         <Modal onClick={() => setShowSubmitModal(false)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalIcon>✅</ModalIcon>
             <ModalTitle>등록이 완료되었습니다!</ModalTitle>
             <ModalMessage>동행모집 글이 성공적으로 등록되었습니다.</ModalMessage>
             <ModalButtons>
-              <ModalButton primary onClick={confirmSubmit}>확인</ModalButton>
+              <ModalButton $primary onClick={confirmSubmit}>확인</ModalButton>
             </ModalButtons>
           </ModalContent>
         </Modal>

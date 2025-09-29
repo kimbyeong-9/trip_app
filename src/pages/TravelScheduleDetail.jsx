@@ -625,15 +625,15 @@ const ActionButton = styled.button`
   padding: 12px 16px;
   border: 2px solid #667eea;
   border-radius: 12px;
-  background: ${props => props.primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
-  color: ${props => props.primary ? 'white' : '#667eea'};
+  background: ${props => props.$primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
+  color: ${props => props.$primary ? 'white' : '#667eea'};
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: ${props => props.primary ? 'linear-gradient(135deg, #5a6fd8 0%, #6a4c9a 100%)' : '#f0f4ff'};
+    background: ${props => props.$primary ? 'linear-gradient(135deg, #5a6fd8 0%, #6a4c9a 100%)' : '#f0f4ff'};
     transform: translateY(-1px);
   }
 `;
@@ -781,6 +781,111 @@ const BottomSaveButton = styled.button`
   }
 `;
 
+const DeleteButton = styled.button`
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 16px 48px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 20px auto;
+  display: block;
+  box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(220, 53, 69, 0.6);
+    background: #c82333;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const DeleteModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+`;
+
+const DeleteModalContent = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+`;
+
+const DeleteModalTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 700;
+  color: #dc3545;
+  margin: 0 0 15px 0;
+`;
+
+const DeleteModalMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  line-height: 1.5;
+  margin: 0 0 30px 0;
+`;
+
+const DeleteModalButtons = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+`;
+
+const DeleteModalCancelButton = styled.button`
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.6);
+    background: #5a6268;
+  }
+`;
+
+const DeleteModalConfirmButton = styled.button`
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.6);
+    background: #c82333;
+  }
+`;
+
 const TravelScheduleDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -790,6 +895,8 @@ const TravelScheduleDetail = () => {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
+  const [isUserSchedule, setIsUserSchedule] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // 샘플 일정 데이터
   const sampleItinerary = {
@@ -946,6 +1053,7 @@ const TravelScheduleDetail = () => {
             startDate: userSchedule.startDate,
             endDate: userSchedule.endDate
           });
+          setIsUserSchedule(true);
         } else {
           // 기본 샘플 데이터 사용 (기존 mockData 일정들)
           const mockSchedule = itineraryCards.find(card => card.id === parseInt(id));
@@ -1048,8 +1156,50 @@ const TravelScheduleDetail = () => {
   };
 
   const handleAuthorClick = () => {
+    console.log('handleAuthorClick called');
+    console.log('schedule:', schedule);
+    console.log('schedule.author:', schedule?.author);
+    console.log('isUserSchedule:', isUserSchedule);
+
     if (schedule && schedule.author && schedule.author.name) {
-      navigate(`/profile/${schedule.author.name}`);
+      console.log('Navigating to profile...');
+      if (isUserSchedule) {
+        console.log('Going to my profile');
+        // 내가 작성한 일정인 경우 마이페이지로 이동
+        navigate('/profile/user');
+      } else {
+        console.log('Going to user profile:', schedule.author.name);
+        // 다른 사용자 일정인 경우 해당 사용자 프로필로 이동
+        navigate(`/profile/${schedule.author.name}`);
+      }
+    } else {
+      console.log('Conditions not met for navigation');
+      console.log('schedule exists:', !!schedule);
+      console.log('schedule.author exists:', !!(schedule?.author));
+      console.log('schedule.author.name exists:', !!(schedule?.author?.name));
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+  };
+
+  const handleConfirmDelete = () => {
+    try {
+      // localStorage에서 해당 일정 삭제
+      const userSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
+      const updatedSchedules = userSchedules.filter(schedule => schedule.id !== id);
+      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
+
+      // 삭제 후 일정 목록 페이지로 이동
+      navigate('/travel-schedules');
+    } catch (error) {
+      console.error('일정 삭제 실패:', error);
+      alert('일정 삭제에 실패했습니다.');
     }
   };
 
@@ -1109,7 +1259,6 @@ const TravelScheduleDetail = () => {
           <ScheduleTitle>{schedule.title}</ScheduleTitle>
           <ScheduleMeta>
             <Badge>{schedule.region}</Badge>
-            <Badge>{schedule.duration}</Badge>
           </ScheduleMeta>
 
           {/* 통계 정보 */}
@@ -1272,10 +1421,19 @@ const TravelScheduleDetail = () => {
           </DaySection>
         )}
 
-        {/* 하단 저장 버튼 */}
-        <BottomSaveButton onClick={handleSave}>
-          저장
-        </BottomSaveButton>
+        {/* 내가 작성한 일정이 아닌 경우만 저장 버튼 표시 */}
+        {!isUserSchedule && (
+          <BottomSaveButton onClick={handleSave}>
+            저장
+          </BottomSaveButton>
+        )}
+
+        {/* 사용자 일정일 경우만 삭제 버튼 표시 */}
+        {isUserSchedule && (
+          <DeleteButton onClick={handleDeleteClick}>
+            일정 삭제
+          </DeleteButton>
+        )}
       </DetailContainer>
 
       {/* 장소 상세 정보 모달 */}
@@ -1323,7 +1481,7 @@ const TravelScheduleDetail = () => {
                 <ActionButton onClick={handleShare}>
                   공유
                 </ActionButton>
-                <ActionButton primary onClick={handleSave}>
+                <ActionButton $primary onClick={handleSave}>
                   장소저장
                 </ActionButton>
               </ActionButtons>
@@ -1349,7 +1507,6 @@ const TravelScheduleDetail = () => {
       {/* 저장 성공 모달 */}
       <SaveSuccessModal $show={showSaveSuccessModal} onClick={(e) => e.target === e.currentTarget && handleCloseSaveSuccessModal()}>
         <SaveSuccessContent $show={showSaveSuccessModal}>
-          <SaveSuccessIcon>✅</SaveSuccessIcon>
           <SaveSuccessTitle>저장 완료!</SaveSuccessTitle>
           <SaveSuccessMessage>
             일정이 관심 일정에 저장되었습니다.<br />
@@ -1360,6 +1517,27 @@ const TravelScheduleDetail = () => {
           </SaveSuccessButton>
         </SaveSuccessContent>
       </SaveSuccessModal>
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && (
+        <DeleteModal onClick={(e) => e.target === e.currentTarget && handleCloseDeleteModal()}>
+          <DeleteModalContent>
+            <DeleteModalTitle>일정 삭제</DeleteModalTitle>
+            <DeleteModalMessage>
+              정말로 이 일정을 삭제하시겠습니까?<br />
+              삭제된 일정은 복구할 수 없습니다.
+            </DeleteModalMessage>
+            <DeleteModalButtons>
+              <DeleteModalCancelButton onClick={handleCloseDeleteModal}>
+                취소
+              </DeleteModalCancelButton>
+              <DeleteModalConfirmButton onClick={handleConfirmDelete}>
+                삭제
+              </DeleteModalConfirmButton>
+            </DeleteModalButtons>
+          </DeleteModalContent>
+        </DeleteModal>
+      )}
     </TravelScheduleDetailPage>
   );
 };

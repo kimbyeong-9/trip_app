@@ -29,19 +29,21 @@ const DetailHeader = styled.div`
 `;
 
 const BackButton = styled.button`
-  background: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
-  font-size: 24px;
-  color: #6c757d;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  margin-right: 15px;
-  padding: 5px;
-  border-radius: 50%;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  margin-right: 15px;
 
   &:hover {
-    background: #f8f9fa;
-    color: #333;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
   }
 `;
 
@@ -271,6 +273,24 @@ const ContactButton = styled.button`
   }
 `;
 
+const DeleteButton = styled.button`
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+
+  &:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+  }
+`;
+
 const NotFound = styled.div`
   text-align: center;
   padding: 60px 20px;
@@ -327,6 +347,37 @@ const CompanionDetail = () => {
   // ID를 기준으로 게시물 찾기
   const companion = allCompanionPosts.find(post => post.id.toString() === id);
 
+  // 사용자가 작성한 게시물인지 확인
+  const isUserPost = userPosts.some(post => post.id.toString() === id);
+
+  // 작성자 프로필 클릭 핸들러
+  const handleAuthorClick = () => {
+    if (isUserPost) {
+      // 내가 작성한 게시물인 경우 마이페이지로 이동
+      navigate('/profile/user');
+    } else {
+      // 다른 사용자 게시물인 경우 해당 사용자 프로필로 이동
+      navigate(`/profile/${companion.author?.name || companion.author}`);
+    }
+  };
+
+  // 동행모집 삭제 핸들러
+  const handleDelete = () => {
+    if (window.confirm('정말로 이 동행모집을 삭제하시겠습니까?')) {
+      try {
+        const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
+        const updatedPosts = storedPosts.filter(post => post.id.toString() !== id);
+        localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
+
+        alert('동행모집이 성공적으로 삭제되었습니다.');
+        navigate('/profile/user'); // 마이페이지로 이동
+      } catch (error) {
+        console.error('동행모집 삭제 실패:', error);
+        alert('삭제에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
+  };
+
   if (!companion) {
     return (
       <CompanionDetailPage>
@@ -366,7 +417,7 @@ const CompanionDetail = () => {
               </MetaInfo>
             </TitleSection>
 
-            <AuthorSection onClick={() => navigate(`/profile/${companion.author?.name || companion.author}`)}>
+            <AuthorSection onClick={handleAuthorClick}>
               <AuthorAvatar
                 src={companion.author?.profileImage || companion.authorImage}
                 alt={companion.author?.name || companion.author}
@@ -433,10 +484,20 @@ const CompanionDetail = () => {
             )}
 
             <ActionButtons>
-              <JoinButton disabled={companion.participants.current >= companion.participants.max}>
-                {companion.participants.current >= companion.participants.max ? '모집마감' : '참여하기'}
-              </JoinButton>
-              <ContactButton>문의하기</ContactButton>
+              {isUserPost ? (
+                // 내가 작성한 게시물인 경우 삭제 버튼만 표시
+                <DeleteButton onClick={handleDelete}>
+                  동행모집 삭제
+                </DeleteButton>
+              ) : (
+                // 다른 사용자의 게시물인 경우 참여하기/문의하기 버튼 표시
+                <>
+                  <JoinButton disabled={companion.participants.current >= companion.participants.max}>
+                    {companion.participants.current >= companion.participants.max ? '모집마감' : '참여하기'}
+                  </JoinButton>
+                  <ContactButton>문의하기</ContactButton>
+                </>
+              )}
             </ActionButtons>
           </DetailInfo>
         </CompanionDetailContent>

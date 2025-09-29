@@ -114,9 +114,9 @@ const FilterTags = styled.div`
 
 const FilterTag = styled.button`
   padding: 6px 12px;
-  border: 2px solid ${props => props.active ? '#667eea' : '#e9ecef'};
-  background: ${props => props.active ? '#667eea' : 'white'};
-  color: ${props => props.active ? 'white' : '#495057'};
+  border: 2px solid ${props => props.$active ? '#667eea' : '#e9ecef'};
+  background: ${props => props.$active ? '#667eea' : 'white'};
+  color: ${props => props.$active ? 'white' : '#495057'};
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
@@ -126,7 +126,7 @@ const FilterTag = styled.button`
 
   &:hover {
     border-color: #667eea;
-    background: ${props => props.active ? '#5a6fd8' : '#f8f9fa'};
+    background: ${props => props.$active ? '#5a6fd8' : '#f8f9fa'};
   }
 `;
 
@@ -150,6 +150,9 @@ const ScheduleCard = styled.div`
   transition: all 0.3s ease;
   cursor: pointer;
   border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 
   &:hover {
     transform: translateY(-8px);
@@ -165,6 +168,10 @@ const ScheduleImage = styled.img`
 
 const ScheduleContent = styled.div`
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
 `;
 
 const ScheduleTitle = styled.h3`
@@ -233,6 +240,7 @@ const AuthorName = styled.span`
   color: #6c757d;
   font-weight: 500;
 `;
+
 
 const NoResults = styled.div`
   text-align: center;
@@ -312,7 +320,7 @@ const ModalButton = styled.button`
   transition: all 0.3s ease;
   border: none;
 
-  ${props => props.primary ? `
+  ${props => props.$primary ? `
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
@@ -344,15 +352,15 @@ const Pagination = styled.div`
 const PageButton = styled.button`
   padding: 8px 12px;
   border: 1px solid #e9ecef;
-  background: ${props => props.active ? '#667eea' : 'white'};
-  color: ${props => props.active ? 'white' : '#495057'};
+  background: ${props => props.$active ? '#667eea' : 'white'};
+  color: ${props => props.$active ? 'white' : '#495057'};
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s ease;
 
   &:hover {
-    background: ${props => props.active ? '#5a6fd8' : '#f8f9fa'};
+    background: ${props => props.$active ? '#5a6fd8' : '#f8f9fa'};
     transform: translateY(-1px);
   }
 
@@ -381,6 +389,54 @@ const ScheduleStat = styled.div`
 
   span:first-child {
     font-size: 14px;
+  }
+`;
+
+const EyeIcon = styled.span`
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+  position: relative;
+  display: inline-block;
+  width: 16px;
+  height: 10px;
+  background: white;
+  border: 1px solid #6c757d;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: #6c757d;
+    border-radius: 50%;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+  }
+`;
+
+const HeartIconSmall = styled.span`
+  font-size: 14px;
+  color: #e74c3c;
+  transition: all 0.3s ease;
+
+  &::before {
+    content: '♥';
   }
 `;
 
@@ -421,10 +477,6 @@ const CreateModalContainer = styled.div`
   }
 `;
 
-const CreateModalIcon = styled.div`
-  font-size: 64px;
-  margin-bottom: 20px;
-`;
 
 const CreateModalTitle = styled.h3`
   font-size: 24px;
@@ -452,8 +504,8 @@ const CreateOptionsContainer = styled.div`
 `;
 
 const CreateOptionButton = styled.button`
-  background: ${props => props.primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
-  color: ${props => props.primary ? 'white' : '#667eea'};
+  background: ${props => props.$primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
+  color: ${props => props.$primary ? 'white' : '#667eea'};
   border: 2px solid #667eea;
   padding: 15px 25px;
   border-radius: 12px;
@@ -468,16 +520,13 @@ const CreateOptionButton = styled.button`
   gap: 8px;
 
   &:hover {
-    background: ${props => props.primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#667eea'};
+    background: ${props => props.$primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#667eea'};
     color: white;
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
   }
 `;
 
-const CreateOptionIcon = styled.div`
-  font-size: 24px;
-`;
 
 const CreateOptionText = styled.span`
   font-size: 14px;
@@ -625,6 +674,7 @@ const TravelScheduleList = () => {
   const [selectedStartDate, setSelectedStartDate] = useState('');
   const [selectedEndDate, setSelectedEndDate] = useState('');
   const [sortBy, setSortBy] = useState('latest'); // 'latest', 'popular'
+  const [isAICreate, setIsAICreate] = useState(false); // AI 작성 여부
   const schedulesPerPage = 9;
 
   // 로그인 상태 확인
@@ -640,7 +690,14 @@ const TravelScheduleList = () => {
   // 사용자가 등록한 여행 일정 불러오기
   const getUserSchedules = () => {
     try {
-      return JSON.parse(localStorage.getItem('userSchedules')) || [];
+      const userSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
+      // 특정 조건의 카드들을 필터링하여 제거 (화면에서만)
+      return userSchedules.filter(schedule => {
+        const title = schedule.title || '';
+
+        // 제목이 "김병호"인 카드만 제거
+        return title !== '김병호';
+      });
     } catch {
       return [];
     }
@@ -702,21 +759,28 @@ const TravelScheduleList = () => {
   };
 
   const handleDirectCreate = () => {
+    setIsAICreate(false);
     setShowCreateModal(false);
     setShowDatePicker(true);
   };
 
   const handleAICreate = () => {
+    setIsAICreate(true);
     setShowCreateModal(false);
-    // TODO: AI 일정 작성 페이지로 이동 (아직 구현되지 않음)
-    alert('AI 일정 작성 기능은 준비 중입니다.');
+    setShowDatePicker(true);
   };
 
   const handleDateConfirm = () => {
     if (selectedStartDate && selectedEndDate) {
       setShowDatePicker(false);
-      // 직접 일정 작성 페이지로 이동
-      navigate(`/direct-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+
+      if (isAICreate) {
+        // AI 일정 작성 페이지로 이동
+        navigate(`/ai-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+      } else {
+        // 직접 일정 작성 페이지로 이동
+        navigate(`/direct-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+      }
     } else {
       alert('출발일과 도착일을 모두 선택해주세요.');
     }
@@ -726,6 +790,7 @@ const TravelScheduleList = () => {
     setShowDatePicker(false);
     setSelectedStartDate('');
     setSelectedEndDate('');
+    setIsAICreate(false);
   };
 
   const handleCardClick = (scheduleId) => {
@@ -772,7 +837,7 @@ const TravelScheduleList = () => {
               {['all', '서울', '경기', '인천', '강원', '충청', '전라', '경상', '제주', '부산'].map(region => (
                 <FilterTag
                   key={region}
-                  active={selectedRegion === region}
+                  $active={selectedRegion === region}
                   onClick={() => setSelectedRegion(region)}
                 >
                   {region === 'all' ? '전체' : region}
@@ -801,7 +866,7 @@ const TravelScheduleList = () => {
               ].map(month => (
                 <FilterTag
                   key={month.value}
-                  active={selectedMonth === month.value}
+                  $active={selectedMonth === month.value}
                   onClick={() => setSelectedMonth(month.value)}
                 >
                   {month.label}
@@ -813,13 +878,13 @@ const TravelScheduleList = () => {
             <FilterLabel>정렬</FilterLabel>
             <FilterTags>
               <FilterTag
-                active={sortBy === 'latest'}
+                $active={sortBy === 'latest'}
                 onClick={() => setSortBy('latest')}
               >
                 최신순
               </FilterTag>
               <FilterTag
-                active={sortBy === 'popular'}
+                $active={sortBy === 'popular'}
                 onClick={() => setSortBy('popular')}
               >
                 인기순
@@ -837,44 +902,45 @@ const TravelScheduleList = () => {
               >
                 <ScheduleImage src={schedule.image} alt={schedule.title} />
                 <ScheduleContent>
-                  <ScheduleTitle>{schedule.title}</ScheduleTitle>
-                  <ScheduleMeta>
-                    <ScheduleTag type="region">{schedule.region}</ScheduleTag>
-                    <ScheduleTag type="date">{schedule.date}</ScheduleTag>
-                  </ScheduleMeta>
+                  <div>
+                    <ScheduleTitle>{schedule.title}</ScheduleTitle>
+                    <ScheduleMeta>
+                      <ScheduleTag type="region">{schedule.region}</ScheduleTag>
+                      <ScheduleTag type="date">{schedule.date}</ScheduleTag>
+                    </ScheduleMeta>
+                  </div>
 
-                  {/* 작성자 정보 */}
-                  {schedule.author && (
-                    <AuthorInfo>
-                      <AuthorAvatar>
-                        <img
-                          src={typeof schedule.author === 'string' ?
-                            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" :
-                            schedule.author.profileImage
-                          }
-                          alt={typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
-                        />
-                      </AuthorAvatar>
-                      <AuthorName>
-                        {typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
-                      </AuthorName>
-                    </AuthorInfo>
-                  )}
+                  <div>
+                    {/* 작성자 정보 */}
+                    {schedule.author && (
+                      <AuthorInfo>
+                        <AuthorAvatar>
+                          <img
+                            src={typeof schedule.author === 'string' ?
+                              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" :
+                              schedule.author.profileImage
+                            }
+                            alt={typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
+                          />
+                        </AuthorAvatar>
+                        <AuthorName>
+                          {typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
+                        </AuthorName>
+                      </AuthorInfo>
+                    )}
 
-                  {schedule.views && (
+
                     <ScheduleStats>
                       <ScheduleStat>
-                        <span>👁️</span>
-                        <span>{schedule.views.toLocaleString()}</span>
+                        <EyeIcon />
+                        <span>{schedule.views || 0}</span>
                       </ScheduleStat>
-                      {schedule.likes && (
-                        <ScheduleStat>
-                          <span>❤️</span>
-                          <span>{schedule.likes}</span>
-                        </ScheduleStat>
-                      )}
+                      <ScheduleStat>
+                        <HeartIconSmall />
+                        <span>{schedule.likes || 0}</span>
+                      </ScheduleStat>
                     </ScheduleStats>
-                  )}
+                  </div>
                 </ScheduleContent>
               </ScheduleCard>
             ))}
@@ -901,7 +967,7 @@ const TravelScheduleList = () => {
               <PageButton
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                active={currentPage === page}
+                $active={currentPage === page}
               >
                 {page}
               </PageButton>
@@ -925,7 +991,7 @@ const TravelScheduleList = () => {
             <ModalTitle>로그인이 필요합니다</ModalTitle>
             <ModalMessage>로그인 후 이용가능 합니다</ModalMessage>
             <ModalButtons>
-              <ModalButton primary onClick={handleLoginClick}>로그인</ModalButton>
+              <ModalButton $primary onClick={handleLoginClick}>로그인</ModalButton>
               <ModalButton onClick={() => setShowLoginModal(false)}>취소</ModalButton>
             </ModalButtons>
           </ModalContent>
@@ -946,7 +1012,7 @@ const TravelScheduleList = () => {
                 <CreateOptionText>직접일정 작성</CreateOptionText>
               </CreateOptionButton>
 
-              <CreateOptionButton primary onClick={handleAICreate}>
+              <CreateOptionButton $primary onClick={handleAICreate}>
                 <CreateOptionText>AI 일정 작성</CreateOptionText>
               </CreateOptionButton>
             </CreateOptionsContainer>

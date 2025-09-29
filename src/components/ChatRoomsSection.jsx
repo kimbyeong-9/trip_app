@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import repairManIcon from '../assets/icons/free-icon-repair-man-4429935.png';
 
 // Styled Components
 const ChatRoomsSectionContainer = styled.div`
@@ -54,15 +55,13 @@ const ChatRooms = styled.div`
 const ChatRoomCard = styled.div`
   background: white;
   border-radius: 15px;
-  padding: 20px;
+  overflow: hidden;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  min-width: 250px;
+  min-width: 280px;
   flex-shrink: 0;
+  position: relative;
 
   &:hover {
     transform: translateY(-5px);
@@ -70,32 +69,76 @@ const ChatRoomCard = styled.div`
   }
 
   @media (max-width: 768px) {
-    min-width: 200px;
+    min-width: 240px;
   }
 `;
 
+const RoomImageContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 120px;
+  overflow: hidden;
+`;
+
 const RoomImage = styled.img`
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 `;
 
+const CreatorProfileContainer = styled.div`
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+`;
+
+const CreatorAvatar = styled.img`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+`;
+
+const CreatorName = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+`;
+
 const RoomInfo = styled.div`
-  flex: 1;
+  padding: 15px;
 `;
 
 const RoomTitle = styled.h3`
   font-size: 16px;
   font-weight: 600;
   color: #2c3e50;
-  margin: 0 0 5px 0;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
 `;
 
 const RoomMembers = styled.p`
   font-size: 14px;
   color: #6c757d;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  &::before {
+    content: '👥';
+    font-size: 12px;
+  }
 `;
 
 const FloatingButtons = styled.div`
@@ -326,10 +369,173 @@ const GalleryModalButton = styled.button`
   }
 `;
 
+// 채팅방 모달 스타일
+const ChatRoomModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+`;
+
+const ChatRoomModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+  position: relative;
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+`;
+
+const ChatRoomModalBackground = styled.div`
+  width: 100%;
+  height: 250px;
+  background-image: url(${props => props.backgroundImage});
+  background-size: cover;
+  background-position: center;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+  }
+`;
+
+const ChatRoomModalCloseButton = styled.button`
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 20px;
+  transition: all 0.3s ease;
+  z-index: 1;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+  }
+`;
+
+const ChatRoomModalContent = styled.div`
+  padding: 30px;
+  text-align: center;
+`;
+
+const CreatorProfile = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+`;
+
+const ModalCreatorAvatar = styled.img`
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+`;
+
+const CreatorInfo = styled.div`
+  text-align: left;
+`;
+
+const ModalCreatorName = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 5px 0;
+`;
+
+const CreatorRole = styled.p`
+  font-size: 14px;
+  color: #6c757d;
+  margin: 0;
+`;
+
+const ChatRoomModalTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+  line-height: 1.3;
+`;
+
+const ParticipantInfo = styled.div`
+  background: #f8f9fa;
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+`;
+
+const ParticipantCount = styled.p`
+  font-size: 16px;
+  color: #495057;
+  margin: 0;
+  font-weight: 600;
+`;
+
+const JoinButton = styled.button`
+  background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+  width: 100%;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.6);
+  }
+`;
+
 const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [selectedChatRoom, setSelectedChatRoom] = useState(null);
+  const [showChatRoomModal, setShowChatRoomModal] = useState(false);
 
   // 로그인 상태 체크 함수
   const isLoggedIn = () => {
@@ -360,6 +566,28 @@ const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
     setShowGalleryModal(false);
   };
 
+  const handleChatRoomClick = (room) => {
+    setSelectedChatRoom(room);
+    setShowChatRoomModal(true);
+  };
+
+  const closeChatRoomModal = () => {
+    setShowChatRoomModal(false);
+    setSelectedChatRoom(null);
+  };
+
+  const handleJoinChatRoom = () => {
+    if (!isLoggedIn()) {
+      onCardClick(`/chat-room/${selectedChatRoom.id}`);
+      closeChatRoomModal();
+      return;
+    }
+
+    // 로그인된 경우 채팅방으로 이동
+    navigate(`/chat-room/${selectedChatRoom.id}`);
+    closeChatRoomModal();
+  };
+
   return (
     <ChatRoomsSectionContainer>
       <SectionHeader>
@@ -367,11 +595,20 @@ const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
       </SectionHeader>
       <ChatRooms>
         {chatRooms.map((room) => (
-          <ChatRoomCard key={room.id} onClick={() => onCardClick(`/chat-room/${room.id}`)}>
-            <RoomImage src={room.image} alt={room.title} />
+          <ChatRoomCard key={room.id} onClick={() => handleChatRoomClick(room)}>
+            <RoomImageContainer>
+              <RoomImage src={room.image} alt={room.title} />
+              <CreatorProfileContainer>
+                <CreatorAvatar
+                  src={room.creator?.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"}
+                  alt={room.creator?.name || "채팅방 생성자"}
+                />
+                <CreatorName>{room.creator?.name || "여행매니저"}</CreatorName>
+              </CreatorProfileContainer>
+            </RoomImageContainer>
             <RoomInfo>
               <RoomTitle>{room.title}</RoomTitle>
-              <RoomMembers>참여인원: {room.members}명</RoomMembers>
+              <RoomMembers>{room.members}명</RoomMembers>
             </RoomInfo>
           </ChatRoomCard>
         ))}
@@ -455,7 +692,9 @@ const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
       {showGalleryModal && (
         <GalleryModalOverlay onClick={(e) => e.target === e.currentTarget && closeGalleryModal()}>
           <GalleryModalContainer>
-            <GalleryModalIcon>🎨</GalleryModalIcon>
+            <GalleryModalIcon>
+              <img src={repairManIcon} alt="작업중" style={{ width: '64px', height: '64px' }} />
+            </GalleryModalIcon>
             <GalleryModalTitle>갤러리샵 준비중</GalleryModalTitle>
             <GalleryModalMessage>
               갤러리샵 서비스는 현재 준비중입니다.<br />
@@ -466,6 +705,44 @@ const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
             </GalleryModalButton>
           </GalleryModalContainer>
         </GalleryModalOverlay>
+      )}
+
+      {/* 채팅방 상세 모달 */}
+      {showChatRoomModal && selectedChatRoom && (
+        <ChatRoomModalOverlay onClick={(e) => e.target === e.currentTarget && closeChatRoomModal()}>
+          <ChatRoomModalContainer>
+            <ChatRoomModalBackground backgroundImage={selectedChatRoom.image}>
+              <ChatRoomModalCloseButton onClick={closeChatRoomModal}>
+                ×
+              </ChatRoomModalCloseButton>
+            </ChatRoomModalBackground>
+
+            <ChatRoomModalContent>
+              <CreatorProfile>
+                <ModalCreatorAvatar
+                  src={selectedChatRoom.creator?.avatar || selectedChatRoom.image}
+                  alt={selectedChatRoom.creator?.name || "채팅방 생성자"}
+                />
+                <CreatorInfo>
+                  <ModalCreatorName>{selectedChatRoom.creator?.name || "여행 매니저"}</ModalCreatorName>
+                  <CreatorRole>채팅방 생성자</CreatorRole>
+                </CreatorInfo>
+              </CreatorProfile>
+
+              <ChatRoomModalTitle>{selectedChatRoom.title}</ChatRoomModalTitle>
+
+              <ParticipantInfo>
+                <ParticipantCount>
+                  현재 참여인원: {selectedChatRoom.members}명
+                </ParticipantCount>
+              </ParticipantInfo>
+
+              <JoinButton onClick={handleJoinChatRoom}>
+                채팅방 참여하기
+              </JoinButton>
+            </ChatRoomModalContent>
+          </ChatRoomModalContainer>
+        </ChatRoomModalOverlay>
       )}
     </ChatRoomsSectionContainer>
   );

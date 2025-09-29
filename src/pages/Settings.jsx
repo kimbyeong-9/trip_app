@@ -124,7 +124,7 @@ const ToggleSwitch = styled.div`
   position: relative;
   width: 50px;
   height: 25px;
-  background: ${props => props.active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e9ecef'};
+  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e9ecef'};
   border-radius: 25px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -133,7 +133,7 @@ const ToggleSwitch = styled.div`
     content: '';
     position: absolute;
     top: 2px;
-    left: ${props => props.active ? '27px' : '2px'};
+    left: ${props => props.$active ? '27px' : '2px'};
     width: 21px;
     height: 21px;
     background: white;
@@ -161,7 +161,7 @@ const SelectBox = styled.select`
 `;
 
 const Button = styled.button`
-  background: ${props => props.variant === 'danger' ? '#dc3545' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+  background: ${props => props.$variant === 'danger' ? '#dc3545' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
   color: white;
   border: none;
   padding: 12px 24px;
@@ -170,14 +170,14 @@ const Button = styled.button`
   font-weight: 600;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px ${props => props.variant === 'danger' ? 'rgba(220, 53, 69, 0.4)' : 'rgba(102, 126, 234, 0.4)'};
+  box-shadow: 0 4px 15px ${props => props.$variant === 'danger' ? 'rgba(220, 53, 69, 0.4)' : 'rgba(102, 126, 234, 0.4)'};
   opacity: ${props => props.disabled ? 0.6 : 1};
   position: relative;
   overflow: hidden;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px ${props => props.variant === 'danger' ? 'rgba(220, 53, 69, 0.6)' : 'rgba(102, 126, 234, 0.6)'};
+    box-shadow: 0 8px 25px ${props => props.$variant === 'danger' ? 'rgba(220, 53, 69, 0.6)' : 'rgba(102, 126, 234, 0.6)'};
   }
 
   &:disabled {
@@ -433,7 +433,7 @@ const Settings = () => {
               <SettingDescription>앱에서 바로 알림을 받습니다</SettingDescription>
             </SettingLabel>
             <ToggleSwitch
-              active={settings.pushNotifications}
+              $active={settings.pushNotifications}
               onClick={() => handleToggle('pushNotifications')}
             />
           </SettingItem>
@@ -444,7 +444,7 @@ const Settings = () => {
               <SettingDescription>중요한 소식을 이메일로 받습니다</SettingDescription>
             </SettingLabel>
             <ToggleSwitch
-              active={settings.notifications}
+              $active={settings.notifications}
               onClick={() => handleToggle('notifications')}
             />
           </SettingItem>
@@ -455,7 +455,7 @@ const Settings = () => {
               <SettingDescription>혜택 및 이벤트 정보를 받습니다</SettingDescription>
             </SettingLabel>
             <ToggleSwitch
-              active={settings.emailMarketing}
+              $active={settings.emailMarketing}
               onClick={() => handleToggle('emailMarketing')}
             />
           </SettingItem>
@@ -471,7 +471,7 @@ const Settings = () => {
               <SettingDescription>위치 기반 서비스를 이용합니다</SettingDescription>
             </SettingLabel>
             <ToggleSwitch
-              active={settings.locationServices}
+              $active={settings.locationServices}
               onClick={() => handleToggle('locationServices')}
             />
           </SettingItem>
@@ -505,7 +505,7 @@ const Settings = () => {
         <SettingsSection data-settings-section>
           <ButtonGroup>
             <Button
-              variant="danger"
+              $variant="danger"
               onClick={handleReset}
               disabled={isLoading || !hasChanges}
             >

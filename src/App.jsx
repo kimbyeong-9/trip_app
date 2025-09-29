@@ -16,9 +16,10 @@ import CompanionEdit from './pages/CompanionEdit';
 import CompanionDetail from './pages/CompanionDetail';
 import TravelScheduleList from './pages/TravelScheduleList';
 import TravelScheduleDetail from './pages/TravelScheduleDetail';
-import TravelScheduleCreate from './pages/TravelScheduleCreate';
 import TravelScheduleEdit from './pages/TravelScheduleEdit';
 import DirectScheduleCreate from './pages/DirectScheduleCreate';
+import AIScheduleCreate from './pages/AIScheduleCreate';
+import AICategorySelect from './pages/AICategorySelect';
 import UserProfile from './pages/UserProfile';
 import ProfileEdit from './pages/ProfileEdit';
 import MagazineList from './pages/MagazineList';
@@ -28,6 +29,8 @@ import Settings from './pages/Settings';
 import Notice from './pages/Notice';
 import CustomerSupport from './pages/CustomerSupport';
 import FAQ from './pages/FAQ';
+import ChatRoomList from './pages/ChatRoomList';
+import ChatRoomCreate from './pages/ChatRoomCreate';
 import './App.css';
 
 // 페이지 이동 시 스크롤을 맨 위로 이동하는 컴포넌트
@@ -52,14 +55,18 @@ function AppContent() {
   const isCompanionDetailPage = location.pathname.startsWith('/companion/');
   const isTravelSchedulePage = location.pathname.startsWith('/travel-schedule');
   const isDirectScheduleCreatePage = location.pathname === '/direct-schedule-create';
+  const isAIScheduleCreatePage = location.pathname === '/ai-schedule-create';
+  const isAICategorySelectPage = location.pathname === '/ai-category-select';
   const isUserProfilePage = location.pathname.startsWith('/profile/');
   const isProfileEditPage = location.pathname === '/profile-edit';
+  const isChatRoomListPage = location.pathname === '/chat-room-list';
+  const isChatRoomCreatePage = location.pathname === '/chat-room-create';
 
   return (
     <div className="App">
       <ScrollToTop />
-      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionCreatePage && !isCompanionEditPage && !isCompanionDetailPage && !isTravelSchedulePage && !isDirectScheduleCreatePage && !isUserProfilePage && !isProfileEditPage && <Navigation />}
-      <main className={isLoginPage || isForgotPasswordPage || isSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionEditPage || isCompanionDetailPage || isTravelSchedulePage || isDirectScheduleCreatePage || isUserProfilePage || isProfileEditPage ? "companion-main-content" : "main-content"}>
+      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionCreatePage && !isCompanionEditPage && !isCompanionDetailPage && !isTravelSchedulePage && !isDirectScheduleCreatePage && !isAIScheduleCreatePage && !isAICategorySelectPage && !isUserProfilePage && !isProfileEditPage && !isChatRoomListPage && !isChatRoomCreatePage && <Navigation />}
+      <main className={isLoginPage || isForgotPasswordPage || isSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionEditPage || isCompanionDetailPage || isTravelSchedulePage || isDirectScheduleCreatePage || isAIScheduleCreatePage || isAICategorySelectPage || isUserProfilePage || isProfileEditPage || isChatRoomListPage || isChatRoomCreatePage ? "companion-main-content" : "main-content"}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
@@ -74,9 +81,11 @@ function AppContent() {
           <Route path="/companion/:id" element={<CompanionDetail />} />
           <Route path="/travel-schedules" element={<TravelScheduleList />} />
           <Route path="/travel-schedule/:id" element={<TravelScheduleDetail />} />
-          <Route path="/travel-schedule/create" element={<TravelScheduleCreate />} />
           <Route path="/travel-schedule/edit/:id" element={<TravelScheduleEdit />} />
           <Route path="/direct-schedule-create" element={<DirectScheduleCreate />} />
+          <Route path="/ai-schedule-create" element={<AIScheduleCreate />} />
+          <Route path="/ai-category-select" element={<AICategorySelect />} />
+          <Route path="/profile" element={<UserProfile />} />
           <Route path="/profile/:username" element={<UserProfile />} />
           <Route path="/profile-edit" element={<ProfileEdit />} />
           <Route path="/magazines" element={<MagazineList />} />
@@ -86,6 +95,8 @@ function AppContent() {
           <Route path="/notice" element={<Notice />} />
           <Route path="/customer-support" element={<CustomerSupport />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/chat-room-list" element={<ChatRoomList />} />
+          <Route path="/chat-room-create" element={<ChatRoomCreate />} />
         </Routes>
       </main>
       {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isProfileEditPage && <WebsiteFooter />}

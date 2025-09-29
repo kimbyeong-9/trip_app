@@ -54,8 +54,8 @@ const FilterButton = styled.button`
   padding: 12px 24px;
   border-radius: 25px;
   border: 2px solid #667eea;
-  background: ${props => props.active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
-  color: ${props => props.active ? 'white' : '#667eea'};
+  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
+  color: ${props => props.$active ? 'white' : '#667eea'};
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -170,9 +170,9 @@ const PaginationContainer = styled.div`
 const PaginationButton = styled.button`
   min-width: 40px;
   height: 40px;
-  border: 2px solid ${props => props.active ? '#667eea' : '#e9ecef'};
-  background: ${props => props.active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
-  color: ${props => props.active ? 'white' : '#6c757d'};
+  border: 2px solid ${props => props.$active ? '#667eea' : '#e9ecef'};
+  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
+  color: ${props => props.$active ? 'white' : '#6c757d'};
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
@@ -183,9 +183,9 @@ const PaginationButton = styled.button`
   justify-content: center;
 
   &:hover:not(:disabled) {
-    background: ${props => props.active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa'};
+    background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa'};
     border-color: #667eea;
-    color: ${props => props.active ? 'white' : '#667eea'};
+    color: ${props => props.$active ? 'white' : '#667eea'};
     transform: translateY(-1px);
   }
 
@@ -277,7 +277,7 @@ const LoginModalButton = styled.button`
   transition: all 0.3s ease;
   border: none;
 
-  ${props => props.primary ? `
+  ${props => props.$primary ? `
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
@@ -374,7 +374,7 @@ const MagazineList = () => {
           {categories.map(category => (
             <FilterButton
               key={category}
-              active={selectedCategory === category}
+              $active={selectedCategory === category}
               onClick={() => {
                 setSelectedCategory(category);
                 setCurrentPage(1);
@@ -427,7 +427,7 @@ const MagazineList = () => {
                     return (
                       <PaginationButton
                         key={page}
-                        active={currentPage === page}
+                        $active={currentPage === page}
                         onClick={() => handlePageChange(page)}
                       >
                         {page}
@@ -476,7 +476,7 @@ const MagazineList = () => {
             <LoginModalTitle>로그인이 필요합니다</LoginModalTitle>
             <LoginModalMessage>로그인 후 이용가능 합니다</LoginModalMessage>
             <LoginModalButtons>
-              <LoginModalButton primary onClick={handleLoginClick}>로그인</LoginModalButton>
+              <LoginModalButton $primary onClick={handleLoginClick}>로그인</LoginModalButton>
               <LoginModalButton onClick={() => setShowLoginModal(false)}>취소</LoginModalButton>
             </LoginModalButtons>
           </LoginModalContent>

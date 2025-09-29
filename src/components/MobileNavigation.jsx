@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
+import scheduleIcon from '../assets/icons/schedule-icon.png';
+import communityIcon from '../assets/icons/group-chat_1911000.png';
+import homeIcon from '../assets/icons/home_10231156.png';
+import chatIcon from '../assets/icons/chat_134786.png';
+import galleryShopIcon from '../assets/icons/free-icon-shopping-store-2967015.png';
+import repairManIcon from '../assets/icons/free-icon-repair-man-4429935.png';
 
 const MobileNavContainer = styled.div`
   display: none;
@@ -49,6 +55,15 @@ const NavItem = styled(Link)`
 const NavIcon = styled.span`
   font-size: 20px;
   margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
 `;
 
 const NavLabel = styled.span`
@@ -130,27 +145,32 @@ const MobileNavigation = () => {
     {
       path: '/',
       label: '홈',
-      icon: '⌂'
+      icon: homeIcon,
+      isImage: true
     },
     {
       path: '/travel-schedules',
       label: '일정',
-      icon: '📅'
+      icon: scheduleIcon,
+      isImage: true
     },
     {
       path: '/community',
       label: '커뮤니티',
-      icon: '👥'
+      icon: communityIcon,
+      isImage: true
     },
     {
-      path: '/chat-rooms',
+      path: '/chat-room-list',
       label: '채팅방',
-      icon: '◯'
+      icon: chatIcon,
+      isImage: true
     },
     {
       path: '/gallery-shop',
       label: '갤러리샵',
-      icon: '◊'
+      icon: galleryShopIcon,
+      isImage: true
     }
   ];
 
@@ -182,7 +202,13 @@ const MobileNavigation = () => {
             className={isActive(item.path) ? 'active' : ''}
             onClick={(e) => handleNavClick(e, item.path)}
           >
-            <NavIcon>{item.icon}</NavIcon>
+            <NavIcon>
+              {item.isImage ? (
+                <img src={item.icon} alt={item.label} />
+              ) : (
+                item.icon
+              )}
+            </NavIcon>
             <NavLabel>{item.label}</NavLabel>
           </NavItem>
         ))}
@@ -192,7 +218,9 @@ const MobileNavigation = () => {
       {showGalleryModal && (
         <ModalOverlay onClick={(e) => e.target === e.currentTarget && closeGalleryModal()}>
           <ModalContainer>
-            <ModalIcon>🎨</ModalIcon>
+            <ModalIcon>
+              <img src={repairManIcon} alt="작업중" style={{ width: '64px', height: '64px' }} />
+            </ModalIcon>
             <ModalTitle>갤러리샵 준비중</ModalTitle>
             <ModalMessage>
               갤러리샵 서비스는 현재 준비중입니다.<br />

@@ -64,9 +64,9 @@ const FilterTags = styled.div`
 `;
 
 const FilterTag = styled.button`
-  background: ${props => props.active ? 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)' : '#f8f9fa'};
-  color: ${props => props.active ? 'white' : '#6c757d'};
-  border: 1px solid ${props => props.active ? 'transparent' : '#e9ecef'};
+  background: ${props => props.$active ? 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)' : '#f8f9fa'};
+  color: ${props => props.$active ? 'white' : '#6c757d'};
+  border: 1px solid ${props => props.$active ? 'transparent' : '#e9ecef'};
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 14px;
@@ -75,8 +75,8 @@ const FilterTag = styled.button`
   transition: all 0.3s ease;
 
   &:hover {
-    background: ${props => props.active ? 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)' : '#e9ecef'};
-    color: ${props => props.active ? 'white' : '#495057'};
+    background: ${props => props.$active ? 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)' : '#e9ecef'};
+    color: ${props => props.$active ? 'white' : '#495057'};
   }
 `;
 
@@ -245,16 +245,16 @@ const PaginationContainer = styled.div`
 const PaginationButton = styled.button`
   padding: 8px 12px;
   border: 1px solid #e9ecef;
-  background: ${props => props.active ? 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)' : 'white'};
-  color: ${props => props.active ? 'white' : '#6c757d'};
+  background: ${props => props.$active ? 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)' : 'white'};
+  color: ${props => props.$active ? 'white' : '#6c757d'};
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-weight: ${props => props.active ? '600' : '400'};
+  font-weight: ${props => props.$active ? '600' : '400'};
 
   &:hover {
-    background: ${props => props.active ? 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)' : '#f8f9fa'};
-    color: ${props => props.active ? 'white' : '#495057'};
+    background: ${props => props.$active ? 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)' : '#f8f9fa'};
+    color: ${props => props.$active ? 'white' : '#495057'};
   }
 
   &:disabled {
@@ -321,7 +321,7 @@ const LoginModalButton = styled.button`
   transition: all 0.3s ease;
   border: none;
 
-  ${props => props.primary ? `
+  ${props => props.$primary ? `
     background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
@@ -411,7 +411,7 @@ const TourismList = () => {
             {regions.map(region => (
               <FilterTag
                 key={region}
-                active={selectedRegion === region}
+                $active={selectedRegion === region}
                 onClick={() => handleFilterChange(region)}
               >
                 {region}
@@ -448,7 +448,7 @@ const TourismList = () => {
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
               <PaginationButton
                 key={page}
-                active={currentPage === page}
+                $active={currentPage === page}
                 onClick={() => handlePageChange(page)}
               >
                 {page}
@@ -491,7 +491,7 @@ const TourismList = () => {
             <LoginModalTitle>로그인이 필요합니다</LoginModalTitle>
             <LoginModalMessage>로그인 후 이용가능 합니다</LoginModalMessage>
             <LoginModalButtons>
-              <LoginModalButton primary onClick={handleLoginClick}>로그인</LoginModalButton>
+              <LoginModalButton $primary onClick={handleLoginClick}>로그인</LoginModalButton>
               <LoginModalButton onClick={() => setShowLoginModal(false)}>취소</LoginModalButton>
             </LoginModalButtons>
           </LoginModalContainer>

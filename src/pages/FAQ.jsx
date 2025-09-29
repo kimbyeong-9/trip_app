@@ -65,30 +65,6 @@ const FAQSubtitle = styled.p`
   line-height: 1.6;
 `;
 
-const FAQCategories = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 40px;
-  flex-wrap: wrap;
-`;
-
-const CategoryButton = styled.button`
-  padding: 12px 24px;
-  border: 2px solid ${props => props.active ? '#667eea' : '#e9ecef'};
-  border-radius: 25px;
-  background: ${props => props.active ? '#667eea' : 'white'};
-  color: ${props => props.active ? 'white' : '#6c757d'};
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: #667eea;
-    background: ${props => props.active ? '#667eea' : 'rgba(102, 126, 234, 0.1)'};
-    color: ${props => props.active ? 'white' : '#667eea'};
-  }
-`;
 
 const FAQList = styled.div`
   max-width: 800px;
@@ -179,18 +155,7 @@ const AnswerContent = styled.div`
 
 const FAQ = () => {
   const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState('all');
   const [expandedItems, setExpandedItems] = useState({});
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const categories = [
-    { id: 'all', name: '전체' },
-    { id: 'account', name: '계정/로그인' },
-    { id: 'booking', name: '예약/결제' },
-    { id: 'travel', name: '여행 일정' },
-    { id: 'companion', name: '동행 모집' },
-    { id: 'service', name: '서비스 이용' }
-  ];
 
   const faqData = [
     {
@@ -328,13 +293,7 @@ const FAQ = () => {
     },
   ];
 
-  const filteredFAQ = faqData.filter(item => {
-    const categoryMatch = activeCategory === 'all' || item.category === activeCategory;
-    const searchMatch = searchTerm === '' ||
-      item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.answer.toLowerCase().includes(searchTerm.toLowerCase());
-    return categoryMatch && searchMatch;
-  });
+  const filteredFAQ = faqData;
 
   const toggleExpanded = (id) => {
     setExpandedItems(prev => ({
@@ -354,17 +313,6 @@ const FAQ = () => {
       </FAQHeader>
 
 
-      <FAQCategories>
-        {categories.map(category => (
-          <CategoryButton
-            key={category.id}
-            active={activeCategory === category.id}
-            onClick={() => setActiveCategory(category.id)}
-          >
-            {category.name}
-          </CategoryButton>
-        ))}
-      </FAQCategories>
 
       <FAQList>
         {filteredFAQ.map(item => (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import repairManIcon from '../assets/icons/free-icon-repair-man-4429935.png';
 import RegionCategories from '../components/RegionCategories';
 import CompanionSection from '../components/CompanionSection';
 import ItinerarySection from '../components/ItinerarySection';
@@ -579,7 +580,9 @@ const Home = () => {
       {showGalleryModal && (
         <GalleryModalOverlay onClick={(e) => e.target === e.currentTarget && closeGalleryModal()}>
           <GalleryModalContainer>
-            <GalleryModalIcon>🎨</GalleryModalIcon>
+            <GalleryModalIcon>
+              <img src={repairManIcon} alt="작업중" style={{ width: '64px', height: '64px' }} />
+            </GalleryModalIcon>
             <GalleryModalTitle>갤러리샵 준비중</GalleryModalTitle>
             <GalleryModalMessage>
               갤러리샵 서비스는 현재 준비중입니다.<br />

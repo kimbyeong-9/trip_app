@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 
-// Styled Components - CompanionCreate와 동일한 스타일 재사용
-const CompanionEditPage = styled.div`
+// Styled Components - CompanionCreate와 동일한 스타일
+const CompanionCreatePage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
   padding-top: 70px;
 `;
 
-const CompanionEditContainer = styled.div`
+const CompanionCreateContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
@@ -171,6 +171,76 @@ const CheckboxText = styled.span`
   color: #495057;
 `;
 
+const ImageUploadArea = styled.div`
+  border: 2px dashed #e9ecef;
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+
+  &:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+  }
+`;
+
+const ImageUploadText = styled.p`
+  color: #6c757d;
+  margin: 0 0 10px 0;
+  font-size: 16px;
+`;
+
+const ImageUploadSubtext = styled.p`
+  color: #adb5bd;
+  margin: 0;
+  font-size: 14px;
+`;
+
+const ImagePreview = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+`;
+
+const ImagePreviewItem = styled.div`
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`;
+
+const PreviewImage = styled.img`
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+`;
+
+const RemoveButton = styled.button`
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(220, 53, 69, 1);
+    transform: scale(1.1);
+  }
+`;
+
 const ButtonGroup = styled.div`
   display: flex;
   gap: 15px;
@@ -190,7 +260,7 @@ const Button = styled.button`
   border: none;
   min-width: 120px;
 
-  ${props => props.primary ? `
+  ${props => props.$primary ? `
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
@@ -233,15 +303,86 @@ const DateInputGroup = styled.div`
   }
 `;
 
-const NotFoundMessage = styled.div`
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 40px 30px 30px 30px;
   text-align: center;
-  padding: 60px 20px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+`;
+
+const ModalIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 20px;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 24px;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const ModalMessage = styled.p`
+  font-size: 16px;
   color: #6c757d;
-  font-size: 18px;
+  margin: 0 0 25px 0;
+  line-height: 1.5;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+`;
+
+const ModalButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+
+  ${props => props.$primary ? `
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+  ` : `
+    background: white;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+
+    &:hover {
+      background: #f8f9fa;
+      color: #495057;
+    }
+  `}
 `;
 
 const CompanionEdit = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
 
   const [formData, setFormData] = useState({
@@ -255,12 +396,15 @@ const CompanionEdit = () => {
     meetingPoint: '',
     estimatedCost: '',
     travelStyle: [],
+    images: [],
     notice: ''
   });
 
+  const [imagePreview, setImagePreview] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [postFound, setPostFound] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   const travelStyles = [
     '느긋한 여행', '계획적인 여행', '즉흥적인 여행',
@@ -275,36 +419,45 @@ const CompanionEdit = () => {
 
   const ageGroups = ['20대', '30대', '40대', '50대+'];
 
-  // 기존 게시물 데이터 로드
+  // 기존 데이터 로드
   useEffect(() => {
-    const loadPostData = () => {
-      const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-      const post = storedPosts.find(p => p.id === parseInt(id));
+    const loadCompanionData = () => {
+      try {
+        const savedPosts = JSON.parse(localStorage.getItem('companionPosts') || '[]');
+        const postToEdit = savedPosts.find(post => post.id === parseInt(id));
 
-      if (post) {
-        // 날짜 분리
-        const [startDate, endDate] = post.date.split(' ~ ');
+        if (postToEdit) {
+          // date 필드에서 시작일과 종료일 분리
+          const [startDate, endDate] = postToEdit.date ? postToEdit.date.split(' ~ ') : ['', ''];
 
-        setFormData({
-          title: post.title || '',
-          startDate: startDate || '',
-          endDate: endDate || '',
-          ageGroup: post.ageGroup || '20대',
-          maxParticipants: post.participants?.max || 2,
-          region: post.region || '서울',
-          description: post.description || '',
-          meetingPoint: post.meetingPoint || '',
-          estimatedCost: post.estimatedCost || '',
-          travelStyle: post.travelStyle || [],
-          notice: post.notice || ''
-        });
-        setPostFound(true);
-      } else {
-        setPostFound(false);
+          setFormData({
+            title: postToEdit.title || '',
+            startDate: startDate || '',
+            endDate: endDate || '',
+            ageGroup: postToEdit.ageGroup || '20대',
+            maxParticipants: postToEdit.participants?.max || 2,
+            region: postToEdit.region || '서울',
+            description: postToEdit.description || '',
+            meetingPoint: postToEdit.meetingPoint || '',
+            estimatedCost: postToEdit.estimatedCost || '',
+            travelStyle: postToEdit.travelStyle || [],
+            images: [],
+            notice: postToEdit.notice || ''
+          });
+
+          // 기존 이미지가 있다면 미리보기에 추가
+          if (postToEdit.image) {
+            setImagePreview([postToEdit.image]);
+          }
+        }
+      } catch (error) {
+        console.error('동행모집 데이터 로드 실패:', error);
       }
     };
 
-    loadPostData();
+    if (id) {
+      loadCompanionData();
+    }
   }, [id]);
 
   const handleInputChange = (e) => {
@@ -332,6 +485,25 @@ const CompanionEdit = () => {
     }));
   };
 
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const newImages = files.map(file => URL.createObjectURL(file));
+
+    setImagePreview(prev => [...prev, ...newImages]);
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...files]
+    }));
+  };
+
+  const removeImage = (index) => {
+    setImagePreview(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -354,71 +526,75 @@ const CompanionEdit = () => {
 
     setIsSubmitting(true);
 
+    // 로그인된 사용자 정보 가져오기
+    const getLoginData = () => {
+      const localData = localStorage.getItem('loginData');
+      const sessionData = sessionStorage.getItem('loginData');
+      return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+    };
+
+    const loginData = getLoginData();
+
     try {
+      // 기존 게시물 목록 가져오기
+      const existingPosts = JSON.parse(localStorage.getItem('companionPosts') || '[]');
+
+      // 수정된 게시물 데이터 생성
+      const updatedPost = {
+        id: parseInt(id),
+        title: formData.title,
+        ageGroup: formData.ageGroup,
+        region: formData.region,
+        date: `${formData.startDate} ~ ${formData.endDate}`,
+        description: formData.description,
+        participants: { current: 1, max: formData.maxParticipants },
+        image: imagePreview[0] || "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+        author: loginData?.user?.name || "익명사용자",
+        meetingPoint: formData.meetingPoint,
+        estimatedCost: formData.estimatedCost,
+        travelStyle: formData.travelStyle,
+        notice: formData.notice,
+        updatedAt: new Date().toISOString()
+      };
+
       // 기존 게시물 업데이트
-      const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-      const postIndex = storedPosts.findIndex(p => p.id === parseInt(id));
+      const updatedPosts = existingPosts.map(post =>
+        post.id === parseInt(id) ? updatedPost : post
+      );
 
-      if (postIndex !== -1) {
-        // 기존 게시물 유지하면서 수정된 필드만 업데이트
-        storedPosts[postIndex] = {
-          ...storedPosts[postIndex],
-          title: formData.title,
-          ageGroup: formData.ageGroup,
-          region: formData.region,
-          date: `${formData.startDate} ~ ${formData.endDate}`,
-          description: formData.description,
-          participants: { ...storedPosts[postIndex].participants, max: formData.maxParticipants },
-          meetingPoint: formData.meetingPoint,
-          estimatedCost: formData.estimatedCost,
-          travelStyle: formData.travelStyle,
-          notice: formData.notice,
-          updatedAt: new Date().toISOString()
-        };
+      localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
 
-        localStorage.setItem('companionPosts', JSON.stringify(storedPosts));
-
-        setTimeout(() => {
-          setIsSubmitting(false);
-          alert('동행모집이 성공적으로 수정되었습니다!');
-          navigate('/profile/user');
-        }, 1000);
-      }
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setShowSubmitModal(true);
+      }, 2000);
     } catch (error) {
-      console.error('수정 중 오류가 발생했습니다:', error);
-      alert('수정에 실패했습니다. 다시 시도해주세요.');
+      console.error('동행모집 수정 오류:', error);
+      alert('수정 중 오류가 발생했습니다. 다시 시도해주세요.');
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/profile/user');
+    setShowCancelModal(true);
   };
 
-  if (!postFound) {
-    return (
-      <CompanionEditPage>
-        <Navigation />
-        <CompanionEditContainer>
-          <NotFoundMessage>
-            수정할 게시물을 찾을 수 없습니다.
-            <br />
-            <Button onClick={() => navigate('/profile/user')} style={{ marginTop: '20px' }}>
-              마이페이지로 돌아가기
-            </Button>
-          </NotFoundMessage>
-        </CompanionEditContainer>
-      </CompanionEditPage>
-    );
-  }
+  const confirmCancel = () => {
+    navigate(-1); // 이전 페이지로 돌아가기
+  };
+
+  const confirmSubmit = () => {
+    setShowSubmitModal(false);
+    navigate(-1); // 이전 페이지로 돌아가기
+  };
 
   return (
-    <CompanionEditPage>
+    <CompanionCreatePage>
       <Navigation />
 
-      <CompanionEditContainer>
+      <CompanionCreateContainer>
         <PageHeader>
-          <PageTitle>동행모집 수정</PageTitle>
+          <PageTitle>동행모집 글 수정</PageTitle>
         </PageHeader>
 
         <FormContainer>
@@ -577,6 +753,38 @@ const CompanionEdit = () => {
             </FormSection>
 
             <FormSection>
+              <SectionTitle>사진 업로드</SectionTitle>
+
+              <FormGroup>
+                <ImageUploadArea onClick={() => document.getElementById('imageUpload').click()}>
+                  <ImageUploadText>📷 사진을 업로드해주세요</ImageUploadText>
+                  <ImageUploadSubtext>최대 10장까지 업로드 가능합니다</ImageUploadSubtext>
+                </ImageUploadArea>
+                <input
+                  id="imageUpload"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                />
+
+                {imagePreview.length > 0 && (
+                  <ImagePreview>
+                    {imagePreview.map((url, index) => (
+                      <ImagePreviewItem key={index}>
+                        <PreviewImage src={url} alt={`Preview ${index + 1}`} />
+                        <RemoveButton onClick={() => removeImage(index)}>
+                          ×
+                        </RemoveButton>
+                      </ImagePreviewItem>
+                    ))}
+                  </ImagePreview>
+                )}
+              </FormGroup>
+            </FormSection>
+
+            <FormSection>
               <SectionTitle>추가 안내사항</SectionTitle>
 
               <FormGroup>
@@ -594,14 +802,42 @@ const CompanionEdit = () => {
               <Button type="button" onClick={handleCancel}>
                 취소
               </Button>
-              <Button type="submit" primary disabled={isSubmitting}>
+              <Button type="submit" $primary disabled={isSubmitting}>
                 {isSubmitting ? '수정 중...' : '수정하기'}
               </Button>
             </ButtonGroup>
           </form>
         </FormContainer>
-      </CompanionEditContainer>
-    </CompanionEditPage>
+      </CompanionCreateContainer>
+
+      {/* 취소 확인 모달 */}
+      {showCancelModal && (
+        <Modal onClick={() => setShowCancelModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalIcon>⚠️</ModalIcon>
+            <ModalTitle>수정을 취소하시겠습니까?</ModalTitle>
+            <ModalMessage>수정 중인 내용이 모두 사라집니다.</ModalMessage>
+            <ModalButtons>
+              <ModalButton onClick={() => setShowCancelModal(false)}>계속 수정</ModalButton>
+              <ModalButton $primary onClick={confirmCancel}>취소하기</ModalButton>
+            </ModalButtons>
+          </ModalContent>
+        </Modal>
+      )}
+
+      {/* 수정 완료 모달 */}
+      {showSubmitModal && (
+        <Modal onClick={() => setShowSubmitModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>수정이 완료되었습니다!</ModalTitle>
+            <ModalMessage>동행모집 글이 성공적으로 수정되었습니다.</ModalMessage>
+            <ModalButtons>
+              <ModalButton $primary onClick={confirmSubmit}>확인</ModalButton>
+            </ModalButtons>
+          </ModalContent>
+        </Modal>
+      )}
+    </CompanionCreatePage>
   );
 };
 

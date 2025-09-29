@@ -277,8 +277,8 @@ const PaginationContainer = styled.div`
 const PaginationButton = styled.button`
   padding: 10px 15px;
   border: 1px solid #e9ecef;
-  background: ${props => props.active ? '#667eea' : 'white'};
-  color: ${props => props.active ? 'white' : '#6c757d'};
+  background: ${props => props.$active ? '#667eea' : 'white'};
+  color: ${props => props.$active ? 'white' : '#6c757d'};
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
@@ -286,9 +286,9 @@ const PaginationButton = styled.button`
   min-width: 40px;
 
   &:hover:not(:disabled) {
-    background: ${props => props.active ? '#667eea' : '#f8f9fa'};
+    background: ${props => props.$active ? '#667eea' : '#f8f9fa'};
     border-color: #667eea;
-    color: ${props => props.active ? 'white' : '#667eea'};
+    color: ${props => props.$active ? 'white' : '#667eea'};
   }
 
   &:disabled {
@@ -541,7 +541,7 @@ const Notice = () => {
       buttons.push(
         <PaginationButton
           key={i}
-          active={currentPage === i}
+          $active={currentPage === i}
           onClick={() => handlePageChange(i)}
         >
           {i}

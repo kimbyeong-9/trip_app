@@ -118,27 +118,6 @@ const Input = styled.input`
   }
 `;
 
-const Select = styled.select`
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-  background-color: white;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-
-  &:disabled {
-    background-color: #f8f9fa;
-    opacity: 0.6;
-  }
-`;
 
 const PasswordInputContainer = styled.div`
   position: relative;
@@ -305,6 +284,130 @@ const BackArrowButton = styled.button`
   }
 `;
 
+const VerificationSection = styled.div`
+  border: 2px solid ${props => props.$verified ? '#28a745' : '#e9ecef'};
+  border-radius: 12px;
+  padding: 20px;
+  background-color: ${props => props.$verified ? '#f8fff9' : '#fafafa'};
+  position: relative;
+  transition: all 0.3s ease;
+`;
+
+const VerificationTitle = styled.div`
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .icon {
+    color: ${props => props.$verified ? '#28a745' : '#6c757d'};
+  }
+`;
+
+const VerificationInputGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  margin-top: 20px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+`;
+
+const VerificationButton = styled.button`
+  background: ${props => props.$sent ? '#6c757d' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  opacity: ${props => props.disabled ? 0.6 : 1};
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  @media (max-width: 480px) {
+    padding: 15px 20px;
+  }
+`;
+
+const VerificationStatus = styled.div`
+  font-size: 12px;
+  color: ${props => props.$verified ? '#28a745' : '#6c757d'};
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+
+  .timer {
+    color: #ff6b6b;
+    font-weight: 600;
+  }
+`;
+
+const SuccessIcon = styled.div`
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 24px;
+  height: 24px;
+  background: #28a745;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+`;
+
+const GenderButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+`;
+
+const GenderButton = styled.button`
+  padding: 10px 20px;
+  border: 2px solid ${props => props.$selected ? '#667eea' : '#e9ecef'};
+  border-radius: 25px;
+  background: ${props => props.$selected ? '#667eea' : 'white'};
+  color: ${props => props.$selected ? 'white' : '#6c757d'};
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: #667eea;
+    background: ${props => props.$selected ? '#667eea' : 'rgba(102, 126, 234, 0.1)'};
+    color: ${props => props.$selected ? 'white' : '#667eea'};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const PasswordErrorMessage = styled.div`
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+  padding-left: 5px;
+`;
+
 const Signup = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -322,6 +425,12 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isVerificationSent, setIsVerificationSent] = useState(false);
+  const [verificationTimer, setVerificationTimer] = useState(0);
+  const [passwordError, setPasswordError] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -329,6 +438,139 @@ const Signup = () => {
       ...prev,
       [name]: value
     }));
+
+    // 이메일 중복 검사
+    if (name === 'email') {
+      setEmailError('');
+      if (value) {
+        checkEmailDuplicate(value);
+      }
+    }
+
+    // 비밀번호 확인 실시간 검증
+    if (name === 'confirmPassword') {
+      if (value && formData.password && value !== formData.password) {
+        setPasswordError('비밀번호가 일치하지 않습니다.');
+      } else {
+        setPasswordError('');
+      }
+    }
+
+    // 비밀번호 변경시 확인란도 다시 검증
+    if (name === 'password') {
+      if (formData.confirmPassword && value !== formData.confirmPassword) {
+        setPasswordError('비밀번호가 일치하지 않습니다.');
+      } else {
+        setPasswordError('');
+      }
+    }
+  };
+
+  // 성별 선택 핸들러
+  const handleGenderSelect = (gender) => {
+    setFormData(prev => ({
+      ...prev,
+      gender: prev.gender === gender ? '' : gender
+    }));
+  };
+
+  // 이메일 중복 검사
+  const checkEmailDuplicate = (email) => {
+    // 로컬스토리지에서 기존 사용자 확인
+    const existingUsers = JSON.parse(localStorage.getItem('registeredEmails')) || [];
+    if (existingUsers.includes(email)) {
+      setEmailError('이미 사용 중인 이메일입니다.');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  // 타이머 효과
+  React.useEffect(() => {
+    let interval = null;
+    if (verificationTimer > 0) {
+      interval = setInterval(() => {
+        setVerificationTimer(prev => prev - 1);
+      }, 1000);
+    } else if (verificationTimer === 0 && isVerificationSent) {
+      setIsVerificationSent(false);
+    }
+    return () => clearInterval(interval);
+  }, [verificationTimer, isVerificationSent]);
+
+  // 인증번호 발송
+  const handleSendVerification = async () => {
+    if (!formData.phone) {
+      setError('휴대폰 번호를 먼저 입력해주세요.');
+      return;
+    }
+
+    if (!/^01[016789]-?\d{3,4}-?\d{4}$/.test(formData.phone.replace(/-/g, ''))) {
+      setError('올바른 휴대폰 번호 형식을 입력해주세요.');
+      return;
+    }
+
+    setIsVerificationSent(true);
+    setVerificationTimer(180); // 3분
+    setError('');
+
+    // 실제로는 서버에 인증번호 발송 요청
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    alert(`${formData.phone}로 인증번호가 발송되었습니다.`);
+  };
+
+  // 인증번호 확인
+  const handleVerifyCode = async () => {
+    if (!verificationCode) {
+      setError('인증번호를 입력해주세요.');
+      return;
+    }
+
+    if (verificationCode.length !== 6) {
+      setError('인증번호는 6자리 숫자입니다.');
+      return;
+    }
+
+    // 실제로는 서버에서 인증번호 검증
+    // 여기서는 시뮬레이션으로 '123456'을 정답으로 설정
+    if (verificationCode === '123456') {
+      setIsVerified(true);
+      setError('');
+      alert('휴대폰 인증이 완료되었습니다!');
+    } else {
+      setError('인증번호가 올바르지 않습니다.');
+    }
+  };
+
+  // 인증번호 재발송
+  const handleResendVerification = () => {
+    setVerificationCode('');
+    setIsVerified(false);
+    handleSendVerification();
+  };
+
+  // 전화번호 포맷팅
+  const formatPhoneNumber = (value) => {
+    const phone = value.replace(/[^\d]/g, '');
+    if (phone.length <= 3) return phone;
+    if (phone.length <= 7) return `${phone.slice(0, 3)}-${phone.slice(3)}`;
+    return `${phone.slice(0, 3)}-${phone.slice(3, 7)}-${phone.slice(7, 11)}`;
+  };
+
+  const handlePhoneChange = (e) => {
+    const formattedPhone = formatPhoneNumber(e.target.value);
+    setFormData(prev => ({
+      ...prev,
+      phone: formattedPhone
+    }));
+
+    // 전화번호가 변경되면 인증 상태 초기화
+    if (isVerified || isVerificationSent) {
+      setIsVerified(false);
+      setIsVerificationSent(false);
+      setVerificationCode('');
+      setVerificationTimer(0);
+    }
   };
 
   const validateForm = () => {
@@ -348,6 +590,12 @@ const Signup = () => {
       return false;
     }
 
+    // 이메일 중복 검사
+    if (emailError) {
+      setError(emailError);
+      return false;
+    }
+
     if (formData.password.length < 6) {
       setError('비밀번호는 6자 이상 입력해주세요.');
       return false;
@@ -358,8 +606,19 @@ const Signup = () => {
       return false;
     }
 
+    // 비밀번호 에러가 있으면 제출 차단
+    if (passwordError) {
+      setError(passwordError);
+      return false;
+    }
+
     if (formData.phone && !/^01[016789]-?\d{3,4}-?\d{4}$/.test(formData.phone.replace(/-/g, ''))) {
       setError('올바른 휴대폰 번호 형식을 입력해주세요.');
+      return false;
+    }
+
+    if (formData.phone && !isVerified) {
+      setError('휴대폰 번호 인증을 완료해주세요.');
       return false;
     }
 
@@ -384,6 +643,11 @@ const Signup = () => {
     try {
       // 회원가입 시뮬레이션 (실제로는 서버 API 호출)
       await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // 이메일을 등록된 이메일 목록에 추가
+      const existingEmails = JSON.parse(localStorage.getItem('registeredEmails')) || [];
+      existingEmails.push(formData.email);
+      localStorage.setItem('registeredEmails', JSON.stringify(existingEmails));
 
       // 회원가입 성공 시 자동 로그인
       const userData = {
@@ -451,8 +715,9 @@ const Signup = () => {
               placeholder="이메일을 입력하세요"
               required
               disabled={isLoading}
-              className={error && error.includes('이메일') ? 'error' : ''}
+              className={emailError || (error && error.includes('이메일')) ? 'error' : ''}
             />
+            {emailError && <PasswordErrorMessage>{emailError}</PasswordErrorMessage>}
           </FormGroup>
 
           <FormGroup>
@@ -502,7 +767,7 @@ const Signup = () => {
                 placeholder="비밀번호를 다시 입력하세요"
                 required
                 disabled={isLoading}
-                className={error && error.includes('일치하지') ? 'error' : ''}
+                className={passwordError || (error && error.includes('일치하지')) ? 'error' : ''}
               />
               <PasswordToggle
                 type="button"
@@ -523,20 +788,7 @@ const Signup = () => {
                 )}
               </PasswordToggle>
             </PasswordInputContainer>
-          </FormGroup>
-
-          <FormGroup>
-            <Label htmlFor="phone">휴대폰 번호</Label>
-            <Input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="010-1234-5678"
-              disabled={isLoading}
-              className={error && error.includes('휴대폰') ? 'error' : ''}
-            />
+            {passwordError && <PasswordErrorMessage>{passwordError}</PasswordErrorMessage>}
           </FormGroup>
 
           <FormRow>
@@ -553,20 +805,114 @@ const Signup = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label htmlFor="gender">성별</Label>
-              <Select
-                id="gender"
-                name="gender"
-                value={formData.gender}
-                onChange={handleInputChange}
-                disabled={isLoading}
-              >
-                <option value="">선택안함</option>
-                <option value="male">남성</option>
-                <option value="female">여성</option>
-              </Select>
+              <Label>성별</Label>
+              <GenderButtonGroup>
+                <GenderButton
+                  type="button"
+                  $selected={formData.gender === 'male'}
+                  onClick={() => handleGenderSelect('male')}
+                  disabled={isLoading}
+                >
+                  남성
+                </GenderButton>
+                <GenderButton
+                  type="button"
+                  $selected={formData.gender === 'female'}
+                  onClick={() => handleGenderSelect('female')}
+                  disabled={isLoading}
+                >
+                  여성
+                </GenderButton>
+              </GenderButtonGroup>
             </FormGroup>
           </FormRow>
+
+          {/* 본인인증 섹션 */}
+          <FormGroup>
+            <VerificationSection $verified={isVerified}>
+              {isVerified && <SuccessIcon>✓</SuccessIcon>}
+              <VerificationTitle $verified={isVerified}>
+                본인인증
+              </VerificationTitle>
+
+              <FormGroup>
+                <Label htmlFor="phone">휴대폰 번호</Label>
+                <Input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handlePhoneChange}
+                  placeholder="010-1234-5678"
+                  disabled={isLoading || isVerified}
+                  className={error && error.includes('휴대폰') ? 'error' : ''}
+                  maxLength={13}
+                />
+              </FormGroup>
+
+              {formData.phone && !isVerified && (
+                <>
+                  <VerificationInputGroup>
+                    <Input
+                      type="text"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="인증번호 6자리"
+                      disabled={isLoading || !isVerificationSent}
+                      maxLength={6}
+                      style={{ flex: 1 }}
+                    />
+                    {!isVerificationSent ? (
+                      <VerificationButton
+                        type="button"
+                        onClick={handleSendVerification}
+                        disabled={isLoading || !formData.phone}
+                      >
+                        인증번호 발송
+                      </VerificationButton>
+                    ) : (
+                      <VerificationButton
+                        type="button"
+                        onClick={handleVerifyCode}
+                        disabled={isLoading || !verificationCode || verificationCode.length !== 6}
+                      >
+                        인증확인
+                      </VerificationButton>
+                    )}
+                  </VerificationInputGroup>
+
+                  <VerificationStatus $verified={isVerified}>
+                    {isVerificationSent && verificationTimer > 0 && (
+                      <>
+                        <span>인증번호가 발송되었습니다.</span>
+                        <span className="timer">
+                          {Math.floor(verificationTimer / 60)}:{(verificationTimer % 60).toString().padStart(2, '0')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleResendVerification}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#667eea',
+                            textDecoration: 'underline',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            marginLeft: '10px'
+                          }}
+                        >
+                          재발송
+                        </button>
+                      </>
+                    )}
+                    {isVerified && (
+                      <span style={{ color: '#28a745' }}>✅ 휴대폰 인증이 완료되었습니다.</span>
+                    )}
+                  </VerificationStatus>
+                </>
+              )}
+            </VerificationSection>
+          </FormGroup>
 
           <TermsSection>
             <TermsItem>

@@ -93,9 +93,9 @@ const FilterTags = styled.div`
 
 const FilterTag = styled.button`
   padding: 6px 12px;
-  border: 2px solid ${props => props.active ? '#667eea' : '#e9ecef'};
-  background: ${props => props.active ? '#667eea' : 'white'};
-  color: ${props => props.active ? 'white' : '#495057'};
+  border: 2px solid ${props => props.$active ? '#667eea' : '#e9ecef'};
+  background: ${props => props.$active ? '#667eea' : 'white'};
+  color: ${props => props.$active ? 'white' : '#495057'};
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
@@ -105,7 +105,7 @@ const FilterTag = styled.button`
 
   &:hover {
     border-color: #667eea;
-    background: ${props => props.active ? '#5a6fd8' : '#f8f9fa'};
+    background: ${props => props.$active ? '#5a6fd8' : '#f8f9fa'};
   }
 `;
 
@@ -245,7 +245,7 @@ const MobileCardTag = styled.span`
       case 'region': return '#f3e5f5';
       case 'date': return '#e8f5e8';
       case 'participants': return '#fff3e0';
-      case 'status': return props.isRecruiting ? '#e8f5e8' : '#ffebee';
+      case 'status': return props.$isRecruiting ? '#e8f5e8' : '#ffebee';
       default: return '#f8f9fa';
     }
   }};
@@ -255,7 +255,7 @@ const MobileCardTag = styled.span`
       case 'region': return '#7b1fa2';
       case 'date': return '#2e7d32';
       case 'participants': return '#f57c00';
-      case 'status': return props.isRecruiting ? '#2e7d32' : '#c62828';
+      case 'status': return props.$isRecruiting ? '#2e7d32' : '#c62828';
       default: return '#495057';
     }
   }};
@@ -368,8 +368,8 @@ const ParticipantsCell = styled.div`
 `;
 
 const StatusCell = styled.div`
-  background: ${props => props.isRecruiting ? '#e8f5e8' : '#ffebee'};
-  color: ${props => props.isRecruiting ? '#2e7d32' : '#c62828'};
+  background: ${props => props.$isRecruiting ? '#e8f5e8' : '#ffebee'};
+  color: ${props => props.$isRecruiting ? '#2e7d32' : '#c62828'};
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
@@ -426,15 +426,15 @@ const Pagination = styled.div`
 const PageButton = styled.button`
   padding: 8px 12px;
   border: 1px solid #e9ecef;
-  background: ${props => props.active ? '#667eea' : 'white'};
-  color: ${props => props.active ? 'white' : '#495057'};
+  background: ${props => props.$active ? '#667eea' : 'white'};
+  color: ${props => props.$active ? 'white' : '#495057'};
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s ease;
 
   &:hover {
-    background: ${props => props.active ? '#5a6fd8' : '#f8f9fa'};
+    background: ${props => props.$active ? '#5a6fd8' : '#f8f9fa'};
     transform: translateY(-1px);
   }
 
@@ -666,7 +666,7 @@ const CompanionList = () => {
                 {['all', ...ageGroups].map(age => (
                   <FilterTag
                     key={age}
-                    active={selectedAge === age}
+                    $active={selectedAge === age}
                     onClick={() => setSelectedAge(age)}
                   >
                     {age === 'all' ? '전체' : age}
@@ -681,7 +681,7 @@ const CompanionList = () => {
                 {['all', ...regions].map(region => (
                   <FilterTag
                     key={region}
-                    active={selectedRegion === region}
+                    $active={selectedRegion === region}
                     onClick={() => setSelectedRegion(region)}
                   >
                     {region === 'all' ? '전체' : region}
@@ -710,7 +710,7 @@ const CompanionList = () => {
                 ].map(month => (
                   <FilterTag
                     key={month.value}
-                    active={selectedMonth === month.value}
+                    $active={selectedMonth === month.value}
                     onClick={() => setSelectedMonth(month.value)}
                   >
                     {month.label}
@@ -767,7 +767,7 @@ const CompanionList = () => {
                   <ParticipantsCell>
                     {post.participants.current}/{post.participants.max}명
                   </ParticipantsCell>
-                  <StatusCell isRecruiting={post.participants.current < post.participants.max}>
+                  <StatusCell $isRecruiting={post.participants.current < post.participants.max}>
                     {post.participants.current < post.participants.max ? '모집중' : '마감'}
                   </StatusCell>
                 </TableRow>
@@ -798,7 +798,7 @@ const CompanionList = () => {
                     </MobileCardTag>
                     <MobileCardTag
                       type="status"
-                      isRecruiting={post.participants.current < post.participants.max}
+                      $isRecruiting={post.participants.current < post.participants.max}
                     >
                       {post.participants.current < post.participants.max ? '모집중' : '마감'}
                     </MobileCardTag>
@@ -829,7 +829,7 @@ const CompanionList = () => {
               <PageButton
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                active={currentPage === page}
+                $active={currentPage === page}
               >
                 {page}
               </PageButton>

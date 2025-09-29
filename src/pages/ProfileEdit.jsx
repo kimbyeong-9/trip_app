@@ -6,44 +6,9 @@ const ProfileEditContainer = styled.div`
   min-height: 100vh;
   background: white;
   padding: 0;
+  padding-top: 0 !important;
 `;
 
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
-  margin-bottom: 10px;
-`;
-
-const BackButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  }
-`;
-
-const HeaderTitle = styled.h1`
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0;
-`;
 
 const ProfileEditContent = styled.div`
   max-width: 600px;
@@ -53,13 +18,13 @@ const ProfileEditContent = styled.div`
 
 const ProfileEditCard = styled.div`
   background: white;
-  border-radius: 12px;
-  padding: 40px;
+  border-radius: 0;
+  padding: 40px 20px;
   box-shadow: none;
   position: relative;
-  min-height: calc(100vh - 40px);
-  border: 2px solid #e9ecef;
-  margin: 20px;
+  min-height: 100vh;
+  border: none;
+  margin: 0;
 `;
 
 const CardHeader = styled.div`
@@ -74,19 +39,20 @@ const CardBackButton = styled.button`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   position: absolute;
   left: 0;
   top: 0;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
   }
 `;
 

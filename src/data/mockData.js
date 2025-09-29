@@ -53,54 +53,6 @@ export const companionCards = [
 // 일정 카드 데이터
 export const itineraryCards = [
   {
-    id: 1,
-    title: "서울 2박3일 완벽 코스",
-    region: "서울",
-    author: {
-      name: "서울러버",
-      profileImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
-    },
-    date: "2024-01-10~2024-01-12",
-    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-    description: "서울의 대표 명소들을 효율적으로 돌아보는 완벽한 코스입니다. 경복궁, 북촌한옥마을, 인사동, 명동을 포함한 핫플레이스까지!",
-    views: 1524,
-    likes: 89,
-    createdAt: "2024-01-10T09:00:00Z",
-    detailedDescription: "서울의 전통과 현대가 공존하는 매력을 만끽할 수 있는 완벽한 2박3일 코스입니다.\n\n▶ 1일차: 경복궁 - 북촌한옥마을 - 인사동 - 청계천\n▶ 2일차: 명동 - 남산타워 - 동대문 디자인플라자 - 홍대\n▶ 3일차: 강남 - 압구정 - 한강공원 - 쇼핑\n\n대중교통으로 편리하게 이동 가능하며, 맛집 정보와 포토스팟까지 모두 포함된 알찬 일정입니다!",
-    tags: ["문화", "쇼핑", "맛집", "전통"]
-  },
-  {
-    id: 2,
-    title: "제주도 4박5일 자유여행",
-    region: "제주",
-    author: {
-      name: "제주매니아",
-      profileImage: "https://images.unsplash.com/photo-1494790108755-2616b612b1d1?w=100&h=100&fit=crop&crop=face"
-    },
-    date: "2024-01-15~2024-01-19",
-    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
-    description: "제주도의 숨은 명소와 맛집을 찾아 떠나는 자유여행 코스입니다. 한라산, 성산일출봉, 우도까지 완주!",
-    views: 1856,
-    likes: 142,
-    createdAt: "2024-01-15T08:00:00Z",
-    detailedDescription: "제주도의 숨겨진 보석같은 명소들을 찾아 떠나는 완벽한 자유여행 코스입니다.\n\n▶ 1일차: 제주공항 - 용두암 - 제주시내 맛집투어 - 동문시장\n▶ 2일차: 한라산 국립공원 - 1100고지 - 중문관광단지 - 천지연폭포\n▶ 3일차: 성산일출봉 - 우도 - 성산포 해수욕장 - 섭지코지\n▶ 4일차: 만장굴 - 김녕해수욕장 - 제주민속촌 - 카페거리\n▶ 5일차: 애월해안도로 - 한림공원 - 협재해수욕장 - 공항\n\n렌터카로 자유롭게 이동하며 제주도만의 특별한 매력을 만끽할 수 있는 일정입니다!",
-    tags: ["자연탐방", "해변", "맛집", "드라이브"]
-  },
-  {
-    id: 3,
-    title: "부산 먹거리 투어",
-    region: "부산",
-    author: "부산푸드",
-    date: "2024-02-01~2024-02-02",
-    image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop",
-    description: "부산의 대표 먹거리들을 맛볼 수 있는 투어입니다. 해운대, 광안리, 자갈치시장의 신선한 해산물까지!",
-    views: 2134,
-    likes: 178,
-    createdAt: "2024-02-01T10:30:00Z",
-    detailedDescription: "부산의 진짜 맛을 찾아 떠나는 미식 여행! 바다가 주는 신선한 해산물부터 부산만의 독특한 길거리 음식까지.\n\n▶ 1일차 오전: 자갈치시장 - 신선한 회와 해산물 시식\n▶ 1일차 점심: 부산어묵 체험관 - 밀면 맛집 투어\n▶ 1일차 저녁: 해운대 포장마차 - 부산 대표 술집\n▶ 2일차 오전: 국제시장 - 씨앗호떡, 비빔당면\n▶ 2일차 점심: 광안리 해변 - 조개구이, 꼼장어\n▶ 2일차 저녁: 서면 맛집거리 - 돼지국밥, 동래파전\n\n부산 현지인이 추천하는 진짜 맛집들만 엄선했습니다!",
-    tags: ["맛집투어", "해산물", "길거리음식", "시장"]
-  },
-  {
     id: 4,
     title: "강원도 설악산 등반",
     region: "강원",
@@ -712,61 +664,101 @@ export const chatRooms = [
     id: 1,
     title: "제주여행",
     members: 8,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop",
+    creator: {
+      name: "제주러버",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 2,
     title: "사진찍기 좋은곳",
     members: 52,
-    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
+    creator: {
+      name: "포토그래퍼",
+      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 3,
     title: "서울 맛집",
     members: 23,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1549693578-d683be217e58?w=400&h=300&fit=crop",
+    creator: {
+      name: "맛집헌터",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 4,
     title: "등산 동호회",
     members: 15,
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
+    creator: {
+      name: "산악대장",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 5,
     title: "부산 해운대",
     members: 31,
-    image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop",
+    creator: {
+      name: "바다매니아",
+      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 6,
     title: "강원도 여행",
     members: 19,
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=300&fit=crop",
+    creator: {
+      name: "강원도민",
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 7,
     title: "전주 한옥마을",
     members: 12,
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+    creator: {
+      name: "한옥지킴이",
+      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 8,
     title: "경주 역사투어",
     members: 27,
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
+    creator: {
+      name: "역사탐험가",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 9,
     title: "인천 차이나타운",
     members: 14,
-    image: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=300&fit=crop",
+    creator: {
+      name: "차이나타운가이드",
+      avatar: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face"
+    }
   },
   {
     id: 10,
     title: "안동 하회마을",
     members: 6,
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face"
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+    creator: {
+      name: "전통마을지킴이",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face"
+    }
   }
 ];
 

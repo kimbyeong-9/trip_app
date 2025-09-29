@@ -242,11 +242,11 @@ const ProfileStats = styled.div`
 
 const StatItem = styled.div`
   text-align: center;
-  cursor: ${props => props.clickable ? 'pointer' : 'default'};
+  cursor: ${props => props.$clickable ? 'pointer' : 'default'};
   transition: all 0.3s ease;
 
   &:hover {
-    ${props => props.clickable && `
+    ${props => props.$clickable && `
       transform: translateY(-2px);
       color: #667eea;
     `}
@@ -638,60 +638,6 @@ const InterestTag = styled.span`
   }
 `;
 
-const TripCards = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-`;
-
-const TripCard = styled.div`
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-  background: #fafbfc;
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
-  transition: all 0.3s ease;
-  position: relative;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    background: white;
-  }
-`;
-
-const TripImage = styled.img`
-  width: 100px;
-  height: 75px;
-  border-radius: 12px;
-  object-fit: cover;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-`;
-
-const TripInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1;
-`;
-
-const TripTitle = styled.h4`
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 6px 0;
-  line-height: 1.3;
-`;
-
-const TripMeta = styled.p`
-  color: #6c757d;
-  font-weight: 500;
-  margin: 0;
-  font-size: 14px;
-`;
-
 const EmptyMessage = styled.div`
   text-align: center;
   padding: 40px 20px;
@@ -700,45 +646,6 @@ const EmptyMessage = styled.div`
   background: #f8f9fa;
   border-radius: 12px;
   border: 1px dashed #dee2e6;
-`;
-
-const TripManageButtons = styled.div`
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: flex;
-  gap: 8px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-
-  ${TripCard}:hover & {
-    opacity: 1;
-  }
-`;
-
-const ManageButton = styled.button`
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-
-  &.edit {
-    background: #28a745;
-    color: white;
-  }
-
-  &.delete {
-    background: #dc3545;
-    color: white;
-  }
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  }
 `;
 
 const SectionHeader = styled.div`
@@ -1029,6 +936,7 @@ const InterestedTripCard = styled.div`
   border: 1px solid #e9ecef;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 
   &:hover {
     background: white;
@@ -1089,6 +997,40 @@ const TripAuthorName = styled.span`
   font-size: 12px;
   color: #6c757d;
   font-weight: 500;
+`;
+
+const SavedScheduleDeleteButton = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+
+  ${InterestedTripCard}:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 const ActionButtonsContainer = styled.div`
@@ -1231,6 +1173,319 @@ const PostMeta = styled.div`
   align-items: center;
 `;
 
+// 일정 작성 방법 선택 모달 스타일
+const CreateModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const CreateModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px 30px 30px 30px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+`;
+
+const CreateModalTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const CreateModalMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+`;
+
+const CreateOptionsContainer = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 20px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+`;
+
+const CreateOptionButton = styled.button`
+  background: ${props => props.$primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
+  color: ${props => props.$primary ? 'white' : '#667eea'};
+  border: 2px solid #667eea;
+  padding: 15px 25px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: ${props => props.$primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#667eea'};
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+const CreateOptionText = styled.span`
+  font-size: 14px;
+`;
+
+const CreateCancelButton = styled.button`
+  background: white;
+  color: #6c757d;
+  border: 2px solid #e9ecef;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f8f9fa;
+    color: #495057;
+  }
+`;
+
+// 날짜 선택 모달 스타일
+const DatePickerModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const DatePickerModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+`;
+
+const DatePickerTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const DatePickerMessage = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+`;
+
+const DateInputContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 30px;
+`;
+
+const DateInputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+`;
+
+const DateLabel = styled.label`
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+`;
+
+const DateInput = styled.input`
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+`;
+
+const DateButtonGroup = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+`;
+
+const DateConfirmButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+`;
+
+const DateCancelButton = styled.button`
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+  }
+`;
+
+// 텍스트 리스트 형식을 위한 새로운 스타일 컴포넌트들
+const TextListContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const TextListItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  gap: 12px;
+
+  &:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+  }
+`;
+
+const TextListImage = styled.img`
+  width: 60px;
+  height: 45px;
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+`;
+
+const TextListContent = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const TextListTitle = styled.h4`
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+  line-height: 1.3;
+`;
+
+const TextListMeta = styled.p`
+  font-size: 14px;
+  color: #6c757d;
+  margin: 0;
+`;
+
+const TextListActions = styled.div`
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  ${TextListItem}:hover & {
+    opacity: 1;
+  }
+`;
+
+const TextListButton = styled.button`
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+
+  &.edit {
+    background: #28a745;
+    color: white;
+  }
+
+  &.delete {
+    background: #dc3545;
+    color: white;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+`;
+
 const UserProfile = () => {
   const navigate = useNavigate();
   const { username } = useParams();
@@ -1239,16 +1494,13 @@ const UserProfile = () => {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [savedSchedules, setSavedSchedules] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
   const [activePostTab, setActivePostTab] = useState('companion');
-
-  // 저장된 일정 로드
-  useEffect(() => {
-    const loadSavedSchedules = () => {
-      const saved = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
-      setSavedSchedules(saved);
-    };
-    loadSavedSchedules();
-  }, []);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedStartDate, setSelectedStartDate] = useState('');
+  const [selectedEndDate, setSelectedEndDate] = useState('');
+  const [isAICreate, setIsAICreate] = useState(false);
 
   // 현재 로그인한 사용자 정보 가져오기
   const getCurrentUser = () => {
@@ -1261,12 +1513,25 @@ const UserProfile = () => {
 
   const currentUser = getCurrentUser();
 
+  // 유효하지 않은 blob URL을 기본 이미지로 교체하는 함수
+  const sanitizeImageUrl = (imageUrl) => {
+    if (!imageUrl || imageUrl.startsWith('blob:')) {
+      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+    }
+    return imageUrl;
+  };
+
   // 내가 올린 동행모집 가져오기
   const getMyCompanionPosts = () => {
     const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
     const userName = currentUser?.user?.name;
     if (!userName) return [];
-    return storedPosts.filter(post => post.author === userName);
+    return storedPosts
+      .filter(post => post.author === userName)
+      .map(post => ({
+        ...post,
+        image: sanitizeImageUrl(post.image)
+      }));
   };
 
   // 내가 올린 여행일정 가져오기
@@ -1274,10 +1539,21 @@ const UserProfile = () => {
     const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
     const userName = currentUser?.user?.name;
     if (!userName) return [];
-    // 사용자 일정은 author.name으로 저장되므로 이를 확인
-    return storedSchedules.filter(schedule =>
-      schedule.author?.name === userName || schedule.author === userName
-    );
+
+    // 제목이 "김병호"인 카드를 제외하고 사용자 일정만 반환
+    return storedSchedules
+      .filter(schedule => {
+        const title = schedule.title || '';
+
+        // 제목이 "김병호"인 카드 제거하고 현재 사용자의 일정인지 확인
+        return title !== '김병호' && (
+          schedule.author?.name === userName || schedule.author === userName
+        );
+      })
+      .map(schedule => ({
+        ...schedule,
+        image: sanitizeImageUrl(schedule.image)
+      }));
   };
 
   // 동행모집 삭제 함수
@@ -1293,10 +1569,20 @@ const UserProfile = () => {
   // 여행일정 삭제 함수
   const deleteTravelSchedule = (scheduleId) => {
     if (window.confirm('정말로 이 여행일정을 삭제하시겠습니까?')) {
-      const storedSchedules = JSON.parse(localStorage.getItem('travelSchedules')) || [];
+      const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
       const updatedSchedules = storedSchedules.filter(schedule => schedule.id !== scheduleId);
-      localStorage.setItem('travelSchedules', JSON.stringify(updatedSchedules));
+      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
       window.location.reload(); // 페이지 새로고침으로 목록 업데이트
+    }
+  };
+
+  // 저장된 일정 삭제 함수
+  const deleteSavedSchedule = (scheduleId) => {
+    if (window.confirm('정말로 이 관심 일정을 삭제하시겠습니까?')) {
+      const saved = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
+      const updatedSaved = saved.filter(schedule => schedule.id !== scheduleId);
+      localStorage.setItem('savedSchedules', JSON.stringify(updatedSaved));
+      setSavedSchedules(updatedSaved); // 상태 업데이트
     }
   };
 
@@ -1312,12 +1598,81 @@ const UserProfile = () => {
 
   // 새 동행모집 추가
   const addNewCompanionPost = () => {
-    navigate('/companion/create');
+    // 부드러운 페이지 전환을 위한 추가 설정
+    navigate('/companion/create', {
+      replace: false,
+      state: { from: '/profile/user' }
+    });
   };
 
   // 새 여행일정 추가
   const addNewTravelSchedule = () => {
-    navigate('/travel-schedule/create');
+    setShowCreateModal(true);
+  };
+
+  // 직접 작성 선택 시
+  const handleDirectCreate = () => {
+    setIsAICreate(false);
+    setShowCreateModal(false);
+    setShowDatePicker(true);
+  };
+
+  // AI 작성 선택 시
+  const handleAICreate = () => {
+    setIsAICreate(true);
+    setShowCreateModal(false);
+    setShowDatePicker(true);
+  };
+
+  // 날짜 확인 시
+  const handleDateConfirm = () => {
+    if (selectedStartDate && selectedEndDate) {
+      setShowDatePicker(false);
+      if (isAICreate) {
+        // AI 일정 작성 페이지로 이동
+        navigate(`/ai-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+      } else {
+        // 직접 일정 작성 페이지로 이동
+        navigate(`/direct-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+      }
+    } else {
+      alert('출발일과 도착일을 모두 선택해주세요.');
+    }
+  };
+
+  // 날짜 선택 취소
+  const handleDateCancel = () => {
+    setShowDatePicker(false);
+    setSelectedStartDate('');
+    setSelectedEndDate('');
+  };
+
+  // 팔로우 버튼 클릭 처리
+  const handleFollowClick = () => {
+    const followData = JSON.parse(localStorage.getItem('followData') || '{}');
+
+    if (!followData[username]) {
+      followData[username] = { followers: user?.followers || 0, isFollowing: false };
+    }
+
+    const newIsFollowing = !isFollowing;
+    const newFollowerCount = newIsFollowing
+      ? followerCount + 1
+      : Math.max(0, followerCount - 1);
+
+    // 상태 업데이트
+    setIsFollowing(newIsFollowing);
+    setFollowerCount(newFollowerCount);
+
+    // localStorage 업데이트
+    followData[username] = {
+      followers: newFollowerCount,
+      isFollowing: newIsFollowing
+    };
+    localStorage.setItem('followData', JSON.stringify(followData));
+
+    // 피드백 메시지
+    alert(newIsFollowing ? '팔로우했습니다!' : '팔로우를 취소했습니다.');
   };
 
   // 팔로워/팔로잉 리스트 핸들러
@@ -1566,7 +1921,7 @@ const UserProfile = () => {
       bio: currentUser.user.bio || userProfileData['user'].bio,
       location: currentUser.user.location || userProfileData['user'].location,
       interests: currentUser.user.interests || userProfileData['user'].interests,
-      profileImage: currentUser.user.profileImage || userProfileData['user'].profileImage,
+      profileImage: sanitizeImageUrl(currentUser.user.profileImage || userProfileData['user'].profileImage),
       email: currentUser.user.email || userProfileData['user'].email,
       phone: currentUser.user.phone || userProfileData['user'].phone
     };
@@ -1589,6 +1944,63 @@ const UserProfile = () => {
     );
   }
 
+  // 저장된 일정 로드 및 팔로우 상태 초기화
+  useEffect(() => {
+    // localStorage의 잘못된 blob URL들을 정리하는 함수
+    const cleanupBlobUrls = () => {
+      // companionPosts 정리
+      const companionPosts = JSON.parse(localStorage.getItem('companionPosts') || '[]');
+      const cleanedCompanionPosts = companionPosts.map(post => ({
+        ...post,
+        image: sanitizeImageUrl(post.image)
+      }));
+      localStorage.setItem('companionPosts', JSON.stringify(cleanedCompanionPosts));
+
+      // userSchedules 정리
+      const userSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
+      const cleanedUserSchedules = userSchedules.map(schedule => ({
+        ...schedule,
+        image: sanitizeImageUrl(schedule.image)
+      }));
+      localStorage.setItem('userSchedules', JSON.stringify(cleanedUserSchedules));
+
+      // savedSchedules 정리
+      const savedSchedules = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
+      const cleanedSavedSchedules = savedSchedules.map(schedule => ({
+        ...schedule,
+        image: sanitizeImageUrl(schedule.image),
+        author: schedule.author ? {
+          ...schedule.author,
+          profileImage: sanitizeImageUrl(schedule.author.profileImage)
+        } : schedule.author
+      }));
+      localStorage.setItem('savedSchedules', JSON.stringify(cleanedSavedSchedules));
+    };
+
+    // 정리 후 데이터 로드
+    cleanupBlobUrls();
+
+    const loadSavedSchedules = () => {
+      const saved = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
+      setSavedSchedules(saved);
+    };
+
+    // 팔로워 데이터 로드 및 초기화
+    const loadFollowerData = () => {
+      if (username !== 'user') {
+        // localStorage에서 팔로우 데이터 로드
+        const followData = JSON.parse(localStorage.getItem('followData') || '{}');
+        const userFollowData = followData[username] || { followers: user?.followers || 0, isFollowing: false };
+
+        setFollowerCount(userFollowData.followers);
+        setIsFollowing(userFollowData.isFollowing);
+      }
+    };
+
+    loadSavedSchedules();
+    loadFollowerData();
+  }, [username]);
+
   // Generate mock followers and following data after user is defined
   const mockFollowers = generateFollowers(user?.followers || 234);
   const mockFollowing = generateFollowing(user?.following || 156);
@@ -1604,7 +2016,14 @@ const UserProfile = () => {
               <ProfileLeft>
                 <ProfileAvatar>
                   {user.profileImage ? (
-                    <img src={user.profileImage} alt={user.name} />
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = (user.name || 'U').charAt(0);
+                      }}
+                    />
                   ) : (
                     (user.name || 'U').charAt(0)
                   )}
@@ -1622,7 +2041,7 @@ const UserProfile = () => {
                 {/* 이름과 한줄소개를 더 아래로 배치 */}
                 <div style={{marginTop: '40px'}}>
                   <ProfileName>
-                    {username === 'user' ? '마이페이지' : (user.name || '이름 없음')}
+                    {user.name || '이름 없음'}
                   </ProfileName>
                   <ProfileBio style={{margin: '12px 0 0 0', paddingTop: '55px'}}>{user.bio || '소개가 없습니다.'}</ProfileBio>
                 </div>
@@ -1655,11 +2074,11 @@ const UserProfile = () => {
                 <StatNumber>{user.totalTrips || 0}</StatNumber>
                 <StatLabel>여행</StatLabel>
               </StatItem>
-              <StatItem clickable onClick={handleFollowerClick}>
-                <StatNumber>{user.followers || 0}</StatNumber>
+              <StatItem $clickable onClick={handleFollowerClick}>
+                <StatNumber>{username !== 'user' ? followerCount : (user.followers || 0)}</StatNumber>
                 <StatLabel>팔로워</StatLabel>
               </StatItem>
-              <StatItem clickable onClick={handleFollowingClick}>
+              <StatItem $clickable onClick={handleFollowingClick}>
                 <StatNumber>{user.following || 0}</StatNumber>
                 <StatLabel>팔로잉</StatLabel>
               </StatItem>
@@ -1670,10 +2089,7 @@ const UserProfile = () => {
               <ActionButtonsContainer>
                 <FollowButton
                   className={isFollowing ? 'following' : ''}
-                  onClick={() => {
-                    setIsFollowing(!isFollowing);
-                    alert(isFollowing ? '팔로우를 취소했습니다.' : '팔로우했습니다.');
-                  }}
+                  onClick={handleFollowClick}
                 >
                   {isFollowing ? '✓ 팔로잉' : '+ 팔로우'}
                 </FollowButton>
@@ -1715,25 +2131,47 @@ const UserProfile = () => {
                   <SectionTitle>관심 일정</SectionTitle>
                   {savedSchedules.length > 0 ? (
                     savedSchedules.map(trip => (
-                    <InterestedTripCard key={trip.id} onClick={() => navigate(`/travel-schedule/${trip.id}`)}>
-                      <InterestedTripImage src={trip.image} alt={trip.title} />
-                      <InterestedTripInfo>
+                    <InterestedTripCard key={trip.id}>
+                      <InterestedTripImage
+                        src={trip.image}
+                        alt={trip.title}
+                        onClick={() => navigate(`/travel-schedule/${trip.id}`)}
+                        style={{ cursor: 'pointer' }}
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+                        }}
+                      />
+                      <InterestedTripInfo onClick={() => navigate(`/travel-schedule/${trip.id}`)} style={{ cursor: 'pointer' }}>
                         <InterestedTripTitle>{trip.title}</InterestedTripTitle>
                         <InterestedTripMeta>{trip.region} • {trip.date}</InterestedTripMeta>
                         {trip.author && (
                           <TripAuthorInfo>
                             <TripAuthorAvatar>
-                              <img src={trip.author.profileImage} alt={trip.author.name} />
+                              <img
+                                src={trip.author.profileImage}
+                                alt={trip.author.name}
+                                onError={(e) => {
+                                  e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face';
+                                }}
+                              />
                             </TripAuthorAvatar>
                             <TripAuthorName>{trip.author.name}</TripAuthorName>
                           </TripAuthorInfo>
                         )}
                       </InterestedTripInfo>
+                      <SavedScheduleDeleteButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSavedSchedule(trip.id);
+                        }}
+                        title="관심 일정에서 삭제"
+                      >
+                        삭제
+                      </SavedScheduleDeleteButton>
                     </InterestedTripCard>
                     ))
                   ) : (
                     <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6c757d' }}>
-                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
                       <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
                         저장된 관심 일정이 없습니다
                       </div>
@@ -1760,22 +2198,28 @@ const UserProfile = () => {
                       새 동행모집 등록
                     </AddButton>
                   </SectionHeader>
-                  <TripCards>
+                  <TextListContainer>
                     {getMyCompanionPosts().length > 0 ? (
                       getMyCompanionPosts().map((post) => (
-                        <TripCard key={post.id}>
-                          <TripImage
+                        <TextListItem key={post.id}>
+                          <TextListImage
                             src={post.image}
                             alt={post.title}
                             onClick={() => navigate(`/companion/${post.id}`)}
                             style={{cursor: 'pointer'}}
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+                            }}
                           />
-                          <TripInfo onClick={() => navigate(`/companion/${post.id}`)} style={{cursor: 'pointer'}}>
-                            <TripTitle>{post.title}</TripTitle>
-                            <TripMeta>{post.region} • {post.date}</TripMeta>
-                          </TripInfo>
-                          <TripManageButtons>
-                            <ManageButton
+                          <TextListContent
+                            onClick={() => navigate(`/companion/${post.id}`)}
+                            style={{cursor: 'pointer'}}
+                          >
+                            <TextListTitle>{post.title}</TextListTitle>
+                            <TextListMeta>{post.region} • {post.date}</TextListMeta>
+                          </TextListContent>
+                          <TextListActions>
+                            <TextListButton
                               className="edit"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1783,8 +2227,8 @@ const UserProfile = () => {
                               }}
                             >
                               수정
-                            </ManageButton>
-                            <ManageButton
+                            </TextListButton>
+                            <TextListButton
                               className="delete"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1792,14 +2236,14 @@ const UserProfile = () => {
                               }}
                             >
                               삭제
-                            </ManageButton>
-                          </TripManageButtons>
-                        </TripCard>
+                            </TextListButton>
+                          </TextListActions>
+                        </TextListItem>
                       ))
                     ) : (
                       <EmptyMessage>아직 올린 동행모집이 없습니다.</EmptyMessage>
                     )}
-                  </TripCards>
+                  </TextListContainer>
                 </RecentTripsSection>
 
                 {/* 내가 올린 여행일정 */}
@@ -1811,22 +2255,28 @@ const UserProfile = () => {
                       새 여행일정 등록
                     </AddButton>
                   </SectionHeader>
-                  <TripCards>
+                  <TextListContainer>
                     {getMyTravelSchedules().length > 0 ? (
                       getMyTravelSchedules().map((schedule) => (
-                        <TripCard key={schedule.id}>
-                          <TripImage
+                        <TextListItem key={schedule.id}>
+                          <TextListImage
                             src={schedule.image}
                             alt={schedule.title}
                             onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
                             style={{cursor: 'pointer'}}
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+                            }}
                           />
-                          <TripInfo onClick={() => navigate(`/travel-schedule/${schedule.id}`)} style={{cursor: 'pointer'}}>
-                            <TripTitle>{schedule.title}</TripTitle>
-                            <TripMeta>{schedule.region} • {schedule.duration || schedule.date || `${schedule.startDate} ~ ${schedule.endDate}`}</TripMeta>
-                          </TripInfo>
-                          <TripManageButtons>
-                            <ManageButton
+                          <TextListContent
+                            onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
+                            style={{cursor: 'pointer'}}
+                          >
+                            <TextListTitle>{schedule.title}</TextListTitle>
+                            <TextListMeta>{schedule.region} • {schedule.duration || schedule.date || `${schedule.startDate} ~ ${schedule.endDate}`}</TextListMeta>
+                          </TextListContent>
+                          <TextListActions>
+                            <TextListButton
                               className="edit"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1834,8 +2284,8 @@ const UserProfile = () => {
                               }}
                             >
                               수정
-                            </ManageButton>
-                            <ManageButton
+                            </TextListButton>
+                            <TextListButton
                               className="delete"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1843,14 +2293,14 @@ const UserProfile = () => {
                               }}
                             >
                               삭제
-                            </ManageButton>
-                          </TripManageButtons>
-                        </TripCard>
+                            </TextListButton>
+                          </TextListActions>
+                        </TextListItem>
                       ))
                     ) : (
                       <EmptyMessage>아직 올린 여행일정이 없습니다.</EmptyMessage>
                     )}
-                  </TripCards>
+                  </TextListContainer>
                 </RecentTripsSection>
               </>
             )}
@@ -1976,6 +2426,70 @@ const UserProfile = () => {
             </CouponList>
           </CouponModalContainer>
         </CouponModal>
+      )}
+
+      {/* 일정 생성 선택 모달 */}
+      {showCreateModal && (
+        <CreateModalOverlay onClick={() => setShowCreateModal(false)}>
+          <CreateModalContainer onClick={(e) => e.stopPropagation()}>
+            <CreateModalTitle>일정 작성 방법 선택</CreateModalTitle>
+            <CreateModalMessage>
+              어떤 방식으로 일정을 작성하시겠습니까?
+            </CreateModalMessage>
+            <CreateOptionsContainer>
+              <CreateOptionButton onClick={handleDirectCreate}>
+                <CreateOptionText>직접일정 작성</CreateOptionText>
+              </CreateOptionButton>
+              <CreateOptionButton $primary onClick={handleAICreate}>
+                <CreateOptionText>AI 일정 작성</CreateOptionText>
+              </CreateOptionButton>
+            </CreateOptionsContainer>
+            <CreateCancelButton onClick={() => setShowCreateModal(false)}>
+              취소
+            </CreateCancelButton>
+          </CreateModalContainer>
+        </CreateModalOverlay>
+      )}
+
+      {/* 날짜 선택 모달 */}
+      {showDatePicker && (
+        <DatePickerModalOverlay onClick={() => setShowDatePicker(false)}>
+          <DatePickerModalContainer onClick={(e) => e.stopPropagation()}>
+            <DatePickerTitle>여행 날짜 선택</DatePickerTitle>
+            <DatePickerMessage>
+              여행 시작일과 종료일을 선택해주세요
+            </DatePickerMessage>
+
+            <DateInputContainer>
+              <DateInputGroup>
+                <DateLabel>시작일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={selectedStartDate}
+                  onChange={(e) => setSelectedStartDate(e.target.value)}
+                />
+              </DateInputGroup>
+
+              <DateInputGroup>
+                <DateLabel>종료일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={selectedEndDate}
+                  onChange={(e) => setSelectedEndDate(e.target.value)}
+                />
+              </DateInputGroup>
+            </DateInputContainer>
+
+            <DateButtonGroup>
+              <DateCancelButton onClick={handleDateCancel}>
+                취소
+              </DateCancelButton>
+              <DateConfirmButton onClick={handleDateConfirm}>
+                확인
+              </DateConfirmButton>
+            </DateButtonGroup>
+          </DatePickerModalContainer>
+        </DatePickerModalOverlay>
       )}
     </UserProfilePage>
   );
