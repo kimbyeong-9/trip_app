@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { supabase } from '../supabaseClient';
 
 // Styled Components
 const LoginContainer = styled.div`
-  min-height: 100vh;
+   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
@@ -16,16 +17,12 @@ const LoginContainer = styled.div`
 const LoginCard = styled.div`
   background: white;
   border-radius: 20px;
-  padding: 50px 40px;
+  padding: 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 100%;
   max-width: 500px;
-  min-height: 480px;
   text-align: center;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
 `;
 
 const Logo = styled.div`
@@ -53,6 +50,7 @@ const Subtitle = styled.p`
   color: #6c757d;
   margin-bottom: 30px;
   font-size: 16px;
+  padding: 0 105px;
 `;
 
 const Form = styled.form`
@@ -553,7 +551,7 @@ const Login = () => {
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!email || !password) {
       setError('이메일과 비밀번호를 모두 입력해주세요.');
       return;
@@ -568,19 +566,37 @@ const Login = () => {
 
     setIsLoading(true);
 
-    // 로그인 시뮬레이션 (실제로는 서버 API 호출)
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
+      // Supabase Auth로 로그인
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
-      const user = testAccounts.find(u => u.email === email && u.password === password);
-      
-      if (user) {
-        // 로그인 성공
+      if (signInError) {
+        // 로그인 실패
+        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        setIsLoading(false);
+        return;
+      }
+
+      // 로그인 성공 - user_profiles에서 추가 정보 가져오기
+      if (data.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
         const loginData = {
           isLoggedIn: true,
           user: {
-            email: user.email,
-            name: user.name
+            id: data.user.id,
+            email: data.user.email,
+            name: profileData?.username || data.user.email,
+            phone: profileData?.phone,
+            birthDate: profileData?.birth_date,
+            gender: profileData?.gender
           },
           loginTime: new Date().toISOString()
         };
@@ -592,12 +608,11 @@ const Login = () => {
           sessionStorage.setItem('loginData', JSON.stringify(loginData));
         }
 
-        alert(`${user.name}님, 환영합니다!`);
+        alert(`${loginData.user.name}님, 환영합니다!`);
         navigate('/');
-      } else {
-        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
       }
     } catch (err) {
+      console.error('로그인 오류:', err);
       setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
@@ -969,30 +984,6 @@ const Login = () => {
             <a href="#" onClick={(e) => { e.preventDefault(); handleForgotPassword(); }} style={{color: '#667eea', textDecoration: 'none', fontSize: '14px'}}>비밀번호 찾기</a>
           </div>
         </SignupLink>
-
-        <TestAccounts>
-          <TestTitle>테스트 계정 (클릭하여 자동 입력)</TestTitle>
-          {testAccounts.map((account, index) => (
-            <TestAccount key={index}>
-              {account.name} - {account.email}
-              <TestButton 
-                onClick={() => {
-                  setEmail(account.email);
-                  setPassword(account.password);
-                }}
-                disabled={isLoading}
-              >
-                사용
-              </TestButton>
-            </TestAccount>
-          ))}
-          <TestAccount>
-            관리자 계정
-            <TestButton onClick={handleAdminLogin} disabled={isLoading}>
-              관리자 로그인
-            </TestButton>
-          </TestAccount>
-        </TestAccounts>
       </LoginCard>
 
       {/* 비밀번호 찾기 모달 */}
