@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "supabase-trip_app": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=ffgpymvyywpjfqdpjaba"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_e2cae94c5d13b7815d9759afcba4f21c168d1b58"
+      }
+    }
+  }
+}
