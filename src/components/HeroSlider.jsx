@@ -2,6 +2,102 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
+
+const HeroSlider = ({ heroSlides, showServiceModal, setShowServiceModal, onCardClick }) => {
+  const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
+
+  // 자동 슬라이드
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, heroSlides.length]);
+
+  const togglePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  // 슬라이드 클릭 핸들러
+  const handleSlideClick = (slideId) => {
+    switch(slideId) {
+      case 1: // 할인쿠폰
+        if (!isLoggedIn()) {
+          onCardClick('/coupon');
+        } else {
+          setShowServiceModal(true);
+        }
+        break;
+      case 2: // 버스대절
+        if (!isLoggedIn()) {
+          onCardClick('/bus-rental');
+        } else {
+          setShowServiceModal(true);
+        }
+        break;
+      case 3: // 여행보험
+        if (!isLoggedIn()) {
+          onCardClick('/travel-insurance');
+        } else {
+          setShowServiceModal(true);
+        }
+        break;
+      case 4: // 동행모집
+        if (!isLoggedIn()) {
+          onCardClick('/companion-list');
+        } else {
+          navigate('/companion-list');
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  return (
+    <HeroSliderContainer>
+      <SliderContainer>
+        {heroSlides.map((slide, index) => (
+          <HeroSlide
+            key={slide.id}
+            className={index === currentSlide ? 'active' : ''}
+            style={{
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${slide.image})`
+            }}
+            onClick={() => handleSlideClick(slide.id)}
+          >
+            <HeroContent>
+              <h1>{slide.title}<br />{slide.subtitle}</h1>
+              <p>{slide.link}</p>
+            </HeroContent>
+          </HeroSlide>
+        ))}
+      </SliderContainer>
+      
+      <ControlContainer>
+        <SlideCounter>
+          {currentSlide + 1}/{heroSlides.length}
+        </SlideCounter>
+        <PauseButton onClick={togglePlayPause}>
+          {isPlaying ? '⏸' : '▶'}
+        </PauseButton>
+      </ControlContainer>
+    </HeroSliderContainer>
+  );
+};
+
+
 // Styled Components
 const HeroSliderContainer = styled.div`
   position: relative;
@@ -109,98 +205,5 @@ const PauseButton = styled.button`
   }
 `;
 
-const HeroSlider = ({ heroSlides, showServiceModal, setShowServiceModal, onCardClick }) => {
-  const navigate = useNavigate();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-
-  // 로그인 상태 체크 함수
-  const isLoggedIn = () => {
-    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-    return !!loginData;
-  };
-
-  // 자동 슬라이드
-  useEffect(() => {
-    if (!isPlaying) return;
-
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, heroSlides.length]);
-
-  const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  // 슬라이드 클릭 핸들러
-  const handleSlideClick = (slideId) => {
-    switch(slideId) {
-      case 1: // 할인쿠폰
-        if (!isLoggedIn()) {
-          onCardClick('/coupon');
-        } else {
-          setShowServiceModal(true);
-        }
-        break;
-      case 2: // 버스대절
-        if (!isLoggedIn()) {
-          onCardClick('/bus-rental');
-        } else {
-          setShowServiceModal(true);
-        }
-        break;
-      case 3: // 여행보험
-        if (!isLoggedIn()) {
-          onCardClick('/travel-insurance');
-        } else {
-          setShowServiceModal(true);
-        }
-        break;
-      case 4: // 동행모집
-        if (!isLoggedIn()) {
-          onCardClick('/companion-list');
-        } else {
-          navigate('/companion-list');
-        }
-        break;
-      default:
-        break;
-    }
-  };
-
-  return (
-    <HeroSliderContainer>
-      <SliderContainer>
-        {heroSlides.map((slide, index) => (
-          <HeroSlide
-            key={slide.id}
-            className={index === currentSlide ? 'active' : ''}
-            style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${slide.image})`
-            }}
-            onClick={() => handleSlideClick(slide.id)}
-          >
-            <HeroContent>
-              <h1>{slide.title}<br />{slide.subtitle}</h1>
-              <p>{slide.link}</p>
-            </HeroContent>
-          </HeroSlide>
-        ))}
-      </SliderContainer>
-      
-      <ControlContainer>
-        <SlideCounter>
-          {currentSlide + 1}/{heroSlides.length}
-        </SlideCounter>
-        <PauseButton onClick={togglePlayPause}>
-          {isPlaying ? '⏸' : '▶'}
-        </PauseButton>
-      </ControlContainer>
-    </HeroSliderContainer>
-  );
-};
 
 export default HeroSlider;

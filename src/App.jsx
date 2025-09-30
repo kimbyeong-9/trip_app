@@ -10,6 +10,7 @@ import Booking from './pages/Booking';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import Signup from './pages/Signup';
+import SocialSignup from './pages/SocialSignup';
 import CompanionList from './pages/CompanionList';
 import CompanionCreate from './pages/CompanionCreate';
 import CompanionEdit from './pages/CompanionEdit';
@@ -49,6 +50,7 @@ function AppContent() {
   const isLoginPage = location.pathname === '/login';
   const isForgotPasswordPage = location.pathname === '/forgot-password';
   const isSignupPage = location.pathname === '/signup';
+  const isSocialSignupPage = location.pathname === '/social-signup';
   const isCompanionListPage = location.pathname === '/companion-list';
   const isCompanionCreatePage = location.pathname === '/companion/create';
   const isCompanionEditPage = location.pathname.startsWith('/companion/edit/');
@@ -65,8 +67,8 @@ function AppContent() {
   return (
     <div className="App">
       <ScrollToTop />
-      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isCompanionCreatePage && !isCompanionEditPage && !isCompanionDetailPage && !isTravelSchedulePage && !isDirectScheduleCreatePage && !isAIScheduleCreatePage && !isAICategorySelectPage && !isUserProfilePage && !isProfileEditPage && !isChatRoomListPage && !isChatRoomCreatePage && <Navigation />}
-      <main className={isLoginPage || isForgotPasswordPage || isSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionEditPage || isCompanionDetailPage || isTravelSchedulePage || isDirectScheduleCreatePage || isAIScheduleCreatePage || isAICategorySelectPage || isUserProfilePage || isProfileEditPage || isChatRoomListPage || isChatRoomCreatePage ? "companion-main-content" : "main-content"}>
+      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isSocialSignupPage && !isCompanionCreatePage && !isCompanionEditPage && !isCompanionDetailPage && !isTravelSchedulePage && !isDirectScheduleCreatePage && !isAIScheduleCreatePage && !isAICategorySelectPage && !isUserProfilePage && !isProfileEditPage && !isChatRoomListPage && !isChatRoomCreatePage && <Navigation />}
+      <main className={isLoginPage || isForgotPasswordPage || isSignupPage || isSocialSignupPage ? "login-main-content" : isCompanionListPage || isCompanionCreatePage || isCompanionEditPage || isCompanionDetailPage || isTravelSchedulePage || isDirectScheduleCreatePage || isAIScheduleCreatePage || isAICategorySelectPage || isUserProfilePage || isProfileEditPage || isChatRoomListPage || isChatRoomCreatePage ? "companion-main-content" : "main-content"}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
@@ -75,6 +77,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/social-signup" element={<SocialSignup />} />
           <Route path="/companion-list" element={<CompanionList />} />
           <Route path="/companion/create" element={<CompanionCreate />} />
           <Route path="/companion/edit/:id" element={<CompanionEdit />} />
@@ -99,8 +102,8 @@ function AppContent() {
           <Route path="/chat-room-create" element={<ChatRoomCreate />} />
         </Routes>
       </main>
-      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isProfileEditPage && <WebsiteFooter />}
-      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && <MobileNavigation />}
+      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isSocialSignupPage && !isProfileEditPage && <WebsiteFooter />}
+      {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isSocialSignupPage && <MobileNavigation />}
     </div>
   );
 }

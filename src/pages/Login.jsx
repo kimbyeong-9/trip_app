@@ -8,7 +8,7 @@ const LoginContainer = styled.div`
    min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
-  align-items: center;
+
   justify-content: center;
   padding: 20px;
   position: relative;
@@ -755,108 +755,41 @@ const Login = () => {
     navigate('/');
   };
 
-  const handleSocialLogin = (provider) => {
+  const handleSocialLogin = async (provider) => {
     setIsLoading(true);
 
     try {
-      // 각 소셜 플랫폼별 로그인 URL (데모용)
-      // 실제 운영 시에는 환경변수에서 CLIENT_ID를 가져와야 합니다
-      const loginUrls = {
-        '카카오톡': 'https://kauth.kakao.com/oauth/authorize?' + new URLSearchParams({
-          client_id: process.env.REACT_APP_KAKAO_CLIENT_ID || 'demo_kakao_client_id',
-          redirect_uri: `${window.location.origin}/auth/kakao/callback`,
-          response_type: 'code',
-          scope: 'profile_nickname,profile_image,account_email'
-        }),
-        '네이버': 'https://nid.naver.com/oauth2.0/authorize?' + new URLSearchParams({
-          response_type: 'code',
-          client_id: process.env.REACT_APP_NAVER_CLIENT_ID || 'demo_naver_client_id',
-          redirect_uri: `${window.location.origin}/auth/naver/callback`,
-          state: Math.random().toString(36).substring(7)
-        }),
-        '구글': 'https://accounts.google.com/oauth/authorize?' + new URLSearchParams({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || 'demo_google_client_id',
-          redirect_uri: `${window.location.origin}/auth/google/callback`,
-          response_type: 'code',
-          scope: 'openid profile email',
-          access_type: 'offline'
-        })
-      };
+      let supabaseProvider;
 
-      const loginUrl = loginUrls[provider];
-
-      if (loginUrl) {
-        // 새 창으로 소셜 로그인 페이지 열기
-        const popup = window.open(
-          loginUrl,
-          `${provider}_login`,
-          'width=500,height=600,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no'
-        );
-
-        // 팝업 차단 확인
-        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-          alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
-          setIsLoading(false);
-          return;
-        }
-
-        let loginCompleted = false;
-
-        // 팝업 창 모니터링
-        const checkClosed = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkClosed);
-
-            if (!loginCompleted) {
-              // 사용자가 팝업을 닫았지만 로그인을 완료하지 않은 경우
-              setIsLoading(false);
-              return;
-            }
-
-            // 실제로는 콜백에서 처리하지만, 데모를 위한 시뮬레이션
-            setTimeout(() => {
-              const socialData = {
-                isLoggedIn: true,
-                user: {
-                  email: `user@${provider.toLowerCase().replace('톡', '')}.com`,
-                  name: `${provider} 사용자`,
-                  provider: provider,
-                  profileImage: `https://via.placeholder.com/100?text=${provider.charAt(0)}`
-                },
-                loginTime: new Date().toISOString()
-              };
-
-              localStorage.setItem('loginData', JSON.stringify(socialData));
-              alert(`${provider}로 로그인되었습니다! 환영합니다!`);
-              navigate('/');
-            }, 500);
-          }
-        }, 1000);
-
-        // 데모를 위한 자동 로그인 시뮬레이션 (3초 후)
-        setTimeout(() => {
-          if (!popup.closed) {
-            loginCompleted = true;
-            popup.close();
-          }
-        }, 3000);
-
-        // 10초 후 자동으로 정리
-        setTimeout(() => {
-          if (!popup.closed) {
-            popup.close();
-            clearInterval(checkClosed);
-            setIsLoading(false);
-          }
-        }, 10000);
-
+      if (provider === '구글') {
+        supabaseProvider = 'google';
+      } else if (provider === '애플') {
+        supabaseProvider = 'apple';
+      } else if (provider === '페이스북') {
+        supabaseProvider = 'facebook';
       } else {
-        throw new Error('지원하지 않는 소셜 플랫폼입니다.');
+        alert(`${provider} 로그인은 현재 준비 중입니다.`);
+        setIsLoading(false);
+        return;
       }
+
+      // Supabase OAuth 로그인
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: supabaseProvider,
+        options: {
+          redirectTo: `${window.location.origin}/social-signup`
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // 로그인 성공 시 Supabase가 자동으로 리다이렉트합니다
 
     } catch (error) {
       console.error('소셜 로그인 오류:', error);
-      alert('소셜 로그인 중 오류가 발생했습니다.');
+      alert('소셜 로그인 중 오류가 발생했습니다. Supabase 대시보드에서 Provider 설정을 확인해주세요.');
       setIsLoading(false);
     }
   };
@@ -932,35 +865,6 @@ const Login = () => {
 
         <SocialButtonsContainer>
           <SocialButton
-            onClick={() => handleSocialLogin('카카오톡')}
-            disabled={isLoading}
-            $bgColor="#FEE500"
-            $textColor="#191919"
-            $borderColor="#FEE500"
-            $hoverBorderColor="#E6CF00"
-            $shadowColor="rgba(254, 229, 0, 0.4)"
-          >
-            <SocialIcon
-              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDJDNSAyIDEgNS4zIDEgOS4zQzEgMTEuOCAyLjYgMTQgNS4yIDE1LjNMNC4yIDE4LjhDNC4xIDE5IDQuMyAxOS4yIDQuNSAxOS4xTDguOSAxNi41QzkuMyAxNi42IDkuNiAxNi42IDEwIDE2LjZDMTUgMTYuNiAxOSAxMy4zIDE5IDkuM0MxOSA1LjMgMTUgMiAxMCAyWiIgZmlsbD0iIzAwMCIvPgo8L3N2Zz4K"
-              alt="카카오톡"
-            />
-            카카오톡으로 로그인
-          </SocialButton>
-
-          <SocialButton
-            onClick={() => handleSocialLogin('네이버')}
-            disabled={isLoading}
-            $bgColor="#03C75A"
-            $textColor="white"
-            $borderColor="#03C75A"
-            $hoverBorderColor="#02B74C"
-            $shadowColor="rgba(3, 199, 90, 0.4)"
-          >
-            <SocialIconText color="white">N</SocialIconText>
-            네이버로 로그인
-          </SocialButton>
-
-          <SocialButton
             onClick={() => handleSocialLogin('구글')}
             disabled={isLoading}
             $bgColor="white"
@@ -970,11 +874,43 @@ const Login = () => {
             $shadowColor="rgba(66, 133, 244, 0.3)"
           >
             <SocialIcon
-              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNCA5LjVjMy4wNCAwIDUuMDEgMS4wNyA2Ljc1IDIuODJsNS4wMy01LjAzQzMzIDQuNDQgMjguNzQgMiAyNCAyQzE0LjY0IDIgNi45OSA3Ljk0IDQuMTcgMTYuMzNsNi4wMiA0LjY2QzEyLjE1IDEzLjE1IDE3LjYgOS41IDI0IDkuNXoiIGZpbGw9IiNFQTQzMzUiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNCAzOC41Yy02LjQgMC0xMS44NS0zLjY1LTEzLjgxLTkuNDlsLTYuMDIgNC42N0M2Ljk5IDQyLjA2IDE0LjY0IDQ4IDI0IDQ4YzQuNzQgMCA5LTIuNDQgMTEuNzgtNS4yMmwtNS42MS00LjM2QzI4LjExIDM4LjAxIDI2LjE2IDM4LjUgMjQgMzguNXoiIGZpbGw9IiMzNEE4NTMiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik00Ni4xIDI0YzAtMS42OS0uMTctMi45Ni0uNTctNC4yNEgyNHY5LjAyaDEyLjM5Yy0uNSAyLjk2LTIuMTkgNS4wMy00LjUgNi41MWw1LjYxIDQuMzZDNDAuNzQgMzYuMjIgNDYuMSAzMC42NSA0Ni4xIDI0eiIgZmlsbD0iIzQyODVGNCIvPgo8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTEwLjE5IDIwLjk5Yy0uMjctMS4xMS0uNDMtMi4yOS0uNDMtMy40OWMwLTEuMi4xNi0yLjM4LjQzLTMuNDlsLTYuMDItNC42NkMzLjQ3IDE0LjM5IDIgMTkgMiAyNGMwIDUgMS40NyA5LjYxIDQuMTcgMTQuNjZsNi4wMi00LjY3eiIgZmlsbD0iI0ZCQkMwNSIvPgo8L3N2Zz4K"
+              src="https://www.google.com/favicon.ico"
               alt="구글"
             />
-            구글로 로그인
+            Google 로그인
           </SocialButton>
+
+          <SocialButton
+            onClick={() => handleSocialLogin('페이스북')}
+            disabled={isLoading}
+            $bgColor="#1877F2"
+            $textColor="white"
+            $borderColor="#1877F2"
+            $hoverBorderColor="#166FE5"
+            $shadowColor="rgba(24, 119, 242, 0.4)"
+          >
+            <SocialIcon
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMjAgMTBDMjAgNC40NzcgMTUuNTIzIDAgMTAgMEM0LjQ3NyAwIDAgNC40NzcgMCAxMEMwIDE0Ljk5MSAzLjY1NyAxOS4xMjggOC40MzggMTkuODc4VjEyLjg5SDUuODk4VjEwSDguNDM4VjcuNzk3QzguNDM4IDUuMjkgOS45MyAzLjkwNyAxMi4yMTUgMy45MDdDMTMuMzA5IDMuOTA3IDE0LjQ1MyA0LjEwMiAxNC40NTMgNC4xMDJWNi41NjJIMTMuMTkzQzExLjk1IDYuNTYyIDExLjU2MyA3LjMzMyAxMS41NjMgOC4xMjRWMTBIMTQuMzM2TDEzLjg5MyAxMi44OUgxMS41NjNWMTkuODc4QzE2LjM0MyAxOS4xMjggMjAgMTQuOTkxIDIwIDEwWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg=="
+              alt="페이스북"
+            />
+            Facebook으로 로그인
+          </SocialButton>
+
+          <SocialButton
+            onClick={() => handleSocialLogin('애플')}
+            disabled={isLoading}
+            $bgColor="#000000"
+            $textColor="white"
+            $borderColor="#000000"
+            $hoverBorderColor="#333333"
+            $shadowColor="rgba(0, 0, 0, 0.3)"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            Apple로 로그인
+          </SocialButton>
+          
         </SocialButtonsContainer>
 
         <SignupLink>

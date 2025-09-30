@@ -2,6 +2,70 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
+
+const CompanionSection = ({ companionCards, selectedRegion, onCardClick }) => {
+  const navigate = useNavigate();
+
+  // 카드 필터링 함수
+  const filterCards = (cards, selectedRegion) => {
+    let filtered = cards;
+    const regionMapping = {
+      'seoul': '서울',
+      'busan': '부산',
+      'jeju': '제주',
+      'gyeonggi': '경기',
+      'gangwon': '강원',
+      'jeolla': '전라',
+      'chungcheong': '충청',
+      'gyeongsang': '경상',
+      'incheon': '인천'
+    };
+
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(card => card.region === regionMapping[selectedRegion]);
+    }
+
+    return filtered;
+  };
+
+  // 필터링된 카드들
+  const filteredCompanionCards = filterCards(companionCards, selectedRegion);
+
+  return (
+    <CompanionSectionContainer>
+      <SectionHeader>
+        <h2>함께 동행해요</h2>
+        <ViewAllButton onClick={() => navigate('/companion-list')}>전체보기</ViewAllButton>
+      </SectionHeader>
+
+      <CompanionCards>
+        {filteredCompanionCards.length > 0 ? (
+          filteredCompanionCards.map((card) => (
+            <CompanionCard key={card.id} onClick={() => onCardClick(`/companion/${card.id}`)}>
+              <CardImage src={card.image} alt={card.title} />
+              <LocationBadge>{card.region}</LocationBadge>
+              <CardContent>
+                <CardTitle>{card.title}</CardTitle>
+                <CardMeta>
+                  <AgeGroup>{card.ageGroup}</AgeGroup>
+                  <Date>{card.date}</Date>
+                </CardMeta>
+              </CardContent>
+            </CompanionCard>
+          ))
+        ) : (
+          <NoResultsMessage>
+            <NoResultsIcon>🔍</NoResultsIcon>
+            <NoResultsTitle>검색된 내용이 없습니다</NoResultsTitle>
+            <NoResultsText>다른 키워드로 검색해보세요</NoResultsText>
+          </NoResultsMessage>
+        )}
+      </CompanionCards>
+    </CompanionSectionContainer>
+  );
+};
+
+
 // Styled Components
 const CompanionSectionContainer = styled.div`
   padding: 10px 20px;
@@ -161,67 +225,5 @@ const NoResultsText = styled.p`
   color: #adb5bd;
   margin: 0;
 `;
-
-const CompanionSection = ({ companionCards, selectedRegion, onCardClick }) => {
-  const navigate = useNavigate();
-
-  // 카드 필터링 함수
-  const filterCards = (cards, selectedRegion) => {
-    let filtered = cards;
-    const regionMapping = {
-      'seoul': '서울',
-      'busan': '부산',
-      'jeju': '제주',
-      'gyeonggi': '경기',
-      'gangwon': '강원',
-      'jeolla': '전라',
-      'chungcheong': '충청',
-      'gyeongsang': '경상',
-      'incheon': '인천'
-    };
-
-    if (selectedRegion !== 'all') {
-      filtered = filtered.filter(card => card.region === regionMapping[selectedRegion]);
-    }
-
-    return filtered;
-  };
-
-  // 필터링된 카드들
-  const filteredCompanionCards = filterCards(companionCards, selectedRegion);
-
-  return (
-    <CompanionSectionContainer>
-      <SectionHeader>
-        <h2>함께 동행해요</h2>
-        <ViewAllButton onClick={() => navigate('/companion-list')}>전체보기</ViewAllButton>
-      </SectionHeader>
-
-      <CompanionCards>
-        {filteredCompanionCards.length > 0 ? (
-          filteredCompanionCards.map((card) => (
-            <CompanionCard key={card.id} onClick={() => onCardClick(`/companion/${card.id}`)}>
-              <CardImage src={card.image} alt={card.title} />
-              <LocationBadge>{card.region}</LocationBadge>
-              <CardContent>
-                <CardTitle>{card.title}</CardTitle>
-                <CardMeta>
-                  <AgeGroup>{card.ageGroup}</AgeGroup>
-                  <Date>{card.date}</Date>
-                </CardMeta>
-              </CardContent>
-            </CompanionCard>
-          ))
-        ) : (
-          <NoResultsMessage>
-            <NoResultsIcon>🔍</NoResultsIcon>
-            <NoResultsTitle>검색된 내용이 없습니다</NoResultsTitle>
-            <NoResultsText>다른 키워드로 검색해보세요</NoResultsText>
-          </NoResultsMessage>
-        )}
-      </CompanionCards>
-    </CompanionSectionContainer>
-  );
-};
 
 export default CompanionSection;

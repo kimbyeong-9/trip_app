@@ -2,6 +2,99 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
+
+const ItinerarySection = ({ itineraryCards, selectedRegion, onCardClick }) => {
+  const navigate = useNavigate();
+
+  // 카드 필터링 함수
+  const filterCards = (cards, selectedRegion) => {
+    let filtered = cards;
+    const regionMapping = {
+      'seoul': '서울',
+      'busan': '부산',
+      'jeju': '제주',
+      'gyeonggi': '경기',
+      'gangwon': '강원',
+      'jeolla': '전라',
+      'chungcheong': '충청',
+      'gyeongsang': '경상',
+      'incheon': '인천'
+    };
+
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(card => card.region === regionMapping[selectedRegion]);
+    }
+
+    return filtered;
+  };
+
+  // 필터링된 카드들
+  const filteredItineraryCards = filterCards(itineraryCards, selectedRegion);
+
+  return (
+    <ItinerarySectionContainer>
+      <SectionHeader>
+        <h2>여행 일정</h2>
+        <ViewAllButton onClick={() => navigate('/travel-schedules')}>전체보기</ViewAllButton>
+      </SectionHeader>
+
+      <ItineraryCards>
+        {filteredItineraryCards.length > 0 ? (
+          filteredItineraryCards.map((card) => (
+            <ItineraryCard key={card.id} onClick={() => onCardClick(`/travel-schedule/${card.id}`)}>
+              <CardImage src={card.image} alt={card.title} />
+              <LocationBadge>{card.region}</LocationBadge>
+              <CardContent>
+                <CardTitle>{card.title}</CardTitle>
+                <AuthorInfo>
+                  <AuthorAvatar>
+                    {card.author && typeof card.author === 'object' && card.author.profileImage ? (
+                      <img src={card.author.profileImage} alt={typeof card.author === 'object' ? card.author.name : card.author} />
+                    ) : (
+                      typeof card.author === 'object'
+                        ? (card.author.name ? card.author.name.charAt(0) : 'U')
+                        : (card.author ? card.author.charAt(0) : 'U')
+                    )}
+                  </AuthorAvatar>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '2px' }}>작성자</div>
+                    <AuthorName>
+                      {card.author
+                        ? (typeof card.author === 'object' ? card.author.name : card.author)
+                        : '익명'
+                      }
+                    </AuthorName>
+                  </div>
+                </AuthorInfo>
+                <ViewsLikes>
+                  <ViewsLikesItem>
+                    <EyeIcon />
+                    <Count>{card.views || 0}</Count>
+                  </ViewsLikesItem>
+                  <ViewsLikesItem>
+                    <HeartIconSmall />
+                    <Count>{card.likes || 0}</Count>
+                  </ViewsLikesItem>
+                </ViewsLikes>
+                <DateMeta>{card.date}</DateMeta>
+              </CardContent>
+            </ItineraryCard>
+          ))
+        ) : (
+          <NoResultsMessage>
+            <NoResultsIcon>🔍</NoResultsIcon>
+            <NoResultsTitle>검색된 내용이 없습니다</NoResultsTitle>
+            <NoResultsText>다른 키워드로 검색해보세요</NoResultsText>
+          </NoResultsMessage>
+        )}
+      </ItineraryCards>
+    </ItinerarySectionContainer>
+  );
+};
+
+
+
+
 // Styled Components
 const ItinerarySectionContainer = styled.div`
   padding: 10px 20px 30px 20px;
@@ -277,93 +370,5 @@ const NoResultsText = styled.p`
   margin: 0;
 `;
 
-const ItinerarySection = ({ itineraryCards, selectedRegion, onCardClick }) => {
-  const navigate = useNavigate();
-
-  // 카드 필터링 함수
-  const filterCards = (cards, selectedRegion) => {
-    let filtered = cards;
-    const regionMapping = {
-      'seoul': '서울',
-      'busan': '부산',
-      'jeju': '제주',
-      'gyeonggi': '경기',
-      'gangwon': '강원',
-      'jeolla': '전라',
-      'chungcheong': '충청',
-      'gyeongsang': '경상',
-      'incheon': '인천'
-    };
-
-    if (selectedRegion !== 'all') {
-      filtered = filtered.filter(card => card.region === regionMapping[selectedRegion]);
-    }
-
-    return filtered;
-  };
-
-  // 필터링된 카드들
-  const filteredItineraryCards = filterCards(itineraryCards, selectedRegion);
-
-  return (
-    <ItinerarySectionContainer>
-      <SectionHeader>
-        <h2>여행 일정</h2>
-        <ViewAllButton onClick={() => navigate('/travel-schedules')}>전체보기</ViewAllButton>
-      </SectionHeader>
-
-      <ItineraryCards>
-        {filteredItineraryCards.length > 0 ? (
-          filteredItineraryCards.map((card) => (
-            <ItineraryCard key={card.id} onClick={() => onCardClick(`/travel-schedule/${card.id}`)}>
-              <CardImage src={card.image} alt={card.title} />
-              <LocationBadge>{card.region}</LocationBadge>
-              <CardContent>
-                <CardTitle>{card.title}</CardTitle>
-                <AuthorInfo>
-                  <AuthorAvatar>
-                    {card.author && typeof card.author === 'object' && card.author.profileImage ? (
-                      <img src={card.author.profileImage} alt={typeof card.author === 'object' ? card.author.name : card.author} />
-                    ) : (
-                      typeof card.author === 'object'
-                        ? (card.author.name ? card.author.name.charAt(0) : 'U')
-                        : (card.author ? card.author.charAt(0) : 'U')
-                    )}
-                  </AuthorAvatar>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '2px' }}>작성자</div>
-                    <AuthorName>
-                      {card.author
-                        ? (typeof card.author === 'object' ? card.author.name : card.author)
-                        : '익명'
-                      }
-                    </AuthorName>
-                  </div>
-                </AuthorInfo>
-                <ViewsLikes>
-                  <ViewsLikesItem>
-                    <EyeIcon />
-                    <Count>{card.views || 0}</Count>
-                  </ViewsLikesItem>
-                  <ViewsLikesItem>
-                    <HeartIconSmall />
-                    <Count>{card.likes || 0}</Count>
-                  </ViewsLikesItem>
-                </ViewsLikes>
-                <DateMeta>{card.date}</DateMeta>
-              </CardContent>
-            </ItineraryCard>
-          ))
-        ) : (
-          <NoResultsMessage>
-            <NoResultsIcon>🔍</NoResultsIcon>
-            <NoResultsTitle>검색된 내용이 없습니다</NoResultsTitle>
-            <NoResultsText>다른 키워드로 검색해보세요</NoResultsText>
-          </NoResultsMessage>
-        )}
-      </ItineraryCards>
-    </ItinerarySectionContainer>
-  );
-};
 
 export default ItinerarySection;
