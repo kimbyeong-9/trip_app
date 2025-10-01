@@ -9,6 +9,7 @@ const SocialSignup = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
 
   // Form fields
   const [name, setName] = useState('');
@@ -33,6 +34,61 @@ const SocialSignup = () => {
     setLocationTerms(checked);
     setEventTerms(checked);
   };
+
+  // Check if user already has a profile on mount
+  React.useEffect(() => {
+    const checkUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          // No user logged in, redirect to login
+          navigate('/login');
+          return;
+        }
+
+        // Check if user already has a profile
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profile && profile.username && profile.phone) {
+          // User already has complete profile, redirect to home
+          const loginData = {
+            isLoggedIn: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              name: profile.username,
+              phone: profile.phone,
+              birthDate: profile.birth_date,
+              gender: profile.gender
+            },
+            loginTime: new Date().toISOString()
+          };
+          localStorage.setItem('loginData', JSON.stringify(loginData));
+          navigate('/');
+          return;
+        }
+
+        // Pre-fill name from social login metadata
+        if (user.user_metadata?.full_name) {
+          setName(user.user_metadata.full_name);
+        } else if (user.user_metadata?.name) {
+          setName(user.user_metadata.name);
+        }
+
+        setIsCheckingProfile(false);
+      } catch (err) {
+        console.error('프로필 확인 오류:', err);
+        setIsCheckingProfile(false);
+      }
+    };
+
+    checkUserProfile();
+  }, [navigate]);
 
   // Update all agree when individual checkboxes change
   React.useEffect(() => {
@@ -108,12 +164,49 @@ const SocialSignup = () => {
 
     try {
       // Get current user from Supabase session
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
 
-      if (!user) {
+      if (getUserError || !user) {
         setError('로그인 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
         setIsLoading(false);
         return;
+      }
+
+      // Get session to access provider info
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Determine provider from user metadata or app_metadata
+      let provider = 'email';
+      if (user.app_metadata?.provider) {
+        provider = user.app_metadata.provider;
+      } else if (session?.user?.app_metadata?.provider) {
+        provider = session.user.app_metadata.provider;
+      }
+
+      // Get provider-specific user ID
+      const providerUserId = user.user_metadata?.sub || user.id;
+      const profileImage = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+
+      // Save to social_login_users table if it's a social login
+      if (provider !== 'email') {
+        const { error: socialLoginError } = await supabase
+          .from('social_login_users')
+          .upsert({
+            auth_user_id: user.id,
+            provider: provider,
+            provider_user_id: providerUserId,
+            email: user.email,
+            name: name,
+            profile_image: profileImage,
+            raw_user_data: user.user_metadata,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'provider,provider_user_id'
+          });
+
+        if (socialLoginError) {
+          console.error('소셜 로그인 데이터 저장 오류:', socialLoginError);
+        }
       }
 
       // Update user profile in database
@@ -140,7 +233,9 @@ const SocialSignup = () => {
           email: user.email,
           name: name,
           phone: phone,
-          birthDate: birthDate
+          birthDate: birthDate,
+          provider: provider,
+          profileImage: profileImage
         },
         loginTime: new Date().toISOString()
       };
@@ -156,6 +251,17 @@ const SocialSignup = () => {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingProfile) {
+    return (
+      <SignupContainer>
+        <SignupCard>
+          <Logo>여행대로</Logo>
+          <LoadingMessage>프로필 확인 중...</LoadingMessage>
+        </SignupCard>
+      </SignupContainer>
+    );
+  }
 
   return (
     <SignupContainer>
@@ -508,6 +614,13 @@ const SubmitButton = styled.button`
     cursor: not-allowed;
     transform: none;
   }
+`;
+
+const LoadingMessage = styled.div`
+  text-align: center;
+  color: #6c757d;
+  font-size: 16px;
+  padding: 40px 20px;
 `;
 
 export default SocialSignup;

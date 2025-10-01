@@ -32,6 +32,7 @@ import CustomerSupport from './pages/CustomerSupport';
 import FAQ from './pages/FAQ';
 import ChatRoomList from './pages/ChatRoomList';
 import ChatRoomCreate from './pages/ChatRoomCreate';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import './App.css';
 
 // 페이지 이동 시 스크롤을 맨 위로 이동하는 컴포넌트
@@ -100,6 +101,7 @@ function AppContent() {
           <Route path="/faq" element={<FAQ />} />
           <Route path="/chat-room-list" element={<ChatRoomList />} />
           <Route path="/chat-room-create" element={<ChatRoomCreate />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         </Routes>
       </main>
       {!isLoginPage && !isForgotPasswordPage && !isSignupPage && !isSocialSignupPage && !isProfileEditPage && <WebsiteFooter />}

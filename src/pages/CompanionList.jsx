@@ -64,14 +64,12 @@ const CompanionList = () => {
         const { data, error } = await supabase
           .from('CompanionList')
           .select('*')
-          .order('id', { ascending: true });
+          .order('id', { ascending: false });
 
         if (error) {
           console.error('Error fetching companion posts:', error);
         } else {
-          // Supabase 데이터와 사용자 localStorage 데이터 결합
-          const userPosts = getUserPosts();
-          setCompanionPosts([...userPosts, ...(data || [])]);
+          setCompanionPosts(data || []);
         }
       } catch (err) {
         console.error('Error:', err);
@@ -82,15 +80,6 @@ const CompanionList = () => {
 
     fetchCompanionPosts();
   }, []);
-
-  // localStorage에서 사용자가 등록한 게시물 불러오기
-  const getUserPosts = () => {
-    try {
-      return JSON.parse(localStorage.getItem('companionPosts')) || [];
-    } catch {
-      return [];
-    }
-  };
 
   // 필터링된 포스트 계산
   const filteredPosts = companionPosts.filter(post => {
@@ -206,11 +195,6 @@ const CompanionList = () => {
                         <AuthorImage src={post.author.profileImage || ''} alt={post.author.name || '작성자'} />
                         <AuthorInfo>
                           <AuthorName>{post.author.name || '작성자'}</AuthorName>
-                          <AuthorMeta>
-                            {post.author.age && post.author.location
-                              ? `${post.author.age}세 · ${post.author.location}`
-                              : '정보 없음'}
-                          </AuthorMeta>
                         </AuthorInfo>
                       </>
                     )}
@@ -243,11 +227,6 @@ const CompanionList = () => {
                           <AuthorImage src={post.author.profileImage || ''} alt={post.author.name || '작성자'} style={{ width: '30px', height: '30px' }} />
                           <div>
                             <AuthorName style={{ fontSize: '12px' }}>{post.author.name || '작성자'}</AuthorName>
-                            <AuthorMeta style={{ fontSize: '10px' }}>
-                              {post.author.age && post.author.location
-                                ? `${post.author.age}세 · ${post.author.location}`
-                                : '정보 없음'}
-                            </AuthorMeta>
                           </div>
                         </div>
                       )}
@@ -472,7 +451,7 @@ const TableHeader = styled.div`
   font-size: 14px;
   margin-bottom: 15px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1100px) {
     display: none;
   }
 `;
@@ -497,7 +476,7 @@ const TableRow = styled.div`
     border-bottom: none;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1100px) {
     display: none;
   }
 `;
@@ -505,7 +484,7 @@ const TableRow = styled.div`
 const MobileCard = styled.div`
   display: none;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1100px) {
     display: flex;
     flex-direction: column;
     background: white;

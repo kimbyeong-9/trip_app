@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
+import { supabase } from '../supabaseClient';
 
 
 
@@ -108,42 +109,91 @@ const CompanionCreate = () => {
 
     setIsSubmitting(true);
 
-    // 로그인된 사용자 정보 가져오기
-    const getLoginData = () => {
-      const localData = localStorage.getItem('loginData');
-      const sessionData = sessionStorage.getItem('loginData');
-      return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
-    };
+    try {
+      // 로그인된 사용자 정보 가져오기
+      const getLoginData = () => {
+        const localData = localStorage.getItem('loginData');
+        const sessionData = sessionStorage.getItem('loginData');
+        return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+      };
 
-    const loginData = getLoginData();
+      const loginData = getLoginData();
 
-    // 새 게시물 생성
-    const newPost = {
-      id: Date.now(), // 임시 ID
-      title: formData.title,
-      ageGroup: formData.ageGroup,
-      region: formData.region,
-      date: `${formData.startDate} ~ ${formData.endDate}`,
-      description: formData.description,
-      participants: { current: 1, max: formData.maxParticipants },
-      image: imagePreview[0] || "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-      author: loginData?.user?.name || "익명사용자",
-      meetingPoint: formData.meetingPoint,
-      estimatedCost: formData.estimatedCost,
-      travelStyle: formData.travelStyle,
-      notice: formData.notice,
-      createdAt: new Date().toISOString()
-    };
+      // 이미지 업로드 처리
+      let uploadedImageUrl = "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop";
 
-    // localStorage에 저장 (실제로는 API 호출)
-    const existingPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-    existingPosts.unshift(newPost); // 맨 앞에 추가
-    localStorage.setItem('companionPosts', JSON.stringify(existingPosts));
+      if (formData.images.length > 0) {
+        const imageFile = formData.images[0]; // 첫 번째 이미지만 사용
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `companion-images/${fileName}`;
 
-    setTimeout(() => {
+        // Supabase Storage에 업로드
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('trip_images')
+          .upload(filePath, imageFile);
+
+        if (uploadError) {
+          console.error('이미지 업로드 오류:', uploadError);
+          // 업로드 실패해도 기본 이미지로 진행
+        } else {
+          // 업로드된 이미지의 공개 URL 가져오기
+          const { data: { publicUrl } } = supabase.storage
+            .from('trip_images')
+            .getPublicUrl(filePath);
+
+          uploadedImageUrl = publicUrl;
+        }
+      }
+
+      // 작성자 정보 구성
+      const authorInfo = {
+        user_id: loginData?.user?.id || null,
+        name: loginData?.user?.name || "익명사용자",
+        profileImage: loginData?.user?.profileImage || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face",
+        age: loginData?.user?.age || null,
+        location: loginData?.user?.location || null
+      };
+
+      // Supabase에 저장할 데이터 구성
+      const newPost = {
+        title: formData.title,
+        agegroup: formData.ageGroup,
+        region: formData.region,
+        date: `${formData.startDate}~${formData.endDate}`,
+        description: formData.description,
+        participants: { current: 1, max: formData.maxParticipants },
+        image: uploadedImageUrl,
+        author: authorInfo,
+        meetingpoint: formData.meetingPoint,
+        estimatedcost: formData.estimatedCost,
+        travelstyle: formData.travelStyle,
+        notice: formData.notice
+      };
+
+      // Supabase CompanionList 테이블에 저장
+      const { data, error } = await supabase
+        .from('CompanionList')
+        .insert([newPost])
+        .select();
+
+      if (error) {
+        console.error('Supabase 저장 오류:', error);
+        alert('동행모집 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('등록 성공:', data);
+
+      // 등록 완료 모달 표시
       setIsSubmitting(false);
       setShowSubmitModal(true);
-    }, 2000);
+    } catch (err) {
+      console.error('등록 오류:', err);
+      alert('동행모집 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {

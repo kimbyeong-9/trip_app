@@ -22,34 +22,39 @@ const CompanionDetail = () => {
     }
   };
 
-  // Supabase와 localStorage에서 데이터 가져오기
+  // Supabase에서 데이터 가져오기
   useEffect(() => {
     const fetchCompanion = async () => {
       try {
         setLoading(true);
 
-        // 먼저 localStorage에서 찾기 (사용자가 작성한 게시물)
-        const userPosts = getUserPosts();
-        const userPost = userPosts.find(post => post.id.toString() === id);
+        // 현재 로그인한 사용자 정보 가져오기
+        const getLoginData = () => {
+          const localData = localStorage.getItem('loginData');
+          const sessionData = sessionStorage.getItem('loginData');
+          return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+        };
 
-        if (userPost) {
-          setCompanion(userPost);
-          setIsUserPost(true);
+        const loginData = getLoginData();
+        const currentUserId = loginData?.user?.id; // 현재 로그인한 유저 ID
+
+        // Supabase에서 찾기
+        const { data, error } = await supabase
+          .from('CompanionList')
+          .select('*')
+          .eq('id', parseInt(id))
+          .single();
+
+        if (error) {
+          console.error('Error fetching companion:', error);
+          setCompanion(null);
         } else {
-          // Supabase에서 찾기
-          const { data, error } = await supabase
-            .from('CompanionList')
-            .select('*')
-            .eq('id', parseInt(id))
-            .single();
+          setCompanion(data);
 
-          if (error) {
-            console.error('Error fetching companion:', error);
-            setCompanion(null);
-          } else {
-            setCompanion(data);
-            setIsUserPost(false);
-          }
+          // 작성자 user_id와 현재 로그인한 user_id 비교
+          const authorUserId = data.author?.user_id;
+          const isMyPost = currentUserId && authorUserId && currentUserId === authorUserId;
+          setIsUserPost(isMyPost);
         }
       } catch (err) {
         console.error('Error:', err);
@@ -74,12 +79,18 @@ const CompanionDetail = () => {
   };
 
   // 동행모집 삭제 핸들러
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('정말로 이 동행모집을 삭제하시겠습니까?')) {
       try {
-        const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-        const updatedPosts = storedPosts.filter(post => post.id.toString() !== id);
-        localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
+        // Supabase에서 삭제
+        const { error } = await supabase
+          .from('CompanionList')
+          .delete()
+          .eq('id', parseInt(id));
+
+        if (error) {
+          throw error;
+        }
 
         alert('동행모집이 성공적으로 삭제되었습니다.');
         navigate('/profile/user'); // 마이페이지로 이동
@@ -148,12 +159,6 @@ const CompanionDetail = () => {
               />
               <AuthorInfo>
                 <AuthorName>{companion.author?.name || companion.author}</AuthorName>
-                <AuthorRole>
-                  {companion.author?.age && companion.author?.location
-                    ? `${companion.author.age}세 · ${companion.author.location}`
-                    : '모집자'
-                  }
-                </AuthorRole>
               </AuthorInfo>
               <ProfileArrow>→</ProfileArrow>
             </AuthorSection>

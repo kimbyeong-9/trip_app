@@ -256,15 +256,26 @@ const Login = () => {
         return;
       }
 
+      console.log('=== 소셜 로그인 시도 ===');
+      console.log('Provider:', supabaseProvider);
+      console.log('Redirect URL:', `${window.location.origin}/social-signup`);
+
       // Supabase OAuth 로그인
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: supabaseProvider,
         options: {
-          redirectTo: `${window.location.origin}/social-signup`
+          redirectTo: `${window.location.origin}/social-signup`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
 
+      console.log('OAuth Response:', { data, error });
+
       if (error) {
+        console.error('OAuth Error Details:', error);
         throw error;
       }
 
@@ -272,7 +283,9 @@ const Login = () => {
 
     } catch (error) {
       console.error('소셜 로그인 오류:', error);
-      alert('소셜 로그인 중 오류가 발생했습니다. Supabase 대시보드에서 Provider 설정을 확인해주세요.');
+      console.error('Error message:', error.message);
+      console.error('Error details:', error);
+      alert(`소셜 로그인 오류: ${error.message || '알 수 없는 오류'}\n\n콘솔을 확인해주세요.`);
       setIsLoading(false);
     }
   };
