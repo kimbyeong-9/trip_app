@@ -1,10 +1,242 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import MagazineDetailModal from '../components/MagazineDetailModal';
-import { magazineCards } from '../data/mockData';
+import { supabase } from '../supabaseClient';
 
-// Styled Components
+
+const MagazineList = () => {
+  const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMagazine, setSelectedMagazine] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [magazineCards, setMagazineCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const magazinesPerPage = 6;
+
+  const categories = ['전체', '국내여행', '맛집', '액티비티', '문화'];
+
+  useEffect(() => {
+    const fetchMagazineCards = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('MagazineSections')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching magazine cards:', error);
+        } else {
+          setMagazineCards(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching magazine cards:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMagazineCards();
+  }, []);
+
+  // 로그인 상태 확인
+  const getLoginData = () => {
+    const localData = localStorage.getItem('loginData');
+    const sessionData = sessionStorage.getItem('loginData');
+    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+  };
+
+  const loginData = getLoginData();
+  const isLoggedIn = loginData && loginData.isLoggedIn;
+
+  const filteredMagazines = selectedCategory === '전체'
+    ? magazineCards
+    : magazineCards.filter(magazine => magazine.category === selectedCategory);
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(filteredMagazines.length / magazinesPerPage);
+  const startIndex = (currentPage - 1) * magazinesPerPage;
+  const endIndex = startIndex + magazinesPerPage;
+  const displayedMagazines = filteredMagazines.slice(startIndex, endIndex);
+
+  const handleMagazineClick = (magazine) => {
+    if (isLoggedIn) {
+      setSelectedMagazine(magazine);
+      setIsModalOpen(true);
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedMagazine(null);
+  };
+
+  const handleLoginClick = () => {
+    setShowLoginModal(false);
+    navigate('/login');
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  if (loading) {
+    return (
+      <MagazineListPage>
+        <Container>
+          <PageHeader>
+            <PageTitle>여행 매거진</PageTitle>
+          </PageHeader>
+          <LoadingSpinner>
+            <Spinner />
+            <LoadingText>매거진 로딩중...</LoadingText>
+          </LoadingSpinner>
+        </Container>
+      </MagazineListPage>
+    );
+  }
+
+  return (
+    <MagazineListPage>
+      <Container>
+        <PageHeader>
+          <PageTitle>여행 매거진</PageTitle>
+        </PageHeader>
+
+        <FilterSection>
+          {categories.map(category => (
+            <FilterButton
+              key={category}
+              $active={selectedCategory === category}
+              onClick={() => {
+                setSelectedCategory(category);
+                setCurrentPage(1);
+              }}
+            >
+              {category}
+            </FilterButton>
+          ))}
+        </FilterSection>
+
+        {displayedMagazines.length > 0 ? (
+          <>
+            <MagazineGrid>
+              {displayedMagazines.map(magazine => (
+                <MagazineCard
+                  key={magazine.id}
+                  onClick={() => handleMagazineClick(magazine)}
+                >
+                  <MagazineImage src={magazine.image} alt={magazine.title} />
+                  <MagazineContent>
+                    <MagazineCategory>{magazine.views || Math.floor(Math.random() * 500) + 50} views</MagazineCategory>
+                    <MagazineTitle>{magazine.title}</MagazineTitle>
+                    <MagazineDescription>{magazine.description}</MagazineDescription>
+                    <MagazineMeta>
+                      <MagazineAuthor>by {magazine.author}</MagazineAuthor>
+                      <MagazineDate>{formatDate(magazine.date)}</MagazineDate>
+                    </MagazineMeta>
+                  </MagazineContent>
+                </MagazineCard>
+              ))}
+            </MagazineGrid>
+
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <PaginationContainer>
+                <PaginationButton
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  ‹
+                </PaginationButton>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                  // 현재 페이지 주변의 페이지만 보이도록 제한
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <PaginationButton
+                        key={page}
+                        $active={currentPage === page}
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </PaginationButton>
+                    );
+                  } else if (
+                    page === currentPage - 2 ||
+                    page === currentPage + 2
+                  ) {
+                    return <span key={page}>...</span>;
+                  }
+                  return null;
+                })}
+
+                <PaginationButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  ›
+                </PaginationButton>
+              </PaginationContainer>
+            )}
+          </>
+        ) : (
+          <EmptyState>
+            <EmptyIcon>📖</EmptyIcon>
+            <EmptyTitle>매거진이 없습니다</EmptyTitle>
+            <EmptyMessage>선택한 카테고리에 해당하는 매거진이 없습니다.</EmptyMessage>
+          </EmptyState>
+        )}
+      </Container>
+
+      {/* 매거진 상세 모달 */}
+      {isModalOpen && selectedMagazine && (
+        <MagazineDetailModal
+          magazine={selectedMagazine}
+          onClose={handleCloseModal}
+        />
+      )}
+
+      {/* 로그인 모달 */}
+      {showLoginModal && (
+        <LoginModal onClick={() => setShowLoginModal(false)}>
+          <LoginModalContent onClick={(e) => e.stopPropagation()}>
+            <LoginModalIcon>🔒</LoginModalIcon>
+            <LoginModalTitle>로그인이 필요합니다</LoginModalTitle>
+            <LoginModalMessage>로그인 후 이용가능 합니다</LoginModalMessage>
+            <LoginModalButtons>
+              <LoginModalButton $primary onClick={handleLoginClick}>로그인</LoginModalButton>
+              <LoginModalButton onClick={() => setShowLoginModal(false)}>취소</LoginModalButton>
+            </LoginModalButtons>
+          </LoginModalContent>
+        </LoginModal>
+      )}
+    </MagazineListPage>
+  );
+};
+
+
+
+
 const MagazineListPage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -298,192 +530,33 @@ const LoginModalButton = styled.button`
   `}
 `;
 
-const MagazineList = () => {
-  const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState('전체');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedMagazine, setSelectedMagazine] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+const LoadingSpinner = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 20px;
+`;
 
-  const magazinesPerPage = 6;
+const Spinner = styled.div`
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 
-  const categories = ['전체', '국내여행', '맛집', '액티비티', '문화'];
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 
-  // 로그인 상태 확인
-  const getLoginData = () => {
-    const localData = localStorage.getItem('loginData');
-    const sessionData = sessionStorage.getItem('loginData');
-    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
-  };
-
-  const loginData = getLoginData();
-  const isLoggedIn = loginData && loginData.isLoggedIn;
-
-  const filteredMagazines = selectedCategory === '전체'
-    ? magazineCards
-    : magazineCards.filter(magazine => magazine.category === selectedCategory);
-
-  // 페이지네이션 계산
-  const totalPages = Math.ceil(filteredMagazines.length / magazinesPerPage);
-  const startIndex = (currentPage - 1) * magazinesPerPage;
-  const endIndex = startIndex + magazinesPerPage;
-  const displayedMagazines = filteredMagazines.slice(startIndex, endIndex);
-
-  const handleMagazineClick = (magazine) => {
-    if (isLoggedIn) {
-      setSelectedMagazine(magazine);
-      setIsModalOpen(true);
-    } else {
-      setShowLoginModal(true);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedMagazine(null);
-  };
-
-  const handleLoginClick = () => {
-    setShowLoginModal(false);
-    navigate('/login');
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <MagazineListPage>
-      <Container>
-        <PageHeader>
-          <PageTitle>여행 매거진</PageTitle>
-        </PageHeader>
-
-        <FilterSection>
-          {categories.map(category => (
-            <FilterButton
-              key={category}
-              $active={selectedCategory === category}
-              onClick={() => {
-                setSelectedCategory(category);
-                setCurrentPage(1);
-              }}
-            >
-              {category}
-            </FilterButton>
-          ))}
-        </FilterSection>
-
-        {displayedMagazines.length > 0 ? (
-          <>
-            <MagazineGrid>
-              {displayedMagazines.map(magazine => (
-                <MagazineCard
-                  key={magazine.id}
-                  onClick={() => handleMagazineClick(magazine)}
-                >
-                  <MagazineImage src={magazine.image} alt={magazine.title} />
-                  <MagazineContent>
-                    <MagazineCategory>{magazine.views || Math.floor(Math.random() * 500) + 50} views</MagazineCategory>
-                    <MagazineTitle>{magazine.title}</MagazineTitle>
-                    <MagazineDescription>{magazine.description}</MagazineDescription>
-                    <MagazineMeta>
-                      <MagazineAuthor>by {magazine.author}</MagazineAuthor>
-                      <MagazineDate>{formatDate(magazine.date)}</MagazineDate>
-                    </MagazineMeta>
-                  </MagazineContent>
-                </MagazineCard>
-              ))}
-            </MagazineGrid>
-
-            {/* 페이지네이션 */}
-            {totalPages > 1 && (
-              <PaginationContainer>
-                <PaginationButton
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  ‹
-                </PaginationButton>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
-                  // 현재 페이지 주변의 페이지만 보이도록 제한
-                  if (
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  ) {
-                    return (
-                      <PaginationButton
-                        key={page}
-                        $active={currentPage === page}
-                        onClick={() => handlePageChange(page)}
-                      >
-                        {page}
-                      </PaginationButton>
-                    );
-                  } else if (
-                    page === currentPage - 2 ||
-                    page === currentPage + 2
-                  ) {
-                    return <span key={page}>...</span>;
-                  }
-                  return null;
-                })}
-
-                <PaginationButton
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  ›
-                </PaginationButton>
-              </PaginationContainer>
-            )}
-          </>
-        ) : (
-          <EmptyState>
-            <EmptyIcon>📖</EmptyIcon>
-            <EmptyTitle>매거진이 없습니다</EmptyTitle>
-            <EmptyMessage>선택한 카테고리에 해당하는 매거진이 없습니다.</EmptyMessage>
-          </EmptyState>
-        )}
-      </Container>
-
-      {/* 매거진 상세 모달 */}
-      {isModalOpen && selectedMagazine && (
-        <MagazineDetailModal
-          magazine={selectedMagazine}
-          onClose={handleCloseModal}
-        />
-      )}
-
-      {/* 로그인 모달 */}
-      {showLoginModal && (
-        <LoginModal onClick={() => setShowLoginModal(false)}>
-          <LoginModalContent onClick={(e) => e.stopPropagation()}>
-            <LoginModalIcon>🔒</LoginModalIcon>
-            <LoginModalTitle>로그인이 필요합니다</LoginModalTitle>
-            <LoginModalMessage>로그인 후 이용가능 합니다</LoginModalMessage>
-            <LoginModalButtons>
-              <LoginModalButton $primary onClick={handleLoginClick}>로그인</LoginModalButton>
-              <LoginModalButton onClick={() => setShowLoginModal(false)}>취소</LoginModalButton>
-            </LoginModalButtons>
-          </LoginModalContent>
-        </LoginModal>
-      )}
-    </MagazineListPage>
-  );
-};
+const LoadingText = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
+`;
 
 export default MagazineList;

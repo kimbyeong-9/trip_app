@@ -2,7 +2,430 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-// Styled Components
+
+
+const Community = () => {
+  const navigate = useNavigate();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [storyText, setStoryText] = useState('');
+  const [storyImage, setStoryImage] = useState('');
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [selectedStoryId, setSelectedStoryId] = useState(null);
+  const [newComment, setNewComment] = useState('');
+  const [expandedStories, setExpandedStories] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const categories = [
+    { key: 'kids', label: '아이들과 함께' },
+    { key: 'restaurant', label: '맛집' },
+    { key: 'cafe', label: '카페' },
+    { key: 'experience', label: '체험' },
+    { key: 'festival', label: '축제' },
+    { key: 'sports', label: '스포츠' },
+    { key: 'resort', label: '리조트' },
+    { key: 'historical', label: '역사' },
+    { key: 'nature', label: '자연' },
+    { key: 'tourism', label: '관광' },
+    { key: 'architecture', label: '건축' }
+  ];
+
+  // 초기 스토리 데이터를 함수로 생성 (번역을 위해)
+  const getInitialStories = () => [
+    {
+      id: 1,
+      author: '여행러버',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face',
+      date: '2024-01-15',
+      content: '오늘 제주도에서 정말 아름다운 일몰을 봤어요! 성산일출봉에서 바라본 바다가 정말 환상적이었습니다. 다음에는 더 오래 머물고 싶어요.',
+      image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop',
+      tags: ['제주도', '일몼', '성산일출봉'],
+      likes: 24,
+      comments: [
+        { id: 1, author: '바다러버', text: '정말 아름다운 일몰이네요!' },
+        { id: 2, author: '여행매니아', text: '저도 다음에 꼭 가보고 싶어요' }
+      ],
+      liked: false
+    },
+    {
+      id: 2,
+      author: '산악인',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face',
+      date: '2024-01-12',
+      content: '설악산 등반 완료! 힘들었지만 정상에서 본 풍경은 정말 잊을 수 없을 것 같아요. 겨울 설경이 이렇게 아름다울 줄 몰랐네요.',
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+      tags: ['설악산', '등산', '겨울여행'],
+      likes: 18,
+      comments: [
+        { id: 1, author: '등산러버', text: '겨울 설악산 정말 아름답죠!' }
+      ],
+      liked: false
+    },
+    {
+      id: 3,
+      author: '맛집헌터',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=50&h=50&fit=crop&crop=face',
+      date: '2024-01-10',
+      content: '부산 자갈치시장에서 먹은 회가 정말 신선하고 맛있었어요! 현지 아저씨가 추천해주신 곳인데 진짜 대박이었습니다.',
+      image: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&h=400&fit=crop',
+      tags: ['부산', '자갈치시장', '회', '맛집'],
+      likes: 32,
+      comments: [
+        { id: 1, author: '부산토박이', text: '여기 정말 맛있죠!' },
+        { id: 2, author: '회러버', text: '다음에 부산가면 꼭 가볼게요' },
+        { id: 3, author: '맛집탐험가', text: '추천 감사합니다!' }
+      ],
+      liked: true
+    }
+  ];
+
+  const [stories, setStories] = useState(getInitialStories());
+
+
+  // 외부 클릭 시 메뉴 닫기
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuId !== null) {
+        setOpenMenuId(null);
+      }
+    };
+
+    if (openMenuId !== null) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId]);
+
+  const handleCreateStory = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    setStoryText('');
+    setStoryImage('');
+    setSelectedCategory('');
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setStoryImage(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmitStory = () => {
+    if (!storyText.trim() || !selectedCategory) {
+      alert('카테고리를 선택해주세요');
+      return;
+    }
+
+    // 현재 로그인한 사용자 정보 가져오기
+    const getCurrentUser = () => {
+      const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+      if (loginData) {
+        return JSON.parse(loginData);
+      }
+      return null;
+    };
+
+    const currentUser = getCurrentUser();
+
+    const newStory = {
+      id: Date.now(), // 더 고유한 ID 생성
+      author: currentUser?.user?.name || '익명',
+      avatar: currentUser?.user?.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&h=50&fit=crop&crop=face',
+      date: new Date().toISOString().split('T')[0],
+      content: storyText,
+      image: storyImage,
+      tags: [selectedCategory, '여행', '스토리'],
+      category: selectedCategory,
+      likes: 0,
+      comments: [],
+      liked: false
+    };
+
+    setStories([newStory, ...stories]);
+
+    // 폼 초기화
+    setStoryText('');
+    setStoryImage('');
+    setSelectedCategory('');
+
+    handleCloseModal();
+  };
+
+  const handleLike = (id) => {
+    setStories(stories.map(story =>
+      story.id === id
+        ? {
+            ...story,
+            liked: !story.liked,
+            likes: story.liked ? story.likes - 1 : story.likes + 1
+          }
+        : story
+    ));
+  };
+
+  const handleMenuToggle = (id, event) => {
+    event.stopPropagation();
+    setOpenMenuId(openMenuId === id ? null : id);
+  };
+
+  const handleReport = (id) => {
+    alert('신고가 접수되었습니다');
+    setOpenMenuId(null);
+  };
+
+  const handleHide = (id) => {
+    setStories(stories.filter(story => story.id !== id));
+    setOpenMenuId(null);
+  };
+
+  const handleComment = (id) => {
+    setSelectedStoryId(id);
+    setShowCommentModal(true);
+  };
+
+  const handleCloseCommentModal = () => {
+    setShowCommentModal(false);
+    setSelectedStoryId(null);
+    setNewComment('');
+  };
+
+  const handleSubmitComment = () => {
+    if (!newComment.trim()) return;
+
+    const newCommentObj = {
+      id: Date.now(),
+      author: '나',
+      text: newComment.trim()
+    };
+
+    setStories(stories.map(story =>
+      story.id === selectedStoryId
+        ? {
+            ...story,
+            comments: [...story.comments, newCommentObj]
+          }
+        : story
+    ));
+
+    handleCloseCommentModal();
+  };
+
+  const handleProfileClick = (authorName) => {
+    // 작성자 이름을 그대로 사용 (한글 이름 유지)
+    navigate(`/profile/${authorName}`);
+  };
+
+  const toggleStoryExpansion = (storyId) => {
+    setExpandedStories(prev => ({
+      ...prev,
+      [storyId]: !prev[storyId]
+    }));
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <CommunityPage>
+      <Container>
+        <PageHeader>
+          <PageTitle>커뮤니티</PageTitle>
+          <CreateButton onClick={handleCreateStory}>
+스토리 작성
+          </CreateButton>
+        </PageHeader>
+
+        <StoriesGrid>
+          {stories.map(story => (
+            <StoryCard key={story.id}>
+              <StoryHeader>
+                <Avatar
+                  src={story.avatar}
+                  alt={story.author}
+                  onClick={() => handleProfileClick(story.author)}
+                />
+                <StoryInfo onClick={() => handleProfileClick(story.author)}>
+                  <AuthorName>{story.author}</AuthorName>
+                  <StoryDate>{formatDate(story.date)}</StoryDate>
+                </StoryInfo>
+                <MenuButton onClick={(e) => handleMenuToggle(story.id, e)}>
+                  ⋯
+                </MenuButton>
+                {openMenuId === story.id && (
+                  <MenuDropdown onClick={(e) => e.stopPropagation()}>
+                    <MenuOption onClick={() => handleReport(story.id)} className="danger">
+                      신고
+                    </MenuOption>
+                    <MenuOption onClick={() => handleHide(story.id)}>
+                      숨기기
+                    </MenuOption>
+                  </MenuDropdown>
+                )}
+              </StoryHeader>
+
+              <StoryContent>
+                <StoryText expanded={expandedStories[story.id]}>
+                  {story.content}
+                </StoryText>
+                {story.content.length > 100 && (
+                  <ReadMoreButton onClick={() => toggleStoryExpansion(story.id)}>
+                    {expandedStories[story.id] ? '접기' : '더 보기'}
+                  </ReadMoreButton>
+                )}
+                {story.image && (
+                  <StoryImage src={story.image} alt="여행 사진" />
+                )}
+                <StoryTags>
+                  {story.tags.map((tag, index) => (
+                    <Tag key={index}>#{tag}</Tag>
+                  ))}
+                </StoryTags>
+              </StoryContent>
+
+              <StoryActions>
+                <LeftActions>
+                  <ActionButton
+                    className={story.liked ? 'liked' : ''}
+                    onClick={() => handleLike(story.id)}
+                  >
+                    {story.liked ? '♥' : '♡'} {story.likes}
+                  </ActionButton>
+                  <ActionButton onClick={() => handleComment(story.id)}>
+                    댓글 {story.comments.length}
+                  </ActionButton>
+                </LeftActions>
+                <RightActions>
+                  <ActionButton>
+                    공유
+                  </ActionButton>
+                </RightActions>
+              </StoryActions>
+            </StoryCard>
+          ))}
+        </StoriesGrid>
+      </Container>
+
+      {showCreateModal && (
+        <CreateStoryModal onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+          <ModalContainer>
+            <ModalHeader>
+              <ModalTitle>스토리 작성</ModalTitle>
+              <CloseButton onClick={handleCloseModal}>✕</CloseButton>
+            </ModalHeader>
+
+            <CategorySection>
+              <FormLabel>카테고리 선택</FormLabel>
+              <CategoryGrid>
+                {categories.map((category) => (
+                  <CategoryButton
+                    key={category.key}
+                    selected={selectedCategory === category.key}
+                    onClick={() => setSelectedCategory(category.key)}
+                  >
+                    {category.label}
+                  </CategoryButton>
+                ))}
+              </CategoryGrid>
+            </CategorySection>
+
+            <FormGroup>
+              <FormLabel>스토리 내용</FormLabel>
+              <FormTextarea
+                value={storyText}
+                onChange={(e) => setStoryText(e.target.value)}
+                placeholder="오늘의 여행 경험을 공유해주세요..."
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>사진 첨부</FormLabel>
+              <ImageUploadArea>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  id="story-image"
+                />
+                <label htmlFor="story-image">
+                  <UploadText>사진을 여기에 끌어다 놓거나 클릭하세요</UploadText>
+                </label>
+                {storyImage && (
+                  <PreviewImage src={storyImage} alt="미리보기" />
+                )}
+              </ImageUploadArea>
+            </FormGroup>
+
+            <SubmitButton
+              onClick={handleSubmitStory}
+              disabled={!storyText.trim() || !selectedCategory}
+            >
+게시하기
+            </SubmitButton>
+          </ModalContainer>
+        </CreateStoryModal>
+      )}
+
+      {showCommentModal && (
+        <CommentModal onClick={(e) => e.target === e.currentTarget && handleCloseCommentModal()}>
+          <CommentContainer>
+            <ModalHeader>
+              <ModalTitle>댓글</ModalTitle>
+              <CloseButton onClick={handleCloseCommentModal}>✕</CloseButton>
+            </ModalHeader>
+
+            <CommentList>
+              {selectedStoryId && stories.find(s => s.id === selectedStoryId)?.comments.map(comment => (
+                <Comment key={comment.id}>
+                  <CommentAuthor>{comment.author}</CommentAuthor>
+                  <CommentText>{comment.text}</CommentText>
+                </Comment>
+              ))}
+            </CommentList>
+
+            <CommentInput>
+              <CommentTextarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="댓글을 입력하세요..."
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitComment();
+                  }
+                }}
+              />
+              <CommentSubmitButton
+                onClick={handleSubmitComment}
+                disabled={!newComment.trim()}
+              >
+등록
+              </CommentSubmitButton>
+            </CommentInput>
+          </CommentContainer>
+        </CommentModal>
+      )}
+    </CommunityPage>
+  );
+};
+
+
 const CommunityPage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -533,426 +956,5 @@ const CategoryButton = styled.button`
     background: ${props => props.selected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa'};
   }
 `;
-
-const Community = () => {
-  const navigate = useNavigate();
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [storyText, setStoryText] = useState('');
-  const [storyImage, setStoryImage] = useState('');
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [showCommentModal, setShowCommentModal] = useState(false);
-  const [selectedStoryId, setSelectedStoryId] = useState(null);
-  const [newComment, setNewComment] = useState('');
-  const [expandedStories, setExpandedStories] = useState({});
-  const [selectedCategory, setSelectedCategory] = useState('');
-
-  const categories = [
-    { key: 'kids', label: '아이들과 함께' },
-    { key: 'restaurant', label: '맛집' },
-    { key: 'cafe', label: '카페' },
-    { key: 'experience', label: '체험' },
-    { key: 'festival', label: '축제' },
-    { key: 'sports', label: '스포츠' },
-    { key: 'resort', label: '리조트' },
-    { key: 'historical', label: '역사' },
-    { key: 'nature', label: '자연' },
-    { key: 'tourism', label: '관광' },
-    { key: 'architecture', label: '건축' }
-  ];
-
-  // 초기 스토리 데이터를 함수로 생성 (번역을 위해)
-  const getInitialStories = () => [
-    {
-      id: 1,
-      author: '여행러버',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face',
-      date: '2024-01-15',
-      content: '오늘 제주도에서 정말 아름다운 일몰을 봤어요! 성산일출봉에서 바라본 바다가 정말 환상적이었습니다. 다음에는 더 오래 머물고 싶어요.',
-      image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop',
-      tags: ['제주도', '일몼', '성산일출봉'],
-      likes: 24,
-      comments: [
-        { id: 1, author: '바다러버', text: '정말 아름다운 일몰이네요!' },
-        { id: 2, author: '여행매니아', text: '저도 다음에 꼭 가보고 싶어요' }
-      ],
-      liked: false
-    },
-    {
-      id: 2,
-      author: '산악인',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face',
-      date: '2024-01-12',
-      content: '설악산 등반 완료! 힘들었지만 정상에서 본 풍경은 정말 잊을 수 없을 것 같아요. 겨울 설경이 이렇게 아름다울 줄 몰랐네요.',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
-      tags: ['설악산', '등산', '겨울여행'],
-      likes: 18,
-      comments: [
-        { id: 1, author: '등산러버', text: '겨울 설악산 정말 아름답죠!' }
-      ],
-      liked: false
-    },
-    {
-      id: 3,
-      author: '맛집헌터',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=50&h=50&fit=crop&crop=face',
-      date: '2024-01-10',
-      content: '부산 자갈치시장에서 먹은 회가 정말 신선하고 맛있었어요! 현지 아저씨가 추천해주신 곳인데 진짜 대박이었습니다.',
-      image: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&h=400&fit=crop',
-      tags: ['부산', '자갈치시장', '회', '맛집'],
-      likes: 32,
-      comments: [
-        { id: 1, author: '부산토박이', text: '여기 정말 맛있죠!' },
-        { id: 2, author: '회러버', text: '다음에 부산가면 꼭 가볼게요' },
-        { id: 3, author: '맛집탐험가', text: '추천 감사합니다!' }
-      ],
-      liked: true
-    }
-  ];
-
-  const [stories, setStories] = useState(getInitialStories());
-
-
-  // 외부 클릭 시 메뉴 닫기
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (openMenuId !== null) {
-        setOpenMenuId(null);
-      }
-    };
-
-    if (openMenuId !== null) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [openMenuId]);
-
-  const handleCreateStory = () => {
-    setShowCreateModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowCreateModal(false);
-    setStoryText('');
-    setStoryImage('');
-    setSelectedCategory('');
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setStoryImage(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmitStory = () => {
-    if (!storyText.trim() || !selectedCategory) {
-      alert('카테고리를 선택해주세요');
-      return;
-    }
-
-    // 현재 로그인한 사용자 정보 가져오기
-    const getCurrentUser = () => {
-      const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-      if (loginData) {
-        return JSON.parse(loginData);
-      }
-      return null;
-    };
-
-    const currentUser = getCurrentUser();
-
-    const newStory = {
-      id: Date.now(), // 더 고유한 ID 생성
-      author: currentUser?.user?.name || '익명',
-      avatar: currentUser?.user?.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&h=50&fit=crop&crop=face',
-      date: new Date().toISOString().split('T')[0],
-      content: storyText,
-      image: storyImage,
-      tags: [selectedCategory, '여행', '스토리'],
-      category: selectedCategory,
-      likes: 0,
-      comments: [],
-      liked: false
-    };
-
-    setStories([newStory, ...stories]);
-
-    // 폼 초기화
-    setStoryText('');
-    setStoryImage('');
-    setSelectedCategory('');
-
-    handleCloseModal();
-  };
-
-  const handleLike = (id) => {
-    setStories(stories.map(story =>
-      story.id === id
-        ? {
-            ...story,
-            liked: !story.liked,
-            likes: story.liked ? story.likes - 1 : story.likes + 1
-          }
-        : story
-    ));
-  };
-
-  const handleMenuToggle = (id, event) => {
-    event.stopPropagation();
-    setOpenMenuId(openMenuId === id ? null : id);
-  };
-
-  const handleReport = (id) => {
-    alert('신고가 접수되었습니다');
-    setOpenMenuId(null);
-  };
-
-  const handleHide = (id) => {
-    setStories(stories.filter(story => story.id !== id));
-    setOpenMenuId(null);
-  };
-
-  const handleComment = (id) => {
-    setSelectedStoryId(id);
-    setShowCommentModal(true);
-  };
-
-  const handleCloseCommentModal = () => {
-    setShowCommentModal(false);
-    setSelectedStoryId(null);
-    setNewComment('');
-  };
-
-  const handleSubmitComment = () => {
-    if (!newComment.trim()) return;
-
-    const newCommentObj = {
-      id: Date.now(),
-      author: '나',
-      text: newComment.trim()
-    };
-
-    setStories(stories.map(story =>
-      story.id === selectedStoryId
-        ? {
-            ...story,
-            comments: [...story.comments, newCommentObj]
-          }
-        : story
-    ));
-
-    handleCloseCommentModal();
-  };
-
-  const handleProfileClick = (authorName) => {
-    // 작성자 이름을 그대로 사용 (한글 이름 유지)
-    navigate(`/profile/${authorName}`);
-  };
-
-  const toggleStoryExpansion = (storyId) => {
-    setExpandedStories(prev => ({
-      ...prev,
-      [storyId]: !prev[storyId]
-    }));
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <CommunityPage>
-      <Container>
-        <PageHeader>
-          <PageTitle>커뮤니티</PageTitle>
-          <CreateButton onClick={handleCreateStory}>
-스토리 작성
-          </CreateButton>
-        </PageHeader>
-
-        <StoriesGrid>
-          {stories.map(story => (
-            <StoryCard key={story.id}>
-              <StoryHeader>
-                <Avatar
-                  src={story.avatar}
-                  alt={story.author}
-                  onClick={() => handleProfileClick(story.author)}
-                />
-                <StoryInfo onClick={() => handleProfileClick(story.author)}>
-                  <AuthorName>{story.author}</AuthorName>
-                  <StoryDate>{formatDate(story.date)}</StoryDate>
-                </StoryInfo>
-                <MenuButton onClick={(e) => handleMenuToggle(story.id, e)}>
-                  ⋯
-                </MenuButton>
-                {openMenuId === story.id && (
-                  <MenuDropdown onClick={(e) => e.stopPropagation()}>
-                    <MenuOption onClick={() => handleReport(story.id)} className="danger">
-                      신고
-                    </MenuOption>
-                    <MenuOption onClick={() => handleHide(story.id)}>
-                      숨기기
-                    </MenuOption>
-                  </MenuDropdown>
-                )}
-              </StoryHeader>
-
-              <StoryContent>
-                <StoryText expanded={expandedStories[story.id]}>
-                  {story.content}
-                </StoryText>
-                {story.content.length > 100 && (
-                  <ReadMoreButton onClick={() => toggleStoryExpansion(story.id)}>
-                    {expandedStories[story.id] ? '접기' : '더 보기'}
-                  </ReadMoreButton>
-                )}
-                {story.image && (
-                  <StoryImage src={story.image} alt="여행 사진" />
-                )}
-                <StoryTags>
-                  {story.tags.map((tag, index) => (
-                    <Tag key={index}>#{tag}</Tag>
-                  ))}
-                </StoryTags>
-              </StoryContent>
-
-              <StoryActions>
-                <LeftActions>
-                  <ActionButton
-                    className={story.liked ? 'liked' : ''}
-                    onClick={() => handleLike(story.id)}
-                  >
-                    {story.liked ? '♥' : '♡'} {story.likes}
-                  </ActionButton>
-                  <ActionButton onClick={() => handleComment(story.id)}>
-                    댓글 {story.comments.length}
-                  </ActionButton>
-                </LeftActions>
-                <RightActions>
-                  <ActionButton>
-                    공유
-                  </ActionButton>
-                </RightActions>
-              </StoryActions>
-            </StoryCard>
-          ))}
-        </StoriesGrid>
-      </Container>
-
-      {showCreateModal && (
-        <CreateStoryModal onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
-          <ModalContainer>
-            <ModalHeader>
-              <ModalTitle>스토리 작성</ModalTitle>
-              <CloseButton onClick={handleCloseModal}>✕</CloseButton>
-            </ModalHeader>
-
-            <CategorySection>
-              <FormLabel>카테고리 선택</FormLabel>
-              <CategoryGrid>
-                {categories.map((category) => (
-                  <CategoryButton
-                    key={category.key}
-                    selected={selectedCategory === category.key}
-                    onClick={() => setSelectedCategory(category.key)}
-                  >
-                    {category.label}
-                  </CategoryButton>
-                ))}
-              </CategoryGrid>
-            </CategorySection>
-
-            <FormGroup>
-              <FormLabel>스토리 내용</FormLabel>
-              <FormTextarea
-                value={storyText}
-                onChange={(e) => setStoryText(e.target.value)}
-                placeholder="오늘의 여행 경험을 공유해주세요..."
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <FormLabel>사진 첨부</FormLabel>
-              <ImageUploadArea>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  id="story-image"
-                />
-                <label htmlFor="story-image">
-                  <UploadText>사진을 여기에 끌어다 놓거나 클릭하세요</UploadText>
-                </label>
-                {storyImage && (
-                  <PreviewImage src={storyImage} alt="미리보기" />
-                )}
-              </ImageUploadArea>
-            </FormGroup>
-
-            <SubmitButton
-              onClick={handleSubmitStory}
-              disabled={!storyText.trim() || !selectedCategory}
-            >
-게시하기
-            </SubmitButton>
-          </ModalContainer>
-        </CreateStoryModal>
-      )}
-
-      {showCommentModal && (
-        <CommentModal onClick={(e) => e.target === e.currentTarget && handleCloseCommentModal()}>
-          <CommentContainer>
-            <ModalHeader>
-              <ModalTitle>댓글</ModalTitle>
-              <CloseButton onClick={handleCloseCommentModal}>✕</CloseButton>
-            </ModalHeader>
-
-            <CommentList>
-              {selectedStoryId && stories.find(s => s.id === selectedStoryId)?.comments.map(comment => (
-                <Comment key={comment.id}>
-                  <CommentAuthor>{comment.author}</CommentAuthor>
-                  <CommentText>{comment.text}</CommentText>
-                </Comment>
-              ))}
-            </CommentList>
-
-            <CommentInput>
-              <CommentTextarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="댓글을 입력하세요..."
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmitComment();
-                  }
-                }}
-              />
-              <CommentSubmitButton
-                onClick={handleSubmitComment}
-                disabled={!newComment.trim()}
-              >
-등록
-              </CommentSubmitButton>
-            </CommentInput>
-          </CommentContainer>
-        </CommentModal>
-      )}
-    </CommunityPage>
-  );
-};
 
 export default Community;

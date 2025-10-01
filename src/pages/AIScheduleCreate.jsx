@@ -2,7 +2,207 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
-// Styled Components
+
+
+const AIScheduleCreate = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [showDateReset, setShowDateReset] = useState(false);
+  const [newStartDate, setNewStartDate] = useState('');
+  const [newEndDate, setNewEndDate] = useState('');
+
+  // URL에서 날짜 정보 추출
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const start = params.get('startDate');
+    const end = params.get('endDate');
+
+    if (start && end) {
+      setStartDate(start);
+      setEndDate(end);
+    }
+  }, [location]);
+
+  // 현재 로그인한 사용자 정보 가져오기
+  const getCurrentUser = () => {
+    try {
+      const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+      return loginData ? JSON.parse(loginData) : null;
+    } catch (error) {
+      console.error('사용자 정보 가져오기 오류:', error);
+      return null;
+    }
+  };
+
+  const currentUser = getCurrentUser();
+  const userName = currentUser?.user?.name || '여행자';
+
+  // 지역 데이터
+  const regions = [
+    { id: 'seoul', name: '서울' },
+    { id: 'busan', name: '부산' },
+    { id: 'jeju', name: '제주' },
+    { id: 'gangwon', name: '강원' },
+    { id: 'gyeonggi', name: '경기' },
+    { id: 'incheon', name: '인천' },
+    { id: 'chungcheong', name: '충청' },
+    { id: 'jeolla', name: '전라' },
+    { id: 'gyeongsang', name: '경상' },
+  ];
+
+  const handleRegionSelect = (regionId) => {
+    setSelectedRegion(regionId);
+  };
+
+  const handleNext = () => {
+    if (!selectedRegion) {
+      alert('여행 지역을 선택해주세요.');
+      return;
+    }
+
+    // 다음 단계인 카테고리 선택으로 이동
+    navigate(`/ai-category-select?region=${selectedRegion}&startDate=${startDate}&endDate=${endDate}`);
+  };
+
+  const handleBack = () => {
+    setNewStartDate(startDate);
+    setNewEndDate(endDate);
+    setShowDateReset(true);
+  };
+
+  const handleClose = () => {
+    navigate('/travel-schedules');
+  };
+
+  const handleDateResetConfirm = () => {
+    if (newStartDate && newEndDate) {
+      setStartDate(newStartDate);
+      setEndDate(newEndDate);
+      setShowDateReset(false);
+      // URL도 업데이트
+      navigate(`/ai-schedule-create?startDate=${newStartDate}&endDate=${newEndDate}`, { replace: true });
+    } else {
+      alert('출발일과 도착일을 모두 선택해주세요.');
+    }
+  };
+
+  const handleDateResetCancel = () => {
+    setShowDateReset(false);
+    setNewStartDate('');
+    setNewEndDate('');
+    navigate('/travel-schedules');
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <AIScheduleCreateModal onClick={(e) => e.target === e.currentTarget && handleClose()}>
+      <AICreateContainer onClick={(e) => e.stopPropagation()}>
+        <CloseButton onClick={handleClose}>
+          ×
+        </CloseButton>
+
+        <WelcomeSection>
+          <WelcomeTitle>안녕하세요 {userName}님!</WelcomeTitle>
+          <WelcomeMessage>
+            어디로 여행을 떠나시나요?<br />
+            AI가 맞춤형 여행 일정을 만들어드릴게요!
+          </WelcomeMessage>
+
+          {startDate && endDate && (
+            <DateInfo>
+              <DateValue>
+                {formatDate(startDate)} ~ {formatDate(endDate)}
+              </DateValue>
+            </DateInfo>
+          )}
+        </WelcomeSection>
+
+        <RegionSelectionSection>
+          <SectionTitle>여행 지역 선택</SectionTitle>
+
+          <RegionGrid>
+            {regions.map((region) => (
+              <RegionButton
+                key={region.id}
+                selected={selectedRegion === region.id}
+                onClick={() => handleRegionSelect(region.id)}
+              >
+                <RegionName>{region.name}</RegionName>
+              </RegionButton>
+            ))}
+          </RegionGrid>
+
+          <ButtonGroup>
+            <ActionButton onClick={handleBack}>
+              날짜 변경
+            </ActionButton>
+            <ActionButton
+              primary
+              onClick={handleNext}
+              disabled={!selectedRegion}
+            >
+              다음
+            </ActionButton>
+          </ButtonGroup>
+        </RegionSelectionSection>
+      </AICreateContainer>
+
+      {/* 날짜 재설정 모달 */}
+      {showDateReset && (
+        <DateResetModal onClick={(e) => e.target === e.currentTarget && handleDateResetCancel()}>
+          <DateResetContainer onClick={(e) => e.stopPropagation()}>
+            <DateResetTitle>여행 날짜 재설정</DateResetTitle>
+
+            <DateInputContainer>
+              <DateInputGroup>
+                <DateInputLabel>시작일</DateInputLabel>
+                <DateInput
+                  type="date"
+                  value={newStartDate}
+                  onChange={(e) => setNewStartDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </DateInputGroup>
+
+              <DateInputGroup>
+                <DateInputLabel>종료일</DateInputLabel>
+                <DateInput
+                  type="date"
+                  value={newEndDate}
+                  onChange={(e) => setNewEndDate(e.target.value)}
+                  min={newStartDate || new Date().toISOString().split('T')[0]}
+                />
+              </DateInputGroup>
+            </DateInputContainer>
+
+            <DateResetButtonGroup>
+              <DateResetButton onClick={handleDateResetCancel}>
+                취소
+              </DateResetButton>
+              <DateResetButton primary onClick={handleDateResetConfirm}>
+                확인
+              </DateResetButton>
+            </DateResetButtonGroup>
+          </DateResetContainer>
+        </DateResetModal>
+      )}
+    </AIScheduleCreateModal>
+  );
+};
+
+
 const AIScheduleCreateModal = styled.div`
   position: fixed;
   top: 0;
@@ -316,202 +516,5 @@ const DateResetButton = styled.button`
   `}
 `;
 
-const AIScheduleCreate = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [selectedRegion, setSelectedRegion] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [showDateReset, setShowDateReset] = useState(false);
-  const [newStartDate, setNewStartDate] = useState('');
-  const [newEndDate, setNewEndDate] = useState('');
-
-  // URL에서 날짜 정보 추출
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const start = params.get('startDate');
-    const end = params.get('endDate');
-
-    if (start && end) {
-      setStartDate(start);
-      setEndDate(end);
-    }
-  }, [location]);
-
-  // 현재 로그인한 사용자 정보 가져오기
-  const getCurrentUser = () => {
-    try {
-      const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-      return loginData ? JSON.parse(loginData) : null;
-    } catch (error) {
-      console.error('사용자 정보 가져오기 오류:', error);
-      return null;
-    }
-  };
-
-  const currentUser = getCurrentUser();
-  const userName = currentUser?.user?.name || '여행자';
-
-  // 지역 데이터
-  const regions = [
-    { id: 'seoul', name: '서울' },
-    { id: 'busan', name: '부산' },
-    { id: 'jeju', name: '제주' },
-    { id: 'gangwon', name: '강원' },
-    { id: 'gyeonggi', name: '경기' },
-    { id: 'incheon', name: '인천' },
-    { id: 'chungcheong', name: '충청' },
-    { id: 'jeolla', name: '전라' },
-    { id: 'gyeongsang', name: '경상' },
-  ];
-
-  const handleRegionSelect = (regionId) => {
-    setSelectedRegion(regionId);
-  };
-
-  const handleNext = () => {
-    if (!selectedRegion) {
-      alert('여행 지역을 선택해주세요.');
-      return;
-    }
-
-    // 다음 단계인 카테고리 선택으로 이동
-    navigate(`/ai-category-select?region=${selectedRegion}&startDate=${startDate}&endDate=${endDate}`);
-  };
-
-  const handleBack = () => {
-    setNewStartDate(startDate);
-    setNewEndDate(endDate);
-    setShowDateReset(true);
-  };
-
-  const handleClose = () => {
-    navigate('/travel-schedules');
-  };
-
-  const handleDateResetConfirm = () => {
-    if (newStartDate && newEndDate) {
-      setStartDate(newStartDate);
-      setEndDate(newEndDate);
-      setShowDateReset(false);
-      // URL도 업데이트
-      navigate(`/ai-schedule-create?startDate=${newStartDate}&endDate=${newEndDate}`, { replace: true });
-    } else {
-      alert('출발일과 도착일을 모두 선택해주세요.');
-    }
-  };
-
-  const handleDateResetCancel = () => {
-    setShowDateReset(false);
-    setNewStartDate('');
-    setNewEndDate('');
-    navigate('/travel-schedules');
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <AIScheduleCreateModal onClick={(e) => e.target === e.currentTarget && handleClose()}>
-      <AICreateContainer onClick={(e) => e.stopPropagation()}>
-        <CloseButton onClick={handleClose}>
-          ×
-        </CloseButton>
-
-        <WelcomeSection>
-          <WelcomeTitle>안녕하세요 {userName}님!</WelcomeTitle>
-          <WelcomeMessage>
-            어디로 여행을 떠나시나요?<br />
-            AI가 맞춤형 여행 일정을 만들어드릴게요!
-          </WelcomeMessage>
-
-          {startDate && endDate && (
-            <DateInfo>
-              <DateValue>
-                {formatDate(startDate)} ~ {formatDate(endDate)}
-              </DateValue>
-            </DateInfo>
-          )}
-        </WelcomeSection>
-
-        <RegionSelectionSection>
-          <SectionTitle>여행 지역 선택</SectionTitle>
-
-          <RegionGrid>
-            {regions.map((region) => (
-              <RegionButton
-                key={region.id}
-                selected={selectedRegion === region.id}
-                onClick={() => handleRegionSelect(region.id)}
-              >
-                <RegionName>{region.name}</RegionName>
-              </RegionButton>
-            ))}
-          </RegionGrid>
-
-          <ButtonGroup>
-            <ActionButton onClick={handleBack}>
-              날짜 변경
-            </ActionButton>
-            <ActionButton
-              primary
-              onClick={handleNext}
-              disabled={!selectedRegion}
-            >
-              다음
-            </ActionButton>
-          </ButtonGroup>
-        </RegionSelectionSection>
-      </AICreateContainer>
-
-      {/* 날짜 재설정 모달 */}
-      {showDateReset && (
-        <DateResetModal onClick={(e) => e.target === e.currentTarget && handleDateResetCancel()}>
-          <DateResetContainer onClick={(e) => e.stopPropagation()}>
-            <DateResetTitle>여행 날짜 재설정</DateResetTitle>
-
-            <DateInputContainer>
-              <DateInputGroup>
-                <DateInputLabel>시작일</DateInputLabel>
-                <DateInput
-                  type="date"
-                  value={newStartDate}
-                  onChange={(e) => setNewStartDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </DateInputGroup>
-
-              <DateInputGroup>
-                <DateInputLabel>종료일</DateInputLabel>
-                <DateInput
-                  type="date"
-                  value={newEndDate}
-                  onChange={(e) => setNewEndDate(e.target.value)}
-                  min={newStartDate || new Date().toISOString().split('T')[0]}
-                />
-              </DateInputGroup>
-            </DateInputContainer>
-
-            <DateResetButtonGroup>
-              <DateResetButton onClick={handleDateResetCancel}>
-                취소
-              </DateResetButton>
-              <DateResetButton primary onClick={handleDateResetConfirm}>
-                확인
-              </DateResetButton>
-            </DateResetButtonGroup>
-          </DateResetContainer>
-        </DateResetModal>
-      )}
-    </AIScheduleCreateModal>
-  );
-};
 
 export default AIScheduleCreate;

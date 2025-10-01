@@ -3,523 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { supabase } from '../supabaseClient';
 
-// Styled Components
-const LoginContainer = styled.div`
-   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-
-  justify-content: center;
-  padding: 20px;
-  position: relative;
-`;
-
-const LoginCard = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  max-width: 500px;
-  text-align: center;
-  position: relative;
-`;
-
-const Logo = styled.div`
-  font-size: 32px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 10px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-`;
-
-const Subtitle = styled.p`
-  color: #6c757d;
-  margin-bottom: 30px;
-  font-size: 16px;
-  padding: 0 105px;
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-const InputGroup = styled.div`
-  position: relative;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-
-  &::placeholder {
-    color: #adb5bd;
-  }
-`;
-
-const PasswordToggle = styled.button`
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6c757d;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 5px;
-
-  &:hover {
-    color: #667eea;
-  }
-`;
-
-const CheckboxGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 10px 0;
-`;
-
-const Checkbox = styled.input`
-  width: 18px;
-  height: 18px;
-  accent-color: #667eea;
-`;
-
-const CheckboxLabel = styled.label`
-  color: #6c757d;
-  font-size: 14px;
-  cursor: pointer;
-`;
-
-const LoginButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 15px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const Divider = styled.div`
-  display: flex;
-  align-items: center;
-  margin: 30px 0;
-  color: #6c757d;
-  font-size: 14px;
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #e9ecef;
-  }
-
-  &::before {
-    margin-right: 15px;
-  }
-
-  &::after {
-    margin-left: 15px;
-  }
-`;
-
-const SocialButtonsContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const SocialButton = styled.button`
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid ${props => props.$borderColor || '#e9ecef'};
-  border-radius: 12px;
-  background: ${props => props.$bgColor || 'white'};
-  color: ${props => props.$textColor || '#2c3e50'};
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  position: relative;
-  overflow: hidden;
-  min-height: 56px;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px ${props => props.$shadowColor || 'rgba(0, 0, 0, 0.15)'};
-    border-color: ${props => props.$hoverBorderColor || props.$borderColor || '#667eea'};
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const SocialIcon = styled.img`
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const SocialIconText = styled.span`
-  font-size: 18px;
-  font-weight: bold;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${props => props.color || '#333'};
-  line-height: 1;
-`;
-
-const SignupLink = styled.div`
-  margin-top: 30px;
-  color: #6c757d;
-  font-size: 14px;
-
-  a {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 600;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-`;
-
-const ErrorMessage = styled.div`
-  background: #fee;
-  color: #c33;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 20px;
-  border: 1px solid #fcc;
-`;
-
-const TestAccounts = styled.div`
-  margin-top: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  text-align: left;
-`;
-
-const TestTitle = styled.h4`
-  color: #2c3e50;
-  margin: 0 0 15px 0;
-  font-size: 16px;
-`;
-
-const TestAccount = styled.div`
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #6c757d;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const TestButton = styled.button`
-  background: #667eea;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  margin-left: 10px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #5a6fd8;
-  }
-`;
-
-const BackArrowButton = styled.button`
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid #667eea;
-  border-radius: 8px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #667eea;
-  font-size: 18px;
-
-  &:hover {
-    background: rgba(102, 126, 234, 0.2);
-    transform: translateX(-2px);
-  }
-`;
-
-// 모달 스타일 컴포넌트
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-`;
-
-const ModalContainer = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 500px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: modalSlideIn 0.3s ease-out;
-
-  @keyframes modalSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(30px) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-`;
-
-const ModalHeader = styled.div`
-  text-align: center;
-  margin-bottom: 30px;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 10px 0;
-`;
-
-const ModalSubtitle = styled.p`
-  color: #6c757d;
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.5;
-`;
-
-const ModalForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-const ModalInputGroup = styled.div`
-  text-align: left;
-`;
-
-const ModalLabel = styled.label`
-  display: block;
-  margin-bottom: 8px;
-  color: #2c3e50;
-  font-weight: 600;
-  font-size: 14px;
-`;
-
-const ModalInput = styled.input`
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-
-  &::placeholder {
-    color: #adb5bd;
-  }
-
-  &.error {
-    border-color: #dc3545;
-  }
-`;
-
-const ModalErrorMessage = styled.div`
-  background: #fee;
-  color: #c33;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  border: 1px solid #fcc;
-`;
-
-const ModalButtons = styled.div`
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 20px;
-`;
-
-const ModalButton = styled.button`
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-
-  ${props => props.primary ? `
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-  ` : `
-    background: white;
-    color: #6c757d;
-    border: 2px solid #e9ecef;
-
-    &:hover {
-      background: #f8f9fa;
-      color: #495057;
-    }
-  `}
-`;
-
-const LoadingSpinner = styled.span`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-
-  .spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-const SuccessContainer = styled.div`
-  text-align: center;
-`;
-
-const SuccessIcon = styled.div`
-  margin-bottom: 20px;
-  font-size: 48px;
-  color: #4CAF50;
-`;
-
-const SuccessTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 15px 0;
-`;
-
-const SuccessMessage = styled.p`
-  color: #6c757d;
-  margin-bottom: 15px;
-  font-size: 16px;
-  line-height: 1.6;
-
-  strong {
-    color: #2c3e50;
-    font-weight: 600;
-  }
-`;
-
-const SuccessNote = styled.p`
-  color: #6c757d;
-  font-size: 14px;
-  margin-bottom: 30px;
-`;
-
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -972,7 +455,6 @@ const Login = () => {
               </>
             ) : (
               <SuccessContainer>
-                <SuccessIcon>✅</SuccessIcon>
                 <SuccessTitle>이메일을 확인해주세요</SuccessTitle>
                 <SuccessMessage>
                   <strong>{forgotPasswordEmail}</strong>로<br />
@@ -1057,7 +539,6 @@ const Login = () => {
               </>
             ) : (
               <SuccessContainer>
-                <SuccessIcon>✅</SuccessIcon>
                 <SuccessTitle>아이디를 찾았습니다</SuccessTitle>
                 <SuccessMessage>
                   회원님의 아이디(이메일)는<br />
@@ -1079,5 +560,472 @@ const Login = () => {
     </LoginContainer>
   );
 };
+
+
+const LoginContainer = styled.div`
+   min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+`;
+
+const LoginCard = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  position: relative;
+`;
+
+const Logo = styled.div`
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
+const Subtitle = styled.p`
+  color: #6c757d;
+  margin-bottom: 30px;
+  font-size: 16px;
+  padding: 0 105px;
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const InputGroup = styled.div`
+  position: relative;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  &::placeholder {
+    color: #adb5bd;
+  }
+`;
+
+const PasswordToggle = styled.button`
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 5px;
+
+  &:hover {
+    color: #667eea;
+  }
+`;
+
+const CheckboxGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+`;
+
+const Checkbox = styled.input`
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+`;
+
+const CheckboxLabel = styled.label`
+  color: #6c757d;
+  font-size: 14px;
+  cursor: pointer;
+`;
+
+const LoginButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  margin: 30px 0;
+  color: #6c757d;
+  font-size: 14px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e9ecef;
+  }
+
+  &::before {
+    margin-right: 15px;
+  }
+
+  &::after {
+    margin-left: 15px;
+  }
+`;
+
+const SocialButtonsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const SocialButton = styled.button`
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid ${props => props.$borderColor || '#e9ecef'};
+  border-radius: 12px;
+  background: ${props => props.$bgColor || 'white'};
+  color: ${props => props.$textColor || '#2c3e50'};
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  min-height: 56px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px ${props => props.$shadowColor || 'rgba(0, 0, 0, 0.15)'};
+    border-color: ${props => props.$hoverBorderColor || props.$borderColor || '#667eea'};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const SocialIcon = styled.img`
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+
+const SignupLink = styled.div`
+  margin-top: 30px;
+  color: #6c757d;
+  font-size: 14px;
+
+  a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+const ErrorMessage = styled.div`
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  border: 1px solid #fcc;
+`;
+
+
+const BackArrowButton = styled.button`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid #667eea;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #667eea;
+  font-size: 18px;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateX(-2px);
+  }
+`;
+
+// 모달 스타일 컴포넌트
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const ModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+`;
+
+const ModalHeader = styled.div`
+  text-align: center;
+  margin-bottom: 30px;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+`;
+
+const ModalSubtitle = styled.p`
+  color: #6c757d;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+`;
+
+const ModalForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const ModalInputGroup = styled.div`
+  text-align: left;
+`;
+
+const ModalLabel = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 14px;
+`;
+
+const ModalInput = styled.input`
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  &::placeholder {
+    color: #adb5bd;
+  }
+
+  &.error {
+    border-color: #dc3545;
+  }
+`;
+
+const ModalErrorMessage = styled.div`
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  border: 1px solid #fcc;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+`;
+
+const ModalButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+
+  ${props => props.primary ? `
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  ` : `
+    background: white;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+
+    &:hover {
+      background: #f8f9fa;
+      color: #495057;
+    }
+  `}
+`;
+
+const LoadingSpinner = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const SuccessContainer = styled.div`
+  text-align: center;
+`;
+
+const SuccessIcon = styled.div`
+  margin-bottom: 20px;
+  font-size: 48px;
+  color: #4CAF50;
+`;
+
+const SuccessTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+`;
+
+const SuccessMessage = styled.p`
+  color: #6c757d;
+  margin-bottom: 15px;
+  font-size: 16px;
+  line-height: 1.6;
+
+  strong {
+    color: #2c3e50;
+    font-weight: 600;
+  }
+`;
+
+const SuccessNote = styled.p`
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 30px;
+`;
 
 export default Login;

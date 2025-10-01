@@ -2,7 +2,215 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-// Styled Components
+
+
+const ChatRoomCreate = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: '여행',
+    maxMembers: 10,
+    image: null,
+    imagePreview: null
+  });
+
+  const categories = [
+    '여행', '맛집', '문화', '액티비티', '사진', '힐링', '쇼핑', '기타'
+  ];
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFormData(prev => ({
+          ...prev,
+          image: file,
+          imagePreview: e.target.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      image: null,
+      imagePreview: null
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // 폼 검증
+    if (!formData.title.trim()) {
+      alert('채팅방 제목을 입력해주세요.');
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      alert('채팅방 설명을 입력해주세요.');
+      return;
+    }
+
+    // 실제로는 여기서 API 호출을 통해 채팅방을 생성
+    console.log('새 채팅방 생성:', formData);
+
+    // 성공적으로 생성되었다는 알림
+    alert('채팅방이 성공적으로 생성되었습니다!');
+
+    // 채팅방 목록으로 이동
+    navigate('/chat-room-list');
+  };
+
+  const handleCancel = () => {
+    if (window.confirm('작성 중인 내용이 삭제됩니다. 정말 취소하시겠습니까?')) {
+      navigate('/chat-room-list');
+    }
+  };
+
+  const isFormValid = formData.title.trim() && formData.description.trim();
+
+  return (
+    <ChatRoomCreateContainer>
+      <Header>
+        <HeaderContent>
+          <BackButton onClick={() => navigate('/chat-room-list')}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          </BackButton>
+          <HeaderTitle>
+            <h1>새 채팅방 만들기</h1>
+            <p>여행 동행을 찾기 위한 채팅방을 생성해보세요</p>
+          </HeaderTitle>
+        </HeaderContent>
+      </Header>
+
+      <FormContainer>
+        <FormCard>
+          <form onSubmit={handleSubmit}>
+            <FormSection>
+              <Label>
+                채팅방 제목<span className="required">*</span>
+              </Label>
+              <Input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="예: 제주도 3박4일 같이 가실 분!"
+                maxLength={50}
+              />
+              <CharCount>{formData.title.length}/50</CharCount>
+            </FormSection>
+
+            <FormSection>
+              <Label>
+                채팅방 설명<span className="required">*</span>
+              </Label>
+              <TextArea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="채팅방에 대한 자세한 설명을 작성해주세요. 여행 일정, 예상 비용, 만날 장소 등을 포함하면 좋습니다."
+                maxLength={500}
+              />
+              <CharCount>{formData.description.length}/500</CharCount>
+            </FormSection>
+
+            <FormSection>
+              <Label>카테고리</Label>
+              <Select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+              >
+                {categories.map(category => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </Select>
+            </FormSection>
+
+            <FormSection>
+              <Label>최대 참여인원</Label>
+              <Select
+                name="maxMembers"
+                value={formData.maxMembers}
+                onChange={handleInputChange}
+              >
+                {[5, 10, 15, 20, 25, 30].map(num => (
+                  <option key={num} value={num}>
+                    {num}명
+                  </option>
+                ))}
+              </Select>
+            </FormSection>
+
+            <FormSection>
+              <Label>대표 이미지</Label>
+              <ImageUploadContainer
+                className={formData.imagePreview ? 'has-image' : ''}
+                onClick={() => document.getElementById('imageInput').click()}
+              >
+                {formData.imagePreview ? (
+                  <div>
+                    <PreviewImage src={formData.imagePreview} alt="미리보기" />
+                    <RemoveImageButton
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage();
+                      }}
+                    >
+                      이미지 삭제
+                    </RemoveImageButton>
+                  </div>
+                ) : (
+                  <>
+                    <ImageUploadIcon>📸</ImageUploadIcon>
+                    <ImageUploadText>이미지를 선택해주세요</ImageUploadText>
+                    <ImageUploadSubtext>JPG, PNG 파일 (최대 5MB)</ImageUploadSubtext>
+                  </>
+                )}
+              </ImageUploadContainer>
+              <HiddenFileInput
+                id="imageInput"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+            </FormSection>
+
+            <ButtonContainer>
+              <CancelButton type="button" onClick={handleCancel}>
+                취소
+              </CancelButton>
+              <CreateButton type="submit" disabled={!isFormValid}>
+                채팅방 생성하기
+              </CreateButton>
+            </ButtonContainer>
+          </form>
+        </FormCard>
+      </FormContainer>
+    </ChatRoomCreateContainer>
+  );
+};
+
+
 const ChatRoomCreateContainer = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -332,211 +540,5 @@ const CharCount = styled.div`
   color: #6c757d;
   margin-top: 5px;
 `;
-
-const ChatRoomCreate = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '여행',
-    maxMembers: 10,
-    image: null,
-    imagePreview: null
-  });
-
-  const categories = [
-    '여행', '맛집', '문화', '액티비티', '사진', '힐링', '쇼핑', '기타'
-  ];
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData(prev => ({
-          ...prev,
-          image: file,
-          imagePreview: e.target.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeImage = () => {
-    setFormData(prev => ({
-      ...prev,
-      image: null,
-      imagePreview: null
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // 폼 검증
-    if (!formData.title.trim()) {
-      alert('채팅방 제목을 입력해주세요.');
-      return;
-    }
-
-    if (!formData.description.trim()) {
-      alert('채팅방 설명을 입력해주세요.');
-      return;
-    }
-
-    // 실제로는 여기서 API 호출을 통해 채팅방을 생성
-    console.log('새 채팅방 생성:', formData);
-
-    // 성공적으로 생성되었다는 알림
-    alert('채팅방이 성공적으로 생성되었습니다!');
-
-    // 채팅방 목록으로 이동
-    navigate('/chat-room-list');
-  };
-
-  const handleCancel = () => {
-    if (window.confirm('작성 중인 내용이 삭제됩니다. 정말 취소하시겠습니까?')) {
-      navigate('/chat-room-list');
-    }
-  };
-
-  const isFormValid = formData.title.trim() && formData.description.trim();
-
-  return (
-    <ChatRoomCreateContainer>
-      <Header>
-        <HeaderContent>
-          <BackButton onClick={() => navigate('/chat-room-list')}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-            </svg>
-          </BackButton>
-          <HeaderTitle>
-            <h1>새 채팅방 만들기</h1>
-            <p>여행 동행을 찾기 위한 채팅방을 생성해보세요</p>
-          </HeaderTitle>
-        </HeaderContent>
-      </Header>
-
-      <FormContainer>
-        <FormCard>
-          <form onSubmit={handleSubmit}>
-            <FormSection>
-              <Label>
-                채팅방 제목<span className="required">*</span>
-              </Label>
-              <Input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="예: 제주도 3박4일 같이 가실 분!"
-                maxLength={50}
-              />
-              <CharCount>{formData.title.length}/50</CharCount>
-            </FormSection>
-
-            <FormSection>
-              <Label>
-                채팅방 설명<span className="required">*</span>
-              </Label>
-              <TextArea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="채팅방에 대한 자세한 설명을 작성해주세요. 여행 일정, 예상 비용, 만날 장소 등을 포함하면 좋습니다."
-                maxLength={500}
-              />
-              <CharCount>{formData.description.length}/500</CharCount>
-            </FormSection>
-
-            <FormSection>
-              <Label>카테고리</Label>
-              <Select
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-              >
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </Select>
-            </FormSection>
-
-            <FormSection>
-              <Label>최대 참여인원</Label>
-              <Select
-                name="maxMembers"
-                value={formData.maxMembers}
-                onChange={handleInputChange}
-              >
-                {[5, 10, 15, 20, 25, 30].map(num => (
-                  <option key={num} value={num}>
-                    {num}명
-                  </option>
-                ))}
-              </Select>
-            </FormSection>
-
-            <FormSection>
-              <Label>대표 이미지</Label>
-              <ImageUploadContainer
-                className={formData.imagePreview ? 'has-image' : ''}
-                onClick={() => document.getElementById('imageInput').click()}
-              >
-                {formData.imagePreview ? (
-                  <div>
-                    <PreviewImage src={formData.imagePreview} alt="미리보기" />
-                    <RemoveImageButton
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeImage();
-                      }}
-                    >
-                      이미지 삭제
-                    </RemoveImageButton>
-                  </div>
-                ) : (
-                  <>
-                    <ImageUploadIcon>📸</ImageUploadIcon>
-                    <ImageUploadText>이미지를 선택해주세요</ImageUploadText>
-                    <ImageUploadSubtext>JPG, PNG 파일 (최대 5MB)</ImageUploadSubtext>
-                  </>
-                )}
-              </ImageUploadContainer>
-              <HiddenFileInput
-                id="imageInput"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-            </FormSection>
-
-            <ButtonContainer>
-              <CancelButton type="button" onClick={handleCancel}>
-                취소
-              </CancelButton>
-              <CreateButton type="submit" disabled={!isFormValid}>
-                채팅방 생성하기
-              </CreateButton>
-            </ButtonContainer>
-          </form>
-        </FormCard>
-      </FormContainer>
-    </ChatRoomCreateContainer>
-  );
-};
 
 export default ChatRoomCreate;

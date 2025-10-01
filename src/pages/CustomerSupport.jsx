@@ -3,7 +3,255 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 
-// Styled Components
+
+
+const CustomerSupport = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    category: '',
+    subject: '',
+    message: ''
+  });
+  const [showModal, setShowModal] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.category || !formData.subject || !formData.message) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    // 문의 전송 로직 (실제로는 API 호출)
+    console.log('문의 전송:', formData);
+    setShowModal(true);
+
+    // 폼 초기화
+    setFormData({
+      name: '',
+      email: '',
+      category: '',
+      subject: '',
+      message: ''
+    });
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleCardClick = (type) => {
+    switch (type) {
+      case 'faq':
+        alert('FAQ 페이지는 준비 중입니다.');
+        break;
+      case 'chat':
+        alert('실시간 채팅 상담은 준비 중입니다.');
+        break;
+      case 'phone':
+        alert('전화 상담 연결 기능은 준비 중입니다.');
+        break;
+      case 'email':
+        document.getElementById('contact-form').scrollIntoView({ behavior: 'smooth' });
+        break;
+      default:
+        break;
+    }
+  };
+
+  return (
+    <CustomerSupportPage>
+      <Navigation />
+
+      <SupportContainer>
+        <PageHeader>
+          <PageTitle>고객지원</PageTitle>
+        </PageHeader>
+
+        {/* 지원 옵션 카드 */}
+        <SupportGrid>
+          <SupportCard onClick={() => handleCardClick('faq')}>
+            <CardIcon>❓</CardIcon>
+            <CardTitle>자주 묻는 질문</CardTitle>
+            <CardDescription>
+              가장 자주 묻는 질문들과 답변을 확인하세요.
+              빠른 해결책을 찾을 수 있습니다.
+            </CardDescription>
+            <CardButton>FAQ 보기</CardButton>
+          </SupportCard>
+
+          <SupportCard onClick={() => handleCardClick('chat')}>
+            <CardIcon>💬</CardIcon>
+            <CardTitle>실시간 채팅</CardTitle>
+            <CardDescription>
+              실시간으로 상담원과 채팅하며
+              즉시 도움을 받으세요.
+            </CardDescription>
+            <CardButton>채팅 시작</CardButton>
+          </SupportCard>
+
+          <SupportCard onClick={() => handleCardClick('phone')}>
+            <CardIcon>📞</CardIcon>
+            <CardTitle>전화 상담</CardTitle>
+            <CardDescription>
+              전화로 직접 상담받으시고
+              자세한 안내를 받으세요.
+            </CardDescription>
+            <CardButton>전화 걸기</CardButton>
+          </SupportCard>
+
+          <SupportCard onClick={() => handleCardClick('email')}>
+            <CardIcon>✉️</CardIcon>
+            <CardTitle>이메일 문의</CardTitle>
+            <CardDescription>
+              자세한 문의사항을 이메일로 보내주시면
+              빠르게 답변드리겠습니다.
+            </CardDescription>
+            <CardButton>문의하기</CardButton>
+          </SupportCard>
+        </SupportGrid>
+
+        {/* 문의 폼 */}
+        <ContactSection id="contact-form">
+          <SectionTitle>문의하기</SectionTitle>
+          <ContactForm onSubmit={handleSubmit}>
+            <FormGroup>
+              <FormLabel>이름 *</FormLabel>
+              <FormInput
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="이름을 입력해주세요"
+                required
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>이메일 *</FormLabel>
+              <FormInput
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="이메일을 입력해주세요"
+                required
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>문의 유형 *</FormLabel>
+              <FormSelect
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="">문의 유형을 선택해주세요</option>
+                <option value="booking">예약 관련</option>
+                <option value="payment">결제 관련</option>
+                <option value="account">계정 관련</option>
+                <option value="technical">기술적 문제</option>
+                <option value="refund">환불 관련</option>
+                <option value="other">기타</option>
+              </FormSelect>
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>제목 *</FormLabel>
+              <FormInput
+                type="text"
+                name="subject"
+                value={formData.subject}
+                onChange={handleInputChange}
+                placeholder="문의 제목을 입력해주세요"
+                required
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>내용 *</FormLabel>
+              <FormTextarea
+                name="message"
+                value={formData.message}
+                onChange={handleInputChange}
+                placeholder="문의 내용을 자세히 입력해주세요"
+                required
+              />
+            </FormGroup>
+
+            <SubmitButton type="submit">
+              문의 전송
+            </SubmitButton>
+          </ContactForm>
+
+          {/* 연락처 정보 */}
+          <ContactInfo>
+            <ContactInfoGrid>
+              <ContactInfoItem>
+                <ContactInfoIcon>📞</ContactInfoIcon>
+                <ContactInfoTitle>고객센터</ContactInfoTitle>
+                <ContactInfoDetail>
+                  1588-1234<br />
+                  평일 09:00 - 18:00<br />
+                  주말/공휴일 휴무
+                </ContactInfoDetail>
+              </ContactInfoItem>
+
+              <ContactInfoItem>
+                <ContactInfoIcon>✉️</ContactInfoIcon>
+                <ContactInfoTitle>이메일</ContactInfoTitle>
+                <ContactInfoDetail>
+                  support@tripapp.com<br />
+                  24시간 접수 가능<br />
+                  평균 응답시간 2-4시간
+                </ContactInfoDetail>
+              </ContactInfoItem>
+
+              <ContactInfoItem>
+                <ContactInfoIcon>🏢</ContactInfoIcon>
+                <ContactInfoTitle>오피스</ContactInfoTitle>
+                <ContactInfoDetail>
+                  서울시 강남구 테헤란로<br />
+                  123 여행빌딩 5층<br />
+                  평일 09:00 - 18:00
+                </ContactInfoDetail>
+              </ContactInfoItem>
+            </ContactInfoGrid>
+          </ContactInfo>
+        </ContactSection>
+      </SupportContainer>
+
+      {/* 전송 완료 모달 */}
+      {showModal && (
+        <Modal onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+          <ModalContainer>
+            <ModalIcon>✅</ModalIcon>
+            <ModalTitle>문의가 전송되었습니다</ModalTitle>
+            <ModalMessage>
+              소중한 문의를 보내주셔서 감사합니다.<br />
+              빠른 시일 내에 답변드리겠습니다.
+            </ModalMessage>
+            <ModalButton onClick={handleCloseModal}>
+              확인
+            </ModalButton>
+          </ModalContainer>
+        </Modal>
+      )}
+    </CustomerSupportPage>
+  );
+};
+
+
 const CustomerSupportPage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -306,251 +554,5 @@ const ModalButton = styled.button`
     box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
   }
 `;
-
-const CustomerSupport = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    category: '',
-    subject: '',
-    message: ''
-  });
-  const [showModal, setShowModal] = useState(false);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.email || !formData.category || !formData.subject || !formData.message) {
-      alert('모든 필드를 입력해주세요.');
-      return;
-    }
-
-    // 문의 전송 로직 (실제로는 API 호출)
-    console.log('문의 전송:', formData);
-    setShowModal(true);
-
-    // 폼 초기화
-    setFormData({
-      name: '',
-      email: '',
-      category: '',
-      subject: '',
-      message: ''
-    });
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
-
-  const handleCardClick = (type) => {
-    switch (type) {
-      case 'faq':
-        alert('FAQ 페이지는 준비 중입니다.');
-        break;
-      case 'chat':
-        alert('실시간 채팅 상담은 준비 중입니다.');
-        break;
-      case 'phone':
-        alert('전화 상담 연결 기능은 준비 중입니다.');
-        break;
-      case 'email':
-        document.getElementById('contact-form').scrollIntoView({ behavior: 'smooth' });
-        break;
-      default:
-        break;
-    }
-  };
-
-  return (
-    <CustomerSupportPage>
-      <Navigation />
-
-      <SupportContainer>
-        <PageHeader>
-          <PageTitle>고객지원</PageTitle>
-        </PageHeader>
-
-        {/* 지원 옵션 카드 */}
-        <SupportGrid>
-          <SupportCard onClick={() => handleCardClick('faq')}>
-            <CardIcon>❓</CardIcon>
-            <CardTitle>자주 묻는 질문</CardTitle>
-            <CardDescription>
-              가장 자주 묻는 질문들과 답변을 확인하세요.
-              빠른 해결책을 찾을 수 있습니다.
-            </CardDescription>
-            <CardButton>FAQ 보기</CardButton>
-          </SupportCard>
-
-          <SupportCard onClick={() => handleCardClick('chat')}>
-            <CardIcon>💬</CardIcon>
-            <CardTitle>실시간 채팅</CardTitle>
-            <CardDescription>
-              실시간으로 상담원과 채팅하며
-              즉시 도움을 받으세요.
-            </CardDescription>
-            <CardButton>채팅 시작</CardButton>
-          </SupportCard>
-
-          <SupportCard onClick={() => handleCardClick('phone')}>
-            <CardIcon>📞</CardIcon>
-            <CardTitle>전화 상담</CardTitle>
-            <CardDescription>
-              전화로 직접 상담받으시고
-              자세한 안내를 받으세요.
-            </CardDescription>
-            <CardButton>전화 걸기</CardButton>
-          </SupportCard>
-
-          <SupportCard onClick={() => handleCardClick('email')}>
-            <CardIcon>✉️</CardIcon>
-            <CardTitle>이메일 문의</CardTitle>
-            <CardDescription>
-              자세한 문의사항을 이메일로 보내주시면
-              빠르게 답변드리겠습니다.
-            </CardDescription>
-            <CardButton>문의하기</CardButton>
-          </SupportCard>
-        </SupportGrid>
-
-        {/* 문의 폼 */}
-        <ContactSection id="contact-form">
-          <SectionTitle>문의하기</SectionTitle>
-          <ContactForm onSubmit={handleSubmit}>
-            <FormGroup>
-              <FormLabel>이름 *</FormLabel>
-              <FormInput
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="이름을 입력해주세요"
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <FormLabel>이메일 *</FormLabel>
-              <FormInput
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="이메일을 입력해주세요"
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <FormLabel>문의 유형 *</FormLabel>
-              <FormSelect
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">문의 유형을 선택해주세요</option>
-                <option value="booking">예약 관련</option>
-                <option value="payment">결제 관련</option>
-                <option value="account">계정 관련</option>
-                <option value="technical">기술적 문제</option>
-                <option value="refund">환불 관련</option>
-                <option value="other">기타</option>
-              </FormSelect>
-            </FormGroup>
-
-            <FormGroup>
-              <FormLabel>제목 *</FormLabel>
-              <FormInput
-                type="text"
-                name="subject"
-                value={formData.subject}
-                onChange={handleInputChange}
-                placeholder="문의 제목을 입력해주세요"
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <FormLabel>내용 *</FormLabel>
-              <FormTextarea
-                name="message"
-                value={formData.message}
-                onChange={handleInputChange}
-                placeholder="문의 내용을 자세히 입력해주세요"
-                required
-              />
-            </FormGroup>
-
-            <SubmitButton type="submit">
-              문의 전송
-            </SubmitButton>
-          </ContactForm>
-
-          {/* 연락처 정보 */}
-          <ContactInfo>
-            <ContactInfoGrid>
-              <ContactInfoItem>
-                <ContactInfoIcon>📞</ContactInfoIcon>
-                <ContactInfoTitle>고객센터</ContactInfoTitle>
-                <ContactInfoDetail>
-                  1588-1234<br />
-                  평일 09:00 - 18:00<br />
-                  주말/공휴일 휴무
-                </ContactInfoDetail>
-              </ContactInfoItem>
-
-              <ContactInfoItem>
-                <ContactInfoIcon>✉️</ContactInfoIcon>
-                <ContactInfoTitle>이메일</ContactInfoTitle>
-                <ContactInfoDetail>
-                  support@tripapp.com<br />
-                  24시간 접수 가능<br />
-                  평균 응답시간 2-4시간
-                </ContactInfoDetail>
-              </ContactInfoItem>
-
-              <ContactInfoItem>
-                <ContactInfoIcon>🏢</ContactInfoIcon>
-                <ContactInfoTitle>오피스</ContactInfoTitle>
-                <ContactInfoDetail>
-                  서울시 강남구 테헤란로<br />
-                  123 여행빌딩 5층<br />
-                  평일 09:00 - 18:00
-                </ContactInfoDetail>
-              </ContactInfoItem>
-            </ContactInfoGrid>
-          </ContactInfo>
-        </ContactSection>
-      </SupportContainer>
-
-      {/* 전송 완료 모달 */}
-      {showModal && (
-        <Modal onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
-          <ModalContainer>
-            <ModalIcon>✅</ModalIcon>
-            <ModalTitle>문의가 전송되었습니다</ModalTitle>
-            <ModalMessage>
-              소중한 문의를 보내주셔서 감사합니다.<br />
-              빠른 시일 내에 답변드리겠습니다.
-            </ModalMessage>
-            <ModalButton onClick={handleCloseModal}>
-              확인
-            </ModalButton>
-          </ModalContainer>
-        </Modal>
-      )}
-    </CustomerSupportPage>
-  );
-};
 
 export default CustomerSupport;

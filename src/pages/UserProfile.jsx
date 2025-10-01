@@ -2,8 +2,833 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
+import { mockCoupons, myPageData, userProfileData, followerNames, followingNames } from '../data/mockData';
 
-// Styled Components
+const UserProfile = () => {
+  const navigate = useNavigate();
+  const { username } = useParams();
+  const [showFollowerModal, setShowFollowerModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [savedSchedules, setSavedSchedules] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [activePostTab, setActivePostTab] = useState('companion');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedStartDate, setSelectedStartDate] = useState('');
+  const [selectedEndDate, setSelectedEndDate] = useState('');
+  const [isAICreate, setIsAICreate] = useState(false);
+
+  // 현재 로그인한 사용자 정보 가져오기
+  const getCurrentUser = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    if (loginData) {
+      return JSON.parse(loginData);
+    }
+    return null;
+  };
+
+  const currentUser = getCurrentUser();
+
+  // 유효하지 않은 blob URL을 기본 이미지로 교체하는 함수
+  const sanitizeImageUrl = (imageUrl) => {
+    if (!imageUrl || imageUrl.startsWith('blob:')) {
+      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+    }
+    return imageUrl;
+  };
+
+  // 내가 올린 동행모집 가져오기
+  const getMyCompanionPosts = () => {
+    const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
+    const userName = currentUser?.user?.name;
+    if (!userName) return [];
+    return storedPosts
+      .filter(post => post.author === userName)
+      .map(post => ({
+        ...post,
+        image: sanitizeImageUrl(post.image)
+      }));
+  };
+
+  // 내가 올린 여행일정 가져오기
+  const getMyTravelSchedules = () => {
+    const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
+    const userName = currentUser?.user?.name;
+    if (!userName) return [];
+
+    // 현재 로그인한 사용자의 일정만 반환
+    return storedSchedules
+      .filter(schedule => {
+        // 현재 사용자의 일정인지 확인
+        return schedule.author?.name === userName || schedule.author === userName;
+      })
+      .map(schedule => ({
+        ...schedule,
+        image: sanitizeImageUrl(schedule.image)
+      }));
+  };
+
+  // 동행모집 삭제 함수
+  const deleteCompanionPost = (postId) => {
+    if (window.confirm('정말로 이 동행모집을 삭제하시겠습니까?')) {
+      const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
+      const updatedPosts = storedPosts.filter(post => post.id !== postId);
+      localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
+      window.location.reload(); // 페이지 새로고침으로 목록 업데이트
+    }
+  };
+
+  // 여행일정 삭제 함수
+  const deleteTravelSchedule = (scheduleId) => {
+    if (window.confirm('정말로 이 여행일정을 삭제하시겠습니까?')) {
+      const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
+      const updatedSchedules = storedSchedules.filter(schedule => schedule.id !== scheduleId);
+      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
+      window.location.reload(); // 페이지 새로고침으로 목록 업데이트
+    }
+  };
+
+  // 저장된 일정 삭제 함수
+  const deleteSavedSchedule = (scheduleId) => {
+    if (window.confirm('정말로 이 관심 일정을 삭제하시겠습니까?')) {
+      const saved = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
+      const updatedSaved = saved.filter(schedule => schedule.id !== scheduleId);
+      localStorage.setItem('savedSchedules', JSON.stringify(updatedSaved));
+      setSavedSchedules(updatedSaved); // 상태 업데이트
+    }
+  };
+
+  // 동행모집 수정 함수
+  const editCompanionPost = (postId) => {
+    navigate(`/companion/edit/${postId}`);
+  };
+
+  // 여행일정 수정 함수
+  const editTravelSchedule = (scheduleId) => {
+    navigate(`/travel-schedule/edit/${scheduleId}`);
+  };
+
+  // 새 동행모집 추가
+  const addNewCompanionPost = () => {
+    // 부드러운 페이지 전환을 위한 추가 설정
+    navigate('/companion/create', {
+      replace: false,
+      state: { from: '/profile/user' }
+    });
+  };
+
+  // 새 여행일정 추가
+  const addNewTravelSchedule = () => {
+    setShowCreateModal(true);
+  };
+
+  // 직접 작성 선택 시
+  const handleDirectCreate = () => {
+    setIsAICreate(false);
+    setShowCreateModal(false);
+    setShowDatePicker(true);
+  };
+
+  // AI 작성 선택 시
+  const handleAICreate = () => {
+    setIsAICreate(true);
+    setShowCreateModal(false);
+    setShowDatePicker(true);
+  };
+
+  // 날짜 확인 시
+  const handleDateConfirm = () => {
+    if (selectedStartDate && selectedEndDate) {
+      setShowDatePicker(false);
+      if (isAICreate) {
+        // AI 일정 작성 페이지로 이동
+        navigate(`/ai-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+      } else {
+        // 직접 일정 작성 페이지로 이동
+        navigate(`/direct-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+      }
+    } else {
+      alert('출발일과 도착일을 모두 선택해주세요.');
+    }
+  };
+
+  // 날짜 선택 취소
+  const handleDateCancel = () => {
+    setShowDatePicker(false);
+    setSelectedStartDate('');
+    setSelectedEndDate('');
+  };
+
+  // 팔로우 버튼 클릭 처리
+  const handleFollowClick = () => {
+    const followData = JSON.parse(localStorage.getItem('followData') || '{}');
+
+    if (!followData[username]) {
+      followData[username] = { followers: user?.followers || 0, isFollowing: false };
+    }
+
+    const newIsFollowing = !isFollowing;
+    const newFollowerCount = newIsFollowing
+      ? followerCount + 1
+      : Math.max(0, followerCount - 1);
+
+    // 상태 업데이트
+    setIsFollowing(newIsFollowing);
+    setFollowerCount(newFollowerCount);
+
+    // localStorage 업데이트
+    followData[username] = {
+      followers: newFollowerCount,
+      isFollowing: newIsFollowing
+    };
+    localStorage.setItem('followData', JSON.stringify(followData));
+
+    // 피드백 메시지
+    alert(newIsFollowing ? '팔로우했습니다!' : '팔로우를 취소했습니다.');
+  };
+
+  // 팔로워/팔로잉 리스트 핸들러
+  const handleFollowerClick = () => {
+    setShowFollowerModal(true);
+  };
+
+  const handleFollowingClick = () => {
+    setShowFollowingModal(true);
+  };
+
+  const handleCouponClick = () => {
+    setShowCouponModal(true);
+  };
+
+  // 팔로워 데이터 생성 (이름 배열은 mockData.js에서 import)
+  const generateFollowers = (count) => {
+    const followers = [];
+
+    for (let i = 0; i < count; i++) {
+      const nameIndex = i % followerNames.length;
+      const name = i < followerNames.length ? followerNames[nameIndex] : `${followerNames[nameIndex]}${Math.floor(i / followerNames.length) + 1}`;
+      followers.push({
+        id: i + 1,
+        name: name,
+        username: `user_${i + 1}`,
+        avatar: name.charAt(0)
+      });
+    }
+    return followers;
+  };
+
+  const generateFollowing = (count) => {
+    const following = [];
+
+    for (let i = 0; i < count; i++) {
+      const nameIndex = i % followingNames.length;
+      const name = i < followingNames.length ? followingNames[nameIndex] : `${followingNames[nameIndex]}${Math.floor(i / followingNames.length) + 1}`;
+      following.push({
+        id: i + 1,
+        name: name,
+        username: `following_${i + 1}`,
+        avatar: name.charAt(0)
+      });
+    }
+    return following;
+  };
+
+  // Mock followers and following will be generated after user is defined
+
+  // 쿠폰 데이터는 mockData.js에서 import
+
+  // 마이페이지 데이터는 mockData.js에서 import
+
+  // 유저 프로필 데이터는 mockData.js에서 import
+
+  // 현재 사용자의 프로필 데이터 가져오기
+  let user = userProfileData[username];
+
+  // 본인 프로필인 경우 실제 저장된 데이터 사용
+  if (username === 'user' && currentUser?.user) {
+    user = {
+      ...userProfileData['user'],
+      name: currentUser.user.name || userProfileData['user'].name,
+      bio: currentUser.user.bio || userProfileData['user'].bio,
+      location: currentUser.user.location || userProfileData['user'].location,
+      interests: currentUser.user.interests || userProfileData['user'].interests,
+      profileImage: sanitizeImageUrl(currentUser.user.profileImage || userProfileData['user'].profileImage),
+      email: currentUser.user.email || userProfileData['user'].email,
+      phone: currentUser.user.phone || userProfileData['user'].phone
+    };
+  }
+
+  if (!user) {
+    user = userProfileData['user'];
+  }
+
+  if (!user) {
+    return (
+      <UserProfilePage>
+        <Navigation />
+        <NotFound>
+          <NotFoundTitle>사용자를 찾을 수 없습니다.</NotFoundTitle>
+          <NotFoundMessage>요청하신 사용자가 존재하지 않습니다.</NotFoundMessage>
+          <NotFoundButton onClick={() => navigate(-1)}>뒤로가기</NotFoundButton>
+        </NotFound>
+      </UserProfilePage>
+    );
+  }
+
+  // 저장된 일정 로드 및 팔로우 상태 초기화
+  useEffect(() => {
+    // localStorage의 잘못된 blob URL들을 정리하는 함수
+    const cleanupBlobUrls = () => {
+      // companionPosts 정리
+      const companionPosts = JSON.parse(localStorage.getItem('companionPosts') || '[]');
+      const cleanedCompanionPosts = companionPosts.map(post => ({
+        ...post,
+        image: sanitizeImageUrl(post.image)
+      }));
+      localStorage.setItem('companionPosts', JSON.stringify(cleanedCompanionPosts));
+
+      // userSchedules 정리
+      const userSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
+      const cleanedUserSchedules = userSchedules.map(schedule => ({
+        ...schedule,
+        image: sanitizeImageUrl(schedule.image)
+      }));
+      localStorage.setItem('userSchedules', JSON.stringify(cleanedUserSchedules));
+
+      // savedSchedules 정리
+      const savedSchedules = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
+      const cleanedSavedSchedules = savedSchedules.map(schedule => ({
+        ...schedule,
+        image: sanitizeImageUrl(schedule.image),
+        author: schedule.author ? {
+          ...schedule.author,
+          profileImage: sanitizeImageUrl(schedule.author.profileImage)
+        } : schedule.author
+      }));
+      localStorage.setItem('savedSchedules', JSON.stringify(cleanedSavedSchedules));
+    };
+
+    // 정리 후 데이터 로드
+    cleanupBlobUrls();
+
+    const loadSavedSchedules = () => {
+      const saved = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
+      setSavedSchedules(saved);
+    };
+
+    // 팔로워 데이터 로드 및 초기화
+    const loadFollowerData = () => {
+      if (username !== 'user') {
+        // localStorage에서 팔로우 데이터 로드
+        const followData = JSON.parse(localStorage.getItem('followData') || '{}');
+        const userFollowData = followData[username] || { followers: user?.followers || 0, isFollowing: false };
+
+        setFollowerCount(userFollowData.followers);
+        setIsFollowing(userFollowData.isFollowing);
+      }
+    };
+
+    loadSavedSchedules();
+    loadFollowerData();
+  }, [username]);
+
+  // Generate mock followers and following data after user is defined
+  const mockFollowers = generateFollowers(user?.followers || 234);
+  const mockFollowing = generateFollowing(user?.following || 156);
+
+  return (
+    <UserProfilePage>
+      <Navigation />
+
+      <UserProfileContainer>
+        <ProfileContent>
+          <ProfileCard>
+            <ProfileMain>
+              <ProfileLeft>
+                <ProfileAvatar>
+                  {user.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = (user.name || 'U').charAt(0);
+                      }}
+                    />
+                  ) : (
+                    (user.name || 'U').charAt(0)
+                  )}
+                </ProfileAvatar>
+
+                {/* 프로필 편집하기 버튼을 프로필 사진 밑에 배치 */}
+                {username === 'user' && (
+                  <ProfileEditButton onClick={() => navigate('/profile-edit')}>
+                    프로필 편집하기
+                  </ProfileEditButton>
+                )}
+              </ProfileLeft>
+
+              <ProfileRight>
+                {/* 이름과 한줄소개를 더 아래로 배치 */}
+                <div style={{marginTop: '40px'}}>
+                  <ProfileName>
+                    {user.name || '이름 없음'}
+                  </ProfileName>
+                  <ProfileBio style={{margin: '12px 0 0 0', paddingTop: '55px'}}>{user.bio || '소개가 없습니다.'}</ProfileBio>
+                </div>
+              </ProfileRight>
+            </ProfileMain>
+
+            {/* 지역과 가입일 정보 - 가로 기준 정중앙 배치 */}
+            <div style={{display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0', flexWrap: 'wrap'}}>
+              <ProfileLocation>
+                <LocationIcon>📍</LocationIcon>
+                <span>{user.location || '위치 정보 없음'}</span>
+              </ProfileLocation>
+              <ProfileJoinDate>
+                <JoinIcon>📅</JoinIcon>
+                <span>{user.joinDate || '가입일 정보 없음'} 가입</span>
+              </ProfileJoinDate>
+            </div>
+
+            {/* 키워드 섹션 - 가로 기준 정중앙 배치 */}
+            <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
+              <InterestTags>
+                {(user.interests || []).map((interest, index) => (
+                  <InterestTag key={index}>{interest}</InterestTag>
+                ))}
+              </InterestTags>
+            </div>
+
+            <ProfileStats>
+              <StatItem>
+                <StatNumber>{user.totalTrips || 0}</StatNumber>
+                <StatLabel>여행</StatLabel>
+              </StatItem>
+              <StatItem $clickable onClick={handleFollowerClick}>
+                <StatNumber>{username !== 'user' ? followerCount : (user.followers || 0)}</StatNumber>
+                <StatLabel>팔로워</StatLabel>
+              </StatItem>
+              <StatItem $clickable onClick={handleFollowingClick}>
+                <StatNumber>{user.following || 0}</StatNumber>
+                <StatLabel>팔로잉</StatLabel>
+              </StatItem>
+            </ProfileStats>
+
+            {/* 다른 사용자일 때는 팔로우/메시지 버튼, 본인일 때는 쿠폰 섹션 */}
+            {username !== 'user' ? (
+              <ActionButtonsContainer>
+                <FollowButton
+                  className={isFollowing ? 'following' : ''}
+                  onClick={handleFollowClick}
+                >
+                  {isFollowing ? '✓ 팔로잉' : '+ 팔로우'}
+                </FollowButton>
+                <MessageButton onClick={() => alert('메시지 기능 준비 중입니다.')}>
+                  메시지
+                </MessageButton>
+              </ActionButtonsContainer>
+            ) : (
+              <CouponSection onClick={handleCouponClick} style={{cursor: 'pointer'}}>
+                <CouponSectionTitle>보유 쿠폰</CouponSectionTitle>
+                <CouponCount>3장</CouponCount>
+                <CouponSectionDescription>사용 가능한 할인 쿠폰이 있습니다</CouponSectionDescription>
+              </CouponSection>
+            )}
+          </ProfileCard>
+
+          <ProfileSections>
+            {/* 본인 프로필일 때만 마이페이지 기능 표시 */}
+            {username === 'user' && (
+              <>
+                {/* 포인트 정보 */}
+                <MyPageSection>
+                  <SectionTitle>포인트 정보</SectionTitle>
+                  <PointsInfo>
+                    <PointsLeft>
+                      <PointsLabel>보유 포인트</PointsLabel>
+                      <PointsValue>{myPageData.points.toLocaleString()}P</PointsValue>
+                    </PointsLeft>
+                    <PointsUseButton onClick={() => alert('포인트 사용 기능 준비 중입니다.')}>
+                      사용
+                    </PointsUseButton>
+                  </PointsInfo>
+                </MyPageSection>
+
+
+
+                {/* 관심 일정 */}
+                <MyPageSection>
+                  <SectionTitle>관심 일정</SectionTitle>
+                  {savedSchedules.length > 0 ? (
+                    savedSchedules.map(trip => (
+                    <InterestedTripCard key={trip.id}>
+                      <InterestedTripImage
+                        src={trip.image}
+                        alt={trip.title}
+                        onClick={() => navigate(`/travel-schedule/${trip.id}`)}
+                        style={{ cursor: 'pointer' }}
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+                        }}
+                      />
+                      <InterestedTripInfo onClick={() => navigate(`/travel-schedule/${trip.id}`)} style={{ cursor: 'pointer' }}>
+                        <InterestedTripTitle>{trip.title}</InterestedTripTitle>
+                        <InterestedTripMeta>{trip.region} • {trip.date}</InterestedTripMeta>
+                        {trip.author && (
+                          <TripAuthorInfo>
+                            <TripAuthorAvatar>
+                              <img
+                                src={trip.author.profileImage}
+                                alt={trip.author.name}
+                                onError={(e) => {
+                                  e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face';
+                                }}
+                              />
+                            </TripAuthorAvatar>
+                            <TripAuthorName>{trip.author.name}</TripAuthorName>
+                          </TripAuthorInfo>
+                        )}
+                      </InterestedTripInfo>
+                      <SavedScheduleDeleteButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSavedSchedule(trip.id);
+                        }}
+                        title="관심 일정에서 삭제"
+                      >
+                        삭제
+                      </SavedScheduleDeleteButton>
+                    </InterestedTripCard>
+                    ))
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6c757d' }}>
+                      <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+                        저장된 관심 일정이 없습니다
+                      </div>
+                      <div style={{ fontSize: '14px' }}>
+                        마음에 드는 일정을 저장해보세요!
+                      </div>
+                    </div>
+                  )}
+                </MyPageSection>
+              </>
+            )}
+
+            {/* 일반 프로필 정보 */}
+
+            {/* 내가 올린 게시물들 */}
+            {username === 'user' && (
+              <>
+                {/* 내가 올린 동행모집 */}
+                <RecentTripsSection>
+                  <SectionHeader>
+                    <SectionTitle>내가 올린 동행모집</SectionTitle>
+                    <AddButton onClick={addNewCompanionPost}>
+                      <span>+</span>
+                      새 동행모집 등록
+                    </AddButton>
+                  </SectionHeader>
+                  <TextListContainer>
+                    {getMyCompanionPosts().length > 0 ? (
+                      getMyCompanionPosts().map((post) => (
+                        <TextListItem key={post.id}>
+                          <TextListImage
+                            src={post.image}
+                            alt={post.title}
+                            onClick={() => navigate(`/companion/${post.id}`)}
+                            style={{cursor: 'pointer'}}
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+                            }}
+                          />
+                          <TextListContent
+                            onClick={() => navigate(`/companion/${post.id}`)}
+                            style={{cursor: 'pointer'}}
+                          >
+                            <TextListTitle>{post.title}</TextListTitle>
+                            <TextListMeta>{post.region} • {post.date}</TextListMeta>
+                          </TextListContent>
+                          <TextListActions>
+                            <TextListButton
+                              className="edit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                editCompanionPost(post.id);
+                              }}
+                            >
+                              수정
+                            </TextListButton>
+                            <TextListButton
+                              className="delete"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteCompanionPost(post.id);
+                              }}
+                            >
+                              삭제
+                            </TextListButton>
+                          </TextListActions>
+                        </TextListItem>
+                      ))
+                    ) : (
+                      <EmptyMessage>아직 올린 동행모집이 없습니다.</EmptyMessage>
+                    )}
+                  </TextListContainer>
+                </RecentTripsSection>
+
+                {/* 내가 올린 여행일정 */}
+                <RecentTripsSection>
+                  <SectionHeader>
+                    <SectionTitle>내가 올린 여행일정</SectionTitle>
+                    <AddButton onClick={addNewTravelSchedule}>
+                      <span>+</span>
+                      새 여행일정 등록
+                    </AddButton>
+                  </SectionHeader>
+                  <TextListContainer>
+                    {getMyTravelSchedules().length > 0 ? (
+                      getMyTravelSchedules().map((schedule) => (
+                        <TextListItem key={schedule.id}>
+                          <TextListImage
+                            src={schedule.image}
+                            alt={schedule.title}
+                            onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
+                            style={{cursor: 'pointer'}}
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
+                            }}
+                          />
+                          <TextListContent
+                            onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
+                            style={{cursor: 'pointer'}}
+                          >
+                            <TextListTitle>{schedule.title}</TextListTitle>
+                            <TextListMeta>{schedule.region} • {schedule.duration || schedule.date || `${schedule.startDate} ~ ${schedule.endDate}`}</TextListMeta>
+                          </TextListContent>
+                          <TextListActions>
+                            <TextListButton
+                              className="edit"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                editTravelSchedule(schedule.id);
+                              }}
+                            >
+                              수정
+                            </TextListButton>
+                            <TextListButton
+                              className="delete"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTravelSchedule(schedule.id);
+                              }}
+                            >
+                              삭제
+                            </TextListButton>
+                          </TextListActions>
+                        </TextListItem>
+                      ))
+                    ) : (
+                      <EmptyMessage>아직 올린 여행일정이 없습니다.</EmptyMessage>
+                    )}
+                  </TextListContainer>
+                </RecentTripsSection>
+              </>
+            )}
+
+            {/* 다른 사용자 프로필일 때 해당 유저의 게시물들 */}
+            {username !== 'user' && (
+              <UserPostsSection>
+                <PostsSectionTitle>{user.name}님의 게시물</PostsSectionTitle>
+                <PostTabs>
+                  <PostTab
+                    className={activePostTab === 'companion' ? 'active' : ''}
+                    onClick={() => setActivePostTab('companion')}
+                  >
+                    동행모집
+                  </PostTab>
+                  <PostTab
+                    className={activePostTab === 'schedule' ? 'active' : ''}
+                    onClick={() => setActivePostTab('schedule')}
+                  >
+                    여행일정
+                  </PostTab>
+                </PostTabs>
+                <PostsList>
+                  {activePostTab === 'companion' ? (
+                    // Mock companion posts - in real app would fetch by user
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6c757d' }}>
+                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤝</div>
+                      <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+                        등록된 동행모집이 없습니다
+                      </div>
+                      <div style={{ fontSize: '14px' }}>
+                        아직 동행모집 게시물이 없습니다.
+                      </div>
+                    </div>
+                  ) : (
+                    // Mock travel schedules - in real app would fetch by user
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6c757d' }}>
+                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
+                      <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+                        등록된 여행일정이 없습니다
+                      </div>
+                      <div style={{ fontSize: '14px' }}>
+                        아직 여행일정 게시물이 없습니다.
+                      </div>
+                    </div>
+                  )}
+                </PostsList>
+              </UserPostsSection>
+            )}
+          </ProfileSections>
+        </ProfileContent>
+      </UserProfileContainer>
+
+      {/* 팔로워 모달 */}
+      {showFollowerModal && (
+        <FollowModal onClick={(e) => e.target === e.currentTarget && setShowFollowerModal(false)}>
+          <FollowModalContainer>
+            <FollowModalHeader>
+              <FollowModalTitle>팔로워</FollowModalTitle>
+              <FollowModalClose onClick={() => setShowFollowerModal(false)}>×</FollowModalClose>
+            </FollowModalHeader>
+            <FollowList>
+              {mockFollowers.map(follower => (
+                <FollowItem key={follower.id}>
+                  <FollowAvatar>{follower.avatar}</FollowAvatar>
+                  <FollowInfo>
+                    <FollowName>{follower.name}</FollowName>
+                    <FollowUsername>@{follower.username}</FollowUsername>
+                  </FollowInfo>
+                </FollowItem>
+              ))}
+            </FollowList>
+          </FollowModalContainer>
+        </FollowModal>
+      )}
+
+      {/* 팔로잉 모달 */}
+      {showFollowingModal && (
+        <FollowModal onClick={(e) => e.target === e.currentTarget && setShowFollowingModal(false)}>
+          <FollowModalContainer>
+            <FollowModalHeader>
+              <FollowModalTitle>팔로잉</FollowModalTitle>
+              <FollowModalClose onClick={() => setShowFollowingModal(false)}>×</FollowModalClose>
+            </FollowModalHeader>
+            <FollowList>
+              {mockFollowing.map(following => (
+                <FollowItem key={following.id}>
+                  <FollowAvatar>{following.avatar}</FollowAvatar>
+                  <FollowInfo>
+                    <FollowName>{following.name}</FollowName>
+                    <FollowUsername>@{following.username}</FollowUsername>
+                  </FollowInfo>
+                </FollowItem>
+              ))}
+            </FollowList>
+          </FollowModalContainer>
+        </FollowModal>
+      )}
+
+      {/* 쿠폰 모달 */}
+      {showCouponModal && (
+        <CouponModal onClick={(e) => e.target === e.currentTarget && setShowCouponModal(false)}>
+          <CouponModalContainer>
+            <FollowModalHeader>
+              <FollowModalTitle>쿠폰함</FollowModalTitle>
+              <FollowModalClose onClick={() => setShowCouponModal(false)}>×</FollowModalClose>
+            </FollowModalHeader>
+            <CouponList>
+              {mockCoupons.map(coupon => (
+                <CouponCard key={coupon.id}>
+                  <CouponHeader>
+                    <CouponTitle>{coupon.title}</CouponTitle>
+                    <CouponDiscount>{coupon.discount}</CouponDiscount>
+                  </CouponHeader>
+                  <CouponDescription>{coupon.description}</CouponDescription>
+                  <CouponMinAmount>{coupon.minAmount}</CouponMinAmount>
+                  <CouponFooter>
+                    <CouponCode>{coupon.code}</CouponCode>
+                    <CouponExpiry>{coupon.expiryDate}까지</CouponExpiry>
+                  </CouponFooter>
+                </CouponCard>
+              ))}
+            </CouponList>
+          </CouponModalContainer>
+        </CouponModal>
+      )}
+
+      {/* 일정 생성 선택 모달 */}
+      {showCreateModal && (
+        <CreateModalOverlay onClick={() => setShowCreateModal(false)}>
+          <CreateModalContainer onClick={(e) => e.stopPropagation()}>
+            <CreateModalTitle>일정 작성 방법 선택</CreateModalTitle>
+            <CreateModalMessage>
+              어떤 방식으로 일정을 작성하시겠습니까?
+            </CreateModalMessage>
+            <CreateOptionsContainer>
+              <CreateOptionButton onClick={handleDirectCreate}>
+                <CreateOptionText>직접일정 작성</CreateOptionText>
+              </CreateOptionButton>
+              <CreateOptionButton $primary onClick={handleAICreate}>
+                <CreateOptionText>AI 일정 작성</CreateOptionText>
+              </CreateOptionButton>
+            </CreateOptionsContainer>
+            <CreateCancelButton onClick={() => setShowCreateModal(false)}>
+              취소
+            </CreateCancelButton>
+          </CreateModalContainer>
+        </CreateModalOverlay>
+      )}
+
+      {/* 날짜 선택 모달 */}
+      {showDatePicker && (
+        <DatePickerModalOverlay onClick={() => setShowDatePicker(false)}>
+          <DatePickerModalContainer onClick={(e) => e.stopPropagation()}>
+            <DatePickerTitle>여행 날짜 선택</DatePickerTitle>
+            <DatePickerMessage>
+              여행 시작일과 종료일을 선택해주세요
+            </DatePickerMessage>
+
+            <DateInputContainer>
+              <DateInputGroup>
+                <DateLabel>시작일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={selectedStartDate}
+                  onChange={(e) => setSelectedStartDate(e.target.value)}
+                />
+              </DateInputGroup>
+
+              <DateInputGroup>
+                <DateLabel>종료일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={selectedEndDate}
+                  onChange={(e) => setSelectedEndDate(e.target.value)}
+                />
+              </DateInputGroup>
+            </DateInputContainer>
+
+            <DateButtonGroup>
+              <DateCancelButton onClick={handleDateCancel}>
+                취소
+              </DateCancelButton>
+              <DateConfirmButton onClick={handleDateConfirm}>
+                확인
+              </DateConfirmButton>
+            </DateButtonGroup>
+          </DatePickerModalContainer>
+        </DatePickerModalOverlay>
+      )}
+    </UserProfilePage>
+  );
+};
+
+
 const UserProfilePage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -1485,1014 +2310,5 @@ const TextListButton = styled.button`
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 `;
-
-const UserProfile = () => {
-  const navigate = useNavigate();
-  const { username } = useParams();
-  const [showFollowerModal, setShowFollowerModal] = useState(false);
-  const [showFollowingModal, setShowFollowingModal] = useState(false);
-  const [showCouponModal, setShowCouponModal] = useState(false);
-  const [savedSchedules, setSavedSchedules] = useState([]);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [activePostTab, setActivePostTab] = useState('companion');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedStartDate, setSelectedStartDate] = useState('');
-  const [selectedEndDate, setSelectedEndDate] = useState('');
-  const [isAICreate, setIsAICreate] = useState(false);
-
-  // 현재 로그인한 사용자 정보 가져오기
-  const getCurrentUser = () => {
-    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-    if (loginData) {
-      return JSON.parse(loginData);
-    }
-    return null;
-  };
-
-  const currentUser = getCurrentUser();
-
-  // 유효하지 않은 blob URL을 기본 이미지로 교체하는 함수
-  const sanitizeImageUrl = (imageUrl) => {
-    if (!imageUrl || imageUrl.startsWith('blob:')) {
-      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
-    }
-    return imageUrl;
-  };
-
-  // 내가 올린 동행모집 가져오기
-  const getMyCompanionPosts = () => {
-    const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-    const userName = currentUser?.user?.name;
-    if (!userName) return [];
-    return storedPosts
-      .filter(post => post.author === userName)
-      .map(post => ({
-        ...post,
-        image: sanitizeImageUrl(post.image)
-      }));
-  };
-
-  // 내가 올린 여행일정 가져오기
-  const getMyTravelSchedules = () => {
-    const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
-    const userName = currentUser?.user?.name;
-    if (!userName) return [];
-
-    // 제목이 "김병호"인 카드를 제외하고 사용자 일정만 반환
-    return storedSchedules
-      .filter(schedule => {
-        const title = schedule.title || '';
-
-        // 제목이 "김병호"인 카드 제거하고 현재 사용자의 일정인지 확인
-        return title !== '김병호' && (
-          schedule.author?.name === userName || schedule.author === userName
-        );
-      })
-      .map(schedule => ({
-        ...schedule,
-        image: sanitizeImageUrl(schedule.image)
-      }));
-  };
-
-  // 동행모집 삭제 함수
-  const deleteCompanionPost = (postId) => {
-    if (window.confirm('정말로 이 동행모집을 삭제하시겠습니까?')) {
-      const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-      const updatedPosts = storedPosts.filter(post => post.id !== postId);
-      localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
-      window.location.reload(); // 페이지 새로고침으로 목록 업데이트
-    }
-  };
-
-  // 여행일정 삭제 함수
-  const deleteTravelSchedule = (scheduleId) => {
-    if (window.confirm('정말로 이 여행일정을 삭제하시겠습니까?')) {
-      const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
-      const updatedSchedules = storedSchedules.filter(schedule => schedule.id !== scheduleId);
-      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
-      window.location.reload(); // 페이지 새로고침으로 목록 업데이트
-    }
-  };
-
-  // 저장된 일정 삭제 함수
-  const deleteSavedSchedule = (scheduleId) => {
-    if (window.confirm('정말로 이 관심 일정을 삭제하시겠습니까?')) {
-      const saved = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
-      const updatedSaved = saved.filter(schedule => schedule.id !== scheduleId);
-      localStorage.setItem('savedSchedules', JSON.stringify(updatedSaved));
-      setSavedSchedules(updatedSaved); // 상태 업데이트
-    }
-  };
-
-  // 동행모집 수정 함수
-  const editCompanionPost = (postId) => {
-    navigate(`/companion/edit/${postId}`);
-  };
-
-  // 여행일정 수정 함수
-  const editTravelSchedule = (scheduleId) => {
-    navigate(`/travel-schedule/edit/${scheduleId}`);
-  };
-
-  // 새 동행모집 추가
-  const addNewCompanionPost = () => {
-    // 부드러운 페이지 전환을 위한 추가 설정
-    navigate('/companion/create', {
-      replace: false,
-      state: { from: '/profile/user' }
-    });
-  };
-
-  // 새 여행일정 추가
-  const addNewTravelSchedule = () => {
-    setShowCreateModal(true);
-  };
-
-  // 직접 작성 선택 시
-  const handleDirectCreate = () => {
-    setIsAICreate(false);
-    setShowCreateModal(false);
-    setShowDatePicker(true);
-  };
-
-  // AI 작성 선택 시
-  const handleAICreate = () => {
-    setIsAICreate(true);
-    setShowCreateModal(false);
-    setShowDatePicker(true);
-  };
-
-  // 날짜 확인 시
-  const handleDateConfirm = () => {
-    if (selectedStartDate && selectedEndDate) {
-      setShowDatePicker(false);
-      if (isAICreate) {
-        // AI 일정 작성 페이지로 이동
-        navigate(`/ai-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
-      } else {
-        // 직접 일정 작성 페이지로 이동
-        navigate(`/direct-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
-      }
-    } else {
-      alert('출발일과 도착일을 모두 선택해주세요.');
-    }
-  };
-
-  // 날짜 선택 취소
-  const handleDateCancel = () => {
-    setShowDatePicker(false);
-    setSelectedStartDate('');
-    setSelectedEndDate('');
-  };
-
-  // 팔로우 버튼 클릭 처리
-  const handleFollowClick = () => {
-    const followData = JSON.parse(localStorage.getItem('followData') || '{}');
-
-    if (!followData[username]) {
-      followData[username] = { followers: user?.followers || 0, isFollowing: false };
-    }
-
-    const newIsFollowing = !isFollowing;
-    const newFollowerCount = newIsFollowing
-      ? followerCount + 1
-      : Math.max(0, followerCount - 1);
-
-    // 상태 업데이트
-    setIsFollowing(newIsFollowing);
-    setFollowerCount(newFollowerCount);
-
-    // localStorage 업데이트
-    followData[username] = {
-      followers: newFollowerCount,
-      isFollowing: newIsFollowing
-    };
-    localStorage.setItem('followData', JSON.stringify(followData));
-
-    // 피드백 메시지
-    alert(newIsFollowing ? '팔로우했습니다!' : '팔로우를 취소했습니다.');
-  };
-
-  // 팔로워/팔로잉 리스트 핸들러
-  const handleFollowerClick = () => {
-    setShowFollowerModal(true);
-  };
-
-  const handleFollowingClick = () => {
-    setShowFollowingModal(true);
-  };
-
-  const handleCouponClick = () => {
-    setShowCouponModal(true);
-  };
-
-  // 팔로워 데이터 생성 (실제 숫자에 맞춰서)
-  const generateFollowers = (count) => {
-    const followers = [];
-    const names = ['바다러버', '여행매니아', '등산러버', '맛집탐험가', '사진작가', '카페러버', '드라이브매니아', '캠핑러버', '백패커', '로드트립러', '제주도민', '부산갈매기', '서울토박이', '강원도아재', '전라도할매', '경상도청년', '충청도미식가', '수도권러버', '해외여행러', '국내여행러', '인생여행러', '여행계획러', '자유여행러', '패키지러버', '고급여행러', '배낭여행러', '가족여행러', '커플여행러', '솔로여행러', '동호회러버'];
-
-    for (let i = 0; i < count; i++) {
-      const nameIndex = i % names.length;
-      const name = i < names.length ? names[nameIndex] : `${names[nameIndex]}${Math.floor(i / names.length) + 1}`;
-      followers.push({
-        id: i + 1,
-        name: name,
-        username: `user_${i + 1}`,
-        avatar: name.charAt(0)
-      });
-    }
-    return followers;
-  };
-
-  const generateFollowing = (count) => {
-    const following = [];
-    const names = ['여행러버', '산악인', '맛집헌터', '카페러버', '해변러버', '도시탐험가', '문화애호가', '역사덕후', '자연주의자', '모험가', '휴양러버', '액티비티러버', '포토그래퍼', '블로거', '인플루언서', '가이드', '플래너', '백패커프로', '럭셔리러버', '버짓러버'];
-
-    for (let i = 0; i < count; i++) {
-      const nameIndex = i % names.length;
-      const name = i < names.length ? names[nameIndex] : `${names[nameIndex]}${Math.floor(i / names.length) + 1}`;
-      following.push({
-        id: i + 1,
-        name: name,
-        username: `following_${i + 1}`,
-        avatar: name.charAt(0)
-      });
-    }
-    return following;
-  };
-
-  // Mock followers and following will be generated after user is defined
-
-  // 쿠폰 목 데이터
-  const mockCoupons = [
-    {
-      id: 1,
-      title: '숙박 할인 쿠폰',
-      discount: '20% 할인',
-      description: '전국 호텔 및 펜션 예약 시 사용 가능',
-      expiryDate: '2024-12-31',
-      minAmount: '50,000원 이상',
-      code: 'HOTEL20'
-    },
-    {
-      id: 2,
-      title: '여행용품 할인 쿠폰',
-      discount: '15% 할인',
-      description: '캐리어, 백팩 등 여행용품 구매 시 사용',
-      expiryDate: '2024-11-30',
-      minAmount: '30,000원 이상',
-      code: 'TRAVEL15'
-    },
-    {
-      id: 3,
-      title: '액티비티 체험 쿠폰',
-      discount: '10,000원 할인',
-      description: '패러글라이딩, 다이빙 등 액티비티 예약 시',
-      expiryDate: '2024-10-31',
-      minAmount: '100,000원 이상',
-      code: 'ACTIVITY10K'
-    }
-  ];
-
-  // 마이페이지용 데이터 (본인 프로필일 때만 사용)
-  const myPageData = {
-    points: 15000,
-    memberLevel: '골드',
-    bookings: [
-      {
-        id: 1,
-        hotel: '제주 오션뷰 리조트',
-        room: '스탠다드 오션뷰',
-        checkIn: '2024-03-15',
-        checkOut: '2024-03-17',
-        status: '예약완료',
-        amount: 252000,
-        bookingDate: '2024-02-20'
-      },
-      {
-        id: 2,
-        hotel: '부산 해운대 호텔',
-        room: '디럭스 시티뷰',
-        checkIn: '2024-02-10',
-        checkOut: '2024-02-12',
-        status: '이용완료',
-        amount: 190000,
-        bookingDate: '2024-01-25'
-      }
-    ],
-    favorites: [
-      {
-        id: 1,
-        name: '서울 명동 비즈니스 호텔',
-        location: '서울 중구 명동',
-        rating: 4.3,
-        price: 85000,
-        image: 'https://via.placeholder.com/200x150'
-      },
-      {
-        id: 2,
-        name: '강릉 바다뷰 펜션',
-        location: '강원도 강릉시',
-        rating: 4.6,
-        price: 120000,
-        image: 'https://via.placeholder.com/200x150'
-      }
-    ],
-    interestedTrips: [
-      {
-        id: 1,
-        title: '제주여행 갈사람~ ✈️',
-        region: '제주',
-        date: '2025-10-11~2025-10-14',
-        image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop',
-        author: {
-          name: '제주매니아',
-          profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b1d1?w=100&h=100&fit=crop&crop=face'
-        }
-      },
-      {
-        id: 2,
-        title: '서해안 드라이브 🚗',
-        region: '충남',
-        date: '2025-10-15~2025-10-16',
-        image: 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=300&h=200&fit=crop',
-        author: {
-          name: '서해안드라이버',
-          profileImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face'
-        }
-      }
-    ]
-  };
-
-  // 유저 프로필 데이터 (실제로는 API에서 가져올 데이터)
-  const userProfileData = {
-    '여행러버': {
-      name: '여행러버',
-      bio: '제주도의 모든 매력을 사랑하는 여행자입니다. 성산일출봉에서 바라본 일몰의 감동을 나누고 싶어요.',
-      location: '제주도',
-      joinDate: '2024년 1월',
-      totalTrips: 15,
-      followers: 234,
-      following: 156,
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face',
-      interests: ['자연', '일몰', '바다', '사진', '제주도'],
-      recentTrips: [
-        {
-          id: 1,
-          title: '제주도 성산일출봉 일몰 투어',
-          region: '제주',
-          date: '2024-01-15~2024-01-17',
-          image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=300&h=200&fit=crop'
-        }
-      ]
-    },
-    '산악인': {
-      name: '산악인',
-      bio: '산을 사랑하는 등반가입니다. 겨울 설악산의 아름다운 설경을 보며 느끼는 성취감이 최고예요.',
-      location: '강원도',
-      joinDate: '2023년 11월',
-      totalTrips: 22,
-      followers: 156,
-      following: 89,
-      profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-      interests: ['등산', '겨울여행', '설악산', '자연', '모험'],
-      recentTrips: [
-        {
-          id: 2,
-          title: '설악산 겨울 등반',
-          region: '강원',
-          date: '2024-01-12~2024-01-14',
-          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop'
-        }
-      ]
-    },
-    '맛집헌터': {
-      name: '맛집헌터',
-      bio: '전국의 숨은 맛집을 찾아다니는 미식가입니다. 부산 자갈치시장의 신선한 회는 정말 최고였어요!',
-      location: '부산',
-      joinDate: '2023년 8월',
-      totalTrips: 18,
-      followers: 198,
-      following: 112,
-      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face',
-      interests: ['맛집', '해산물', '시장', '미식투어', '부산'],
-      recentTrips: [
-        {
-          id: 3,
-          title: '부산 자갈치시장 맛집 투어',
-          region: '부산',
-          date: '2024-01-10~2024-01-12',
-          image: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=300&h=200&fit=crop'
-        }
-      ]
-    },
-    'user': {
-      name: '사용자',
-      bio: '여행을 사랑하는 사용자입니다. 새로운 곳을 탐험하고 좋은 사람들과 만나는 것을 좋아해요.',
-      location: '서울',
-      joinDate: '2024년 3월',
-      totalTrips: 5,
-      followers: 234,
-      following: 156,
-      profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-      interests: ['여행', '사진', '맛집', '문화'],
-      recentTrips: [
-        {
-          id: 4,
-          title: '서울 맛집 투어 🍜',
-          region: '서울',
-          date: '2025-10-20~2025-10-21',
-          image: 'https://images.unsplash.com/photo-1549693578-d683be217e58?w=300&h=200&fit=crop'
-        }
-      ]
-    }
-  };
-
-  // 현재 사용자의 프로필 데이터 가져오기
-  let user = userProfileData[username];
-
-  // 본인 프로필인 경우 실제 저장된 데이터 사용
-  if (username === 'user' && currentUser?.user) {
-    user = {
-      ...userProfileData['user'],
-      name: currentUser.user.name || userProfileData['user'].name,
-      bio: currentUser.user.bio || userProfileData['user'].bio,
-      location: currentUser.user.location || userProfileData['user'].location,
-      interests: currentUser.user.interests || userProfileData['user'].interests,
-      profileImage: sanitizeImageUrl(currentUser.user.profileImage || userProfileData['user'].profileImage),
-      email: currentUser.user.email || userProfileData['user'].email,
-      phone: currentUser.user.phone || userProfileData['user'].phone
-    };
-  }
-
-  if (!user) {
-    user = userProfileData['user'];
-  }
-
-  if (!user) {
-    return (
-      <UserProfilePage>
-        <Navigation />
-        <NotFound>
-          <NotFoundTitle>사용자를 찾을 수 없습니다.</NotFoundTitle>
-          <NotFoundMessage>요청하신 사용자가 존재하지 않습니다.</NotFoundMessage>
-          <NotFoundButton onClick={() => navigate(-1)}>뒤로가기</NotFoundButton>
-        </NotFound>
-      </UserProfilePage>
-    );
-  }
-
-  // 저장된 일정 로드 및 팔로우 상태 초기화
-  useEffect(() => {
-    // localStorage의 잘못된 blob URL들을 정리하는 함수
-    const cleanupBlobUrls = () => {
-      // companionPosts 정리
-      const companionPosts = JSON.parse(localStorage.getItem('companionPosts') || '[]');
-      const cleanedCompanionPosts = companionPosts.map(post => ({
-        ...post,
-        image: sanitizeImageUrl(post.image)
-      }));
-      localStorage.setItem('companionPosts', JSON.stringify(cleanedCompanionPosts));
-
-      // userSchedules 정리
-      const userSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
-      const cleanedUserSchedules = userSchedules.map(schedule => ({
-        ...schedule,
-        image: sanitizeImageUrl(schedule.image)
-      }));
-      localStorage.setItem('userSchedules', JSON.stringify(cleanedUserSchedules));
-
-      // savedSchedules 정리
-      const savedSchedules = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
-      const cleanedSavedSchedules = savedSchedules.map(schedule => ({
-        ...schedule,
-        image: sanitizeImageUrl(schedule.image),
-        author: schedule.author ? {
-          ...schedule.author,
-          profileImage: sanitizeImageUrl(schedule.author.profileImage)
-        } : schedule.author
-      }));
-      localStorage.setItem('savedSchedules', JSON.stringify(cleanedSavedSchedules));
-    };
-
-    // 정리 후 데이터 로드
-    cleanupBlobUrls();
-
-    const loadSavedSchedules = () => {
-      const saved = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
-      setSavedSchedules(saved);
-    };
-
-    // 팔로워 데이터 로드 및 초기화
-    const loadFollowerData = () => {
-      if (username !== 'user') {
-        // localStorage에서 팔로우 데이터 로드
-        const followData = JSON.parse(localStorage.getItem('followData') || '{}');
-        const userFollowData = followData[username] || { followers: user?.followers || 0, isFollowing: false };
-
-        setFollowerCount(userFollowData.followers);
-        setIsFollowing(userFollowData.isFollowing);
-      }
-    };
-
-    loadSavedSchedules();
-    loadFollowerData();
-  }, [username]);
-
-  // Generate mock followers and following data after user is defined
-  const mockFollowers = generateFollowers(user?.followers || 234);
-  const mockFollowing = generateFollowing(user?.following || 156);
-
-  return (
-    <UserProfilePage>
-      <Navigation />
-
-      <UserProfileContainer>
-        <ProfileContent>
-          <ProfileCard>
-            <ProfileMain>
-              <ProfileLeft>
-                <ProfileAvatar>
-                  {user.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={user.name}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = (user.name || 'U').charAt(0);
-                      }}
-                    />
-                  ) : (
-                    (user.name || 'U').charAt(0)
-                  )}
-                </ProfileAvatar>
-
-                {/* 프로필 편집하기 버튼을 프로필 사진 밑에 배치 */}
-                {username === 'user' && (
-                  <ProfileEditButton onClick={() => navigate('/profile-edit')}>
-                    프로필 편집하기
-                  </ProfileEditButton>
-                )}
-              </ProfileLeft>
-
-              <ProfileRight>
-                {/* 이름과 한줄소개를 더 아래로 배치 */}
-                <div style={{marginTop: '40px'}}>
-                  <ProfileName>
-                    {user.name || '이름 없음'}
-                  </ProfileName>
-                  <ProfileBio style={{margin: '12px 0 0 0', paddingTop: '55px'}}>{user.bio || '소개가 없습니다.'}</ProfileBio>
-                </div>
-              </ProfileRight>
-            </ProfileMain>
-
-            {/* 지역과 가입일 정보 - 가로 기준 정중앙 배치 */}
-            <div style={{display: 'flex', justifyContent: 'center', gap: '16px', margin: '20px 0', flexWrap: 'wrap'}}>
-              <ProfileLocation>
-                <LocationIcon>📍</LocationIcon>
-                <span>{user.location || '위치 정보 없음'}</span>
-              </ProfileLocation>
-              <ProfileJoinDate>
-                <JoinIcon>📅</JoinIcon>
-                <span>{user.joinDate || '가입일 정보 없음'} 가입</span>
-              </ProfileJoinDate>
-            </div>
-
-            {/* 키워드 섹션 - 가로 기준 정중앙 배치 */}
-            <div style={{display: 'flex', justifyContent: 'center', margin: '20px 0'}}>
-              <InterestTags>
-                {(user.interests || []).map((interest, index) => (
-                  <InterestTag key={index}>{interest}</InterestTag>
-                ))}
-              </InterestTags>
-            </div>
-
-            <ProfileStats>
-              <StatItem>
-                <StatNumber>{user.totalTrips || 0}</StatNumber>
-                <StatLabel>여행</StatLabel>
-              </StatItem>
-              <StatItem $clickable onClick={handleFollowerClick}>
-                <StatNumber>{username !== 'user' ? followerCount : (user.followers || 0)}</StatNumber>
-                <StatLabel>팔로워</StatLabel>
-              </StatItem>
-              <StatItem $clickable onClick={handleFollowingClick}>
-                <StatNumber>{user.following || 0}</StatNumber>
-                <StatLabel>팔로잉</StatLabel>
-              </StatItem>
-            </ProfileStats>
-
-            {/* 다른 사용자일 때는 팔로우/메시지 버튼, 본인일 때는 쿠폰 섹션 */}
-            {username !== 'user' ? (
-              <ActionButtonsContainer>
-                <FollowButton
-                  className={isFollowing ? 'following' : ''}
-                  onClick={handleFollowClick}
-                >
-                  {isFollowing ? '✓ 팔로잉' : '+ 팔로우'}
-                </FollowButton>
-                <MessageButton onClick={() => alert('메시지 기능 준비 중입니다.')}>
-                  메시지
-                </MessageButton>
-              </ActionButtonsContainer>
-            ) : (
-              <CouponSection onClick={handleCouponClick} style={{cursor: 'pointer'}}>
-                <CouponSectionTitle>보유 쿠폰</CouponSectionTitle>
-                <CouponCount>3장</CouponCount>
-                <CouponSectionDescription>사용 가능한 할인 쿠폰이 있습니다</CouponSectionDescription>
-              </CouponSection>
-            )}
-          </ProfileCard>
-
-          <ProfileSections>
-            {/* 본인 프로필일 때만 마이페이지 기능 표시 */}
-            {username === 'user' && (
-              <>
-                {/* 포인트 정보 */}
-                <MyPageSection>
-                  <SectionTitle>포인트 정보</SectionTitle>
-                  <PointsInfo>
-                    <PointsLeft>
-                      <PointsLabel>보유 포인트</PointsLabel>
-                      <PointsValue>{myPageData.points.toLocaleString()}P</PointsValue>
-                    </PointsLeft>
-                    <PointsUseButton onClick={() => alert('포인트 사용 기능 준비 중입니다.')}>
-                      사용
-                    </PointsUseButton>
-                  </PointsInfo>
-                </MyPageSection>
-
-
-
-                {/* 관심 일정 */}
-                <MyPageSection>
-                  <SectionTitle>관심 일정</SectionTitle>
-                  {savedSchedules.length > 0 ? (
-                    savedSchedules.map(trip => (
-                    <InterestedTripCard key={trip.id}>
-                      <InterestedTripImage
-                        src={trip.image}
-                        alt={trip.title}
-                        onClick={() => navigate(`/travel-schedule/${trip.id}`)}
-                        style={{ cursor: 'pointer' }}
-                        onError={(e) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
-                        }}
-                      />
-                      <InterestedTripInfo onClick={() => navigate(`/travel-schedule/${trip.id}`)} style={{ cursor: 'pointer' }}>
-                        <InterestedTripTitle>{trip.title}</InterestedTripTitle>
-                        <InterestedTripMeta>{trip.region} • {trip.date}</InterestedTripMeta>
-                        {trip.author && (
-                          <TripAuthorInfo>
-                            <TripAuthorAvatar>
-                              <img
-                                src={trip.author.profileImage}
-                                alt={trip.author.name}
-                                onError={(e) => {
-                                  e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face';
-                                }}
-                              />
-                            </TripAuthorAvatar>
-                            <TripAuthorName>{trip.author.name}</TripAuthorName>
-                          </TripAuthorInfo>
-                        )}
-                      </InterestedTripInfo>
-                      <SavedScheduleDeleteButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteSavedSchedule(trip.id);
-                        }}
-                        title="관심 일정에서 삭제"
-                      >
-                        삭제
-                      </SavedScheduleDeleteButton>
-                    </InterestedTripCard>
-                    ))
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6c757d' }}>
-                      <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-                        저장된 관심 일정이 없습니다
-                      </div>
-                      <div style={{ fontSize: '14px' }}>
-                        마음에 드는 일정을 저장해보세요!
-                      </div>
-                    </div>
-                  )}
-                </MyPageSection>
-              </>
-            )}
-
-            {/* 일반 프로필 정보 */}
-
-            {/* 내가 올린 게시물들 */}
-            {username === 'user' && (
-              <>
-                {/* 내가 올린 동행모집 */}
-                <RecentTripsSection>
-                  <SectionHeader>
-                    <SectionTitle>내가 올린 동행모집</SectionTitle>
-                    <AddButton onClick={addNewCompanionPost}>
-                      <span>+</span>
-                      새 동행모집 등록
-                    </AddButton>
-                  </SectionHeader>
-                  <TextListContainer>
-                    {getMyCompanionPosts().length > 0 ? (
-                      getMyCompanionPosts().map((post) => (
-                        <TextListItem key={post.id}>
-                          <TextListImage
-                            src={post.image}
-                            alt={post.title}
-                            onClick={() => navigate(`/companion/${post.id}`)}
-                            style={{cursor: 'pointer'}}
-                            onError={(e) => {
-                              e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
-                            }}
-                          />
-                          <TextListContent
-                            onClick={() => navigate(`/companion/${post.id}`)}
-                            style={{cursor: 'pointer'}}
-                          >
-                            <TextListTitle>{post.title}</TextListTitle>
-                            <TextListMeta>{post.region} • {post.date}</TextListMeta>
-                          </TextListContent>
-                          <TextListActions>
-                            <TextListButton
-                              className="edit"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                editCompanionPost(post.id);
-                              }}
-                            >
-                              수정
-                            </TextListButton>
-                            <TextListButton
-                              className="delete"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteCompanionPost(post.id);
-                              }}
-                            >
-                              삭제
-                            </TextListButton>
-                          </TextListActions>
-                        </TextListItem>
-                      ))
-                    ) : (
-                      <EmptyMessage>아직 올린 동행모집이 없습니다.</EmptyMessage>
-                    )}
-                  </TextListContainer>
-                </RecentTripsSection>
-
-                {/* 내가 올린 여행일정 */}
-                <RecentTripsSection>
-                  <SectionHeader>
-                    <SectionTitle>내가 올린 여행일정</SectionTitle>
-                    <AddButton onClick={addNewTravelSchedule}>
-                      <span>+</span>
-                      새 여행일정 등록
-                    </AddButton>
-                  </SectionHeader>
-                  <TextListContainer>
-                    {getMyTravelSchedules().length > 0 ? (
-                      getMyTravelSchedules().map((schedule) => (
-                        <TextListItem key={schedule.id}>
-                          <TextListImage
-                            src={schedule.image}
-                            alt={schedule.title}
-                            onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
-                            style={{cursor: 'pointer'}}
-                            onError={(e) => {
-                              e.target.src = 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop';
-                            }}
-                          />
-                          <TextListContent
-                            onClick={() => navigate(`/travel-schedule/${schedule.id}`)}
-                            style={{cursor: 'pointer'}}
-                          >
-                            <TextListTitle>{schedule.title}</TextListTitle>
-                            <TextListMeta>{schedule.region} • {schedule.duration || schedule.date || `${schedule.startDate} ~ ${schedule.endDate}`}</TextListMeta>
-                          </TextListContent>
-                          <TextListActions>
-                            <TextListButton
-                              className="edit"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                editTravelSchedule(schedule.id);
-                              }}
-                            >
-                              수정
-                            </TextListButton>
-                            <TextListButton
-                              className="delete"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteTravelSchedule(schedule.id);
-                              }}
-                            >
-                              삭제
-                            </TextListButton>
-                          </TextListActions>
-                        </TextListItem>
-                      ))
-                    ) : (
-                      <EmptyMessage>아직 올린 여행일정이 없습니다.</EmptyMessage>
-                    )}
-                  </TextListContainer>
-                </RecentTripsSection>
-              </>
-            )}
-
-            {/* 다른 사용자 프로필일 때 해당 유저의 게시물들 */}
-            {username !== 'user' && (
-              <UserPostsSection>
-                <PostsSectionTitle>{user.name}님의 게시물</PostsSectionTitle>
-                <PostTabs>
-                  <PostTab
-                    className={activePostTab === 'companion' ? 'active' : ''}
-                    onClick={() => setActivePostTab('companion')}
-                  >
-                    동행모집
-                  </PostTab>
-                  <PostTab
-                    className={activePostTab === 'schedule' ? 'active' : ''}
-                    onClick={() => setActivePostTab('schedule')}
-                  >
-                    여행일정
-                  </PostTab>
-                </PostTabs>
-                <PostsList>
-                  {activePostTab === 'companion' ? (
-                    // Mock companion posts - in real app would fetch by user
-                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6c757d' }}>
-                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>🤝</div>
-                      <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-                        등록된 동행모집이 없습니다
-                      </div>
-                      <div style={{ fontSize: '14px' }}>
-                        아직 동행모집 게시물이 없습니다.
-                      </div>
-                    </div>
-                  ) : (
-                    // Mock travel schedules - in real app would fetch by user
-                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6c757d' }}>
-                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
-                      <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-                        등록된 여행일정이 없습니다
-                      </div>
-                      <div style={{ fontSize: '14px' }}>
-                        아직 여행일정 게시물이 없습니다.
-                      </div>
-                    </div>
-                  )}
-                </PostsList>
-              </UserPostsSection>
-            )}
-          </ProfileSections>
-        </ProfileContent>
-      </UserProfileContainer>
-
-      {/* 팔로워 모달 */}
-      {showFollowerModal && (
-        <FollowModal onClick={(e) => e.target === e.currentTarget && setShowFollowerModal(false)}>
-          <FollowModalContainer>
-            <FollowModalHeader>
-              <FollowModalTitle>팔로워</FollowModalTitle>
-              <FollowModalClose onClick={() => setShowFollowerModal(false)}>×</FollowModalClose>
-            </FollowModalHeader>
-            <FollowList>
-              {mockFollowers.map(follower => (
-                <FollowItem key={follower.id}>
-                  <FollowAvatar>{follower.avatar}</FollowAvatar>
-                  <FollowInfo>
-                    <FollowName>{follower.name}</FollowName>
-                    <FollowUsername>@{follower.username}</FollowUsername>
-                  </FollowInfo>
-                </FollowItem>
-              ))}
-            </FollowList>
-          </FollowModalContainer>
-        </FollowModal>
-      )}
-
-      {/* 팔로잉 모달 */}
-      {showFollowingModal && (
-        <FollowModal onClick={(e) => e.target === e.currentTarget && setShowFollowingModal(false)}>
-          <FollowModalContainer>
-            <FollowModalHeader>
-              <FollowModalTitle>팔로잉</FollowModalTitle>
-              <FollowModalClose onClick={() => setShowFollowingModal(false)}>×</FollowModalClose>
-            </FollowModalHeader>
-            <FollowList>
-              {mockFollowing.map(following => (
-                <FollowItem key={following.id}>
-                  <FollowAvatar>{following.avatar}</FollowAvatar>
-                  <FollowInfo>
-                    <FollowName>{following.name}</FollowName>
-                    <FollowUsername>@{following.username}</FollowUsername>
-                  </FollowInfo>
-                </FollowItem>
-              ))}
-            </FollowList>
-          </FollowModalContainer>
-        </FollowModal>
-      )}
-
-      {/* 쿠폰 모달 */}
-      {showCouponModal && (
-        <CouponModal onClick={(e) => e.target === e.currentTarget && setShowCouponModal(false)}>
-          <CouponModalContainer>
-            <FollowModalHeader>
-              <FollowModalTitle>쿠폰함</FollowModalTitle>
-              <FollowModalClose onClick={() => setShowCouponModal(false)}>×</FollowModalClose>
-            </FollowModalHeader>
-            <CouponList>
-              {mockCoupons.map(coupon => (
-                <CouponCard key={coupon.id}>
-                  <CouponHeader>
-                    <CouponTitle>{coupon.title}</CouponTitle>
-                    <CouponDiscount>{coupon.discount}</CouponDiscount>
-                  </CouponHeader>
-                  <CouponDescription>{coupon.description}</CouponDescription>
-                  <CouponMinAmount>{coupon.minAmount}</CouponMinAmount>
-                  <CouponFooter>
-                    <CouponCode>{coupon.code}</CouponCode>
-                    <CouponExpiry>{coupon.expiryDate}까지</CouponExpiry>
-                  </CouponFooter>
-                </CouponCard>
-              ))}
-            </CouponList>
-          </CouponModalContainer>
-        </CouponModal>
-      )}
-
-      {/* 일정 생성 선택 모달 */}
-      {showCreateModal && (
-        <CreateModalOverlay onClick={() => setShowCreateModal(false)}>
-          <CreateModalContainer onClick={(e) => e.stopPropagation()}>
-            <CreateModalTitle>일정 작성 방법 선택</CreateModalTitle>
-            <CreateModalMessage>
-              어떤 방식으로 일정을 작성하시겠습니까?
-            </CreateModalMessage>
-            <CreateOptionsContainer>
-              <CreateOptionButton onClick={handleDirectCreate}>
-                <CreateOptionText>직접일정 작성</CreateOptionText>
-              </CreateOptionButton>
-              <CreateOptionButton $primary onClick={handleAICreate}>
-                <CreateOptionText>AI 일정 작성</CreateOptionText>
-              </CreateOptionButton>
-            </CreateOptionsContainer>
-            <CreateCancelButton onClick={() => setShowCreateModal(false)}>
-              취소
-            </CreateCancelButton>
-          </CreateModalContainer>
-        </CreateModalOverlay>
-      )}
-
-      {/* 날짜 선택 모달 */}
-      {showDatePicker && (
-        <DatePickerModalOverlay onClick={() => setShowDatePicker(false)}>
-          <DatePickerModalContainer onClick={(e) => e.stopPropagation()}>
-            <DatePickerTitle>여행 날짜 선택</DatePickerTitle>
-            <DatePickerMessage>
-              여행 시작일과 종료일을 선택해주세요
-            </DatePickerMessage>
-
-            <DateInputContainer>
-              <DateInputGroup>
-                <DateLabel>시작일</DateLabel>
-                <DateInput
-                  type="date"
-                  value={selectedStartDate}
-                  onChange={(e) => setSelectedStartDate(e.target.value)}
-                />
-              </DateInputGroup>
-
-              <DateInputGroup>
-                <DateLabel>종료일</DateLabel>
-                <DateInput
-                  type="date"
-                  value={selectedEndDate}
-                  onChange={(e) => setSelectedEndDate(e.target.value)}
-                />
-              </DateInputGroup>
-            </DateInputContainer>
-
-            <DateButtonGroup>
-              <DateCancelButton onClick={handleDateCancel}>
-                취소
-              </DateCancelButton>
-              <DateConfirmButton onClick={handleDateConfirm}>
-                확인
-              </DateConfirmButton>
-            </DateButtonGroup>
-          </DatePickerModalContainer>
-        </DatePickerModalOverlay>
-      )}
-    </UserProfilePage>
-  );
-};
 
 export default UserProfile;

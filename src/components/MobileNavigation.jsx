@@ -8,6 +8,108 @@ import chatIcon from '../assets/icons/chat_134786.png';
 import galleryShopIcon from '../assets/icons/free-icon-shopping-store-2967015.png';
 import repairManIcon from '../assets/icons/free-icon-repair-man-4429935.png';
 
+
+
+const MobileNavigation = () => {
+  const location = useLocation();
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+
+  const navItems = [
+    {
+      path: '/',
+      label: '홈',
+      icon: homeIcon,
+      isImage: true
+    },
+    {
+      path: '/travel-schedules',
+      label: '일정',
+      icon: scheduleIcon,
+      isImage: true
+    },
+    {
+      path: '/community',
+      label: '커뮤니티',
+      icon: communityIcon,
+      isImage: true
+    },
+    {
+      path: '/chat-room-list',
+      label: '채팅방',
+      icon: chatIcon,
+      isImage: true
+    },
+    {
+      path: '/gallery-shop',
+      label: '갤러리샵',
+      icon: galleryShopIcon,
+      isImage: true
+    }
+  ];
+
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  const handleNavClick = (e, path) => {
+    if (path === '/gallery-shop') {
+      e.preventDefault();
+      setShowGalleryModal(true);
+    }
+  };
+
+  const closeGalleryModal = () => {
+    setShowGalleryModal(false);
+  };
+
+  return (
+    <MobileNavContainer>
+      <NavList>
+        {navItems.map(item => (
+          <NavItem
+            key={item.path}
+            to={item.path}
+            className={isActive(item.path) ? 'active' : ''}
+            onClick={(e) => handleNavClick(e, item.path)}
+          >
+            <NavIcon>
+              {item.isImage ? (
+                <img src={item.icon} alt={item.label} />
+              ) : (
+                item.icon
+              )}
+            </NavIcon>
+            <NavLabel>{item.label}</NavLabel>
+          </NavItem>
+        ))}
+      </NavList>
+
+      {/* 갤러리샵 준비중 모달 */}
+      {showGalleryModal && (
+        <ModalOverlay onClick={(e) => e.target === e.currentTarget && closeGalleryModal()}>
+          <ModalContainer>
+            <ModalIcon>
+              <img src={repairManIcon} alt="작업중" style={{ width: '64px', height: '64px' }} />
+            </ModalIcon>
+            <ModalTitle>갤러리샵 준비중</ModalTitle>
+            <ModalMessage>
+              갤러리샵 서비스는 현재 준비중입니다.<br />
+              더욱 멋진 서비스로 찾아뵙겠습니다!
+            </ModalMessage>
+            <ModalButton onClick={closeGalleryModal}>
+              확인
+            </ModalButton>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
+    </MobileNavContainer>
+  );
+};
+
+
 const MobileNavContainer = styled.div`
   display: none;
   position: fixed;
@@ -137,103 +239,5 @@ const ModalButton = styled.button`
   }
 `;
 
-const MobileNavigation = () => {
-  const location = useLocation();
-  const [showGalleryModal, setShowGalleryModal] = useState(false);
-
-  const navItems = [
-    {
-      path: '/',
-      label: '홈',
-      icon: homeIcon,
-      isImage: true
-    },
-    {
-      path: '/travel-schedules',
-      label: '일정',
-      icon: scheduleIcon,
-      isImage: true
-    },
-    {
-      path: '/community',
-      label: '커뮤니티',
-      icon: communityIcon,
-      isImage: true
-    },
-    {
-      path: '/chat-room-list',
-      label: '채팅방',
-      icon: chatIcon,
-      isImage: true
-    },
-    {
-      path: '/gallery-shop',
-      label: '갤러리샵',
-      icon: galleryShopIcon,
-      isImage: true
-    }
-  ];
-
-  const isActive = (path) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
-  };
-
-  const handleNavClick = (e, path) => {
-    if (path === '/gallery-shop') {
-      e.preventDefault();
-      setShowGalleryModal(true);
-    }
-  };
-
-  const closeGalleryModal = () => {
-    setShowGalleryModal(false);
-  };
-
-  return (
-    <MobileNavContainer>
-      <NavList>
-        {navItems.map(item => (
-          <NavItem
-            key={item.path}
-            to={item.path}
-            className={isActive(item.path) ? 'active' : ''}
-            onClick={(e) => handleNavClick(e, item.path)}
-          >
-            <NavIcon>
-              {item.isImage ? (
-                <img src={item.icon} alt={item.label} />
-              ) : (
-                item.icon
-              )}
-            </NavIcon>
-            <NavLabel>{item.label}</NavLabel>
-          </NavItem>
-        ))}
-      </NavList>
-
-      {/* 갤러리샵 준비중 모달 */}
-      {showGalleryModal && (
-        <ModalOverlay onClick={(e) => e.target === e.currentTarget && closeGalleryModal()}>
-          <ModalContainer>
-            <ModalIcon>
-              <img src={repairManIcon} alt="작업중" style={{ width: '64px', height: '64px' }} />
-            </ModalIcon>
-            <ModalTitle>갤러리샵 준비중</ModalTitle>
-            <ModalMessage>
-              갤러리샵 서비스는 현재 준비중입니다.<br />
-              더욱 멋진 서비스로 찾아뵙겠습니다!
-            </ModalMessage>
-            <ModalButton onClick={closeGalleryModal}>
-              확인
-            </ModalButton>
-          </ModalContainer>
-        </ModalOverlay>
-      )}
-    </MobileNavContainer>
-  );
-};
 
 export default MobileNavigation;

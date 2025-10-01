@@ -3,7 +3,930 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 
-// Styled Components
+
+
+const DirectScheduleCreate = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // 현재 로그인된 사용자 정보 가져오기
+  const getCurrentUser = () => {
+    try {
+      const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+      return loginData ? JSON.parse(loginData) : null;
+    } catch (error) {
+      console.error('사용자 정보 가져오기 오류:', error);
+      return null;
+    }
+  };
+
+  // URL에서 날짜 정보 가져오기
+  const searchParams = new URLSearchParams(location.search);
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate');
+
+  // AI에서 전달된 데이터 가져오기
+  const isAIGenerated = searchParams.get('isAIGenerated') === 'true';
+  const aiRegion = searchParams.get('region');
+  const aiRestaurantCount = searchParams.get('restaurantCount');
+  const aiCafeCount = searchParams.get('cafeCount');
+  const aiActivities = searchParams.get('activities') ? searchParams.get('activities').split(',') : [];
+
+  // 지역명을 한글로 변환하는 함수
+  const getRegionName = (regionId) => {
+    const regionMap = {
+      'seoul': '서울',
+      'busan': '부산',
+      'jeju': '제주',
+      'gangwon': '강원',
+      'gyeonggi': '경기',
+      'incheon': '인천',
+      'chungcheong': '충청',
+      'jeolla': '전라',
+      'gyeongsang': '경상'
+    };
+    return regionMap[regionId] || regionId;
+  };
+
+  // AI 기반 제목 생성 함수
+  const generateAITitle = () => {
+    if (!isAIGenerated) return '';
+    const regionName = getRegionName(aiRegion);
+    const activityText = aiActivities.length > 0 ? ` ${aiActivities[0]} 중심` : '';
+    return `${regionName}${activityText} 여행`;
+  };
+
+  // AI 기반 상세 설명 생성 함수
+  const generateAIDescription = () => {
+    if (!isAIGenerated) return '';
+
+    return `AI가 추천하는 맞춤형 여행 일정입니다. 여러분의 취향과 선호도를 바탕으로 신중히 선별한 여행 계획으로, 각 장소와 활동들이 조화롭게 연결되어 잊지 못할 여행 경험을 선사할 것입니다.`;
+  };
+
+  // 날짜 차이 계산 함수
+  const calculateDays = (start, end) => {
+    if (!start || !end) return 1;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const timeDiff = endDate.getTime() - startDate.getTime();
+    return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+  };
+
+  // 폼 상태
+  const [formData, setFormData] = useState({
+    title: generateAITitle(),
+    description: generateAIDescription(),
+    region: isAIGenerated ? getRegionName(aiRegion) : '',
+    transportation: [],
+    companions: '',
+    accommodation: '',
+    representativeImage: '',
+  });
+
+  // 장소 검색 관련 상태
+  const [showLocationSearch, setShowLocationSearch] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [selectedRegion, setSelectedRegion] = useState('전체');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [targetDay, setTargetDay] = useState(1);
+
+  // 날짜 재설정 관련 상태
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState(startDate || '');
+  const [tempEndDate, setTempEndDate] = useState(endDate || '');
+
+  // 선택된 장소들 관리 (일차별)
+  const [dailyPlaces, setDailyPlaces] = useState({
+    1: [] // 1일차부터 시작
+  });
+
+  // 현재 활성화된 일차 수
+  const [activeDays, setActiveDays] = useState(1);
+
+  // 날짜 차이 계산하여 일차 수 설정 및 AI 데이터 자동 입력
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const timeDiff = end.getTime() - start.getTime();
+      const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1을 해서 실제 여행 일수
+
+      if (dayDiff > 0 && dayDiff <= 30) { // 최대 30일로 제한
+        setActiveDays(dayDiff);
+
+        // 일차별 장소 초기화
+        const newDailyPlaces = {};
+        for (let i = 1; i <= dayDiff; i++) {
+          newDailyPlaces[i] = [];
+        }
+
+        // AI에서 온 데이터가 있다면 자동으로 장소 추가
+        if (isAIGenerated && aiRegion) {
+          generateAIPlaces(newDailyPlaces, dayDiff);
+        } else {
+          setDailyPlaces(newDailyPlaces);
+        }
+      }
+    }
+  }, [startDate, endDate, isAIGenerated, aiRegion]);
+
+  // AI 기반 장소 자동 생성 함수
+  const generateAIPlaces = (initialPlaces, dayCount) => {
+    // 지역별 추천 장소 데이터
+    const regionPlaces = {
+      seoul: [
+        { id: 'seoul1', name: '경복궁', region: '서울', category: '역사', rating: 4.5, image: 'https://picsum.photos/300/200?random=1' },
+        { id: 'seoul2', name: 'N서울타워', region: '서울', category: '야경', rating: 4.3, image: 'https://picsum.photos/300/200?random=2' },
+        { id: 'seoul3', name: '홍대입구', region: '서울', category: '데이트', rating: 4.2, image: 'https://picsum.photos/300/200?random=3' },
+        { id: 'seoul4', name: '명동교자', region: '서울', category: '음식점', rating: 4.1, image: 'https://picsum.photos/300/200?random=8' },
+        { id: 'seoul5', name: '스타벅스 압구정점', region: '서울', category: '카페', rating: 4.0, image: 'https://picsum.photos/300/200?random=9' },
+        { id: 'seoul6', name: '북촌한옥마을', region: '서울', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=10' },
+        { id: 'seoul7', name: '강남 카페거리', region: '서울', category: '카페', rating: 4.2, image: 'https://picsum.photos/300/200?random=11' },
+        { id: 'seoul8', name: '광장시장', region: '서울', category: '음식점', rating: 4.3, image: 'https://picsum.photos/300/200?random=12' }
+      ],
+      busan: [
+        { id: 'busan1', name: '해운대해수욕장', region: '부산', category: '휴양지', rating: 4.6, image: 'https://picsum.photos/300/200?random=4' },
+        { id: 'busan2', name: '감천문화마을', region: '부산', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=5' },
+        { id: 'busan3', name: '자갈치시장', region: '부산', category: '음식점', rating: 4.5, image: 'https://picsum.photos/300/200?random=13' },
+        { id: 'busan4', name: '광안리 카페', region: '부산', category: '카페', rating: 4.2, image: 'https://picsum.photos/300/200?random=14' },
+        { id: 'busan5', name: '태종대', region: '부산', category: '자연', rating: 4.7, image: 'https://picsum.photos/300/200?random=15' },
+        { id: 'busan6', name: '부산항 맛집', region: '부산', category: '음식점', rating: 4.3, image: 'https://picsum.photos/300/200?random=16' }
+      ],
+      jeju: [
+        { id: 'jeju1', name: '제주올레길', region: '제주', category: '자연', rating: 4.7, image: 'https://picsum.photos/300/200?random=6' },
+        { id: 'jeju2', name: '성산일출봉', region: '제주', category: '자연', rating: 4.8, image: 'https://picsum.photos/300/200?random=7' },
+        { id: 'jeju3', name: '제주 흑돼지', region: '제주', category: '음식점', rating: 4.6, image: 'https://picsum.photos/300/200?random=17' },
+        { id: 'jeju4', name: '애월 카페거리', region: '제주', category: '카페', rating: 4.4, image: 'https://picsum.photos/300/200?random=18' },
+        { id: 'jeju5', name: '한라산', region: '제주', category: '자연', rating: 4.9, image: 'https://picsum.photos/300/200?random=19' },
+        { id: 'jeju6', name: '우도', region: '제주', category: '자연', rating: 4.5, image: 'https://picsum.photos/300/200?random=20' }
+      ],
+      gangwon: [
+        { id: 'gangwon1', name: '설악산', region: '강원', category: '자연', rating: 4.8, image: 'https://picsum.photos/300/200?random=21' },
+        { id: 'gangwon2', name: '강릉 커피거리', region: '강원', category: '카페', rating: 4.3, image: 'https://picsum.photos/300/200?random=22' },
+        { id: 'gangwon3', name: '평창 맛집', region: '강원', category: '음식점', rating: 4.2, image: 'https://picsum.photos/300/200?random=23' },
+        { id: 'gangwon4', name: '동해 해변', region: '강원', category: '자연', rating: 4.5, image: 'https://picsum.photos/300/200?random=24' }
+      ],
+      gyeonggi: [
+        { id: 'gyeonggi1', name: '수원화성', region: '경기', category: '역사', rating: 4.4, image: 'https://picsum.photos/300/200?random=25' },
+        { id: 'gyeonggi2', name: '경기 맛집', region: '경기', category: '음식점', rating: 4.2, image: 'https://picsum.photos/300/200?random=26' },
+        { id: 'gyeonggi3', name: '경기 카페', region: '경기', category: '카페', rating: 4.1, image: 'https://picsum.photos/300/200?random=27' },
+        { id: 'gyeonggi4', name: '한강공원', region: '경기', category: '자연', rating: 4.3, image: 'https://picsum.photos/300/200?random=28' }
+      ],
+      incheon: [
+        { id: 'incheon1', name: '차이나타운', region: '인천', category: '체험', rating: 4.2, image: 'https://picsum.photos/300/200?random=29' },
+        { id: 'incheon2', name: '월미도', region: '인천', category: '자연', rating: 4.1, image: 'https://picsum.photos/300/200?random=30' },
+        { id: 'incheon3', name: '인천 맛집', region: '인천', category: '음식점', rating: 4.0, image: 'https://picsum.photos/300/200?random=31' },
+        { id: 'incheon4', name: '인천 카페', region: '인천', category: '카페', rating: 3.9, image: 'https://picsum.photos/300/200?random=32' }
+      ],
+      chungcheong: [
+        { id: 'chungcheong1', name: '온천리조트', region: '충청', category: '휴양지', rating: 4.3, image: 'https://picsum.photos/300/200?random=33' },
+        { id: 'chungcheong2', name: '충청 맛집', region: '충청', category: '음식점', rating: 4.2, image: 'https://picsum.photos/300/200?random=34' },
+        { id: 'chungcheong3', name: '충청 카페', region: '충청', category: '카페', rating: 4.1, image: 'https://picsum.photos/300/200?random=35' },
+        { id: 'chungcheong4', name: '한옥마을', region: '충청', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=36' }
+      ],
+      jeolla: [
+        { id: 'jeolla1', name: '전주 한옥마을', region: '전라', category: '체험', rating: 4.6, image: 'https://picsum.photos/300/200?random=37' },
+        { id: 'jeolla2', name: '전라 맛집', region: '전라', category: '음식점', rating: 4.7, image: 'https://picsum.photos/300/200?random=38' },
+        { id: 'jeolla3', name: '전라 카페', region: '전라', category: '카페', rating: 4.2, image: 'https://picsum.photos/300/200?random=39' },
+        { id: 'jeolla4', name: '순천만', region: '전라', category: '자연', rating: 4.5, image: 'https://picsum.photos/300/200?random=40' }
+      ],
+      gyeongsang: [
+        { id: 'gyeongsang1', name: '경주 불국사', region: '경상', category: '역사', rating: 4.8, image: 'https://picsum.photos/300/200?random=41' },
+        { id: 'gyeongsang2', name: '경상 맛집', region: '경상', category: '음식점', rating: 4.3, image: 'https://picsum.photos/300/200?random=42' },
+        { id: 'gyeongsang3', name: '경상 카페', region: '경상', category: '카페', rating: 4.1, image: 'https://picsum.photos/300/200?random=43' },
+        { id: 'gyeongsang4', name: '안동 하회마을', region: '경상', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=44' }
+      ]
+    };
+
+    const places = regionPlaces[aiRegion] || [];
+    const restaurants = places.filter(p => p.category === '음식점');
+    const cafes = places.filter(p => p.category === '카페');
+    const activities = places.filter(p => aiActivities.includes(p.category));
+    const otherPlaces = places.filter(p => !['음식점', '카페'].includes(p.category) && !aiActivities.includes(p.category));
+
+    // 각 일차별로 장소 자동 배치
+    const newDailyPlaces = { ...initialPlaces };
+
+    for (let day = 1; day <= dayCount; day++) {
+      const dayPlaces = [];
+
+      // 맛집 추가 (설정된 횟수만큼)
+      for (let i = 0; i < parseInt(aiRestaurantCount) && i < restaurants.length; i++) {
+        const restaurant = restaurants[i % restaurants.length];
+        dayPlaces.push({ ...restaurant, id: `${restaurant.id}_day${day}_restaurant${i}` });
+      }
+
+      // 카페 추가 (설정된 횟수만큼)
+      for (let i = 0; i < parseInt(aiCafeCount) && i < cafes.length; i++) {
+        const cafe = cafes[i % cafes.length];
+        dayPlaces.push({ ...cafe, id: `${cafe.id}_day${day}_cafe${i}` });
+      }
+
+      // 선택한 활동 관련 장소 추가
+      if (activities.length > 0) {
+        const activity = activities[(day - 1) % activities.length];
+        dayPlaces.push({ ...activity, id: `${activity.id}_day${day}_activity` });
+      }
+
+      // 기타 관광지 추가
+      if (otherPlaces.length > 0) {
+        const otherPlace = otherPlaces[(day - 1) % otherPlaces.length];
+        dayPlaces.push({ ...otherPlace, id: `${otherPlace.id}_day${day}_other` });
+      }
+
+      newDailyPlaces[day] = dayPlaces;
+    }
+
+    setDailyPlaces(newDailyPlaces);
+  };
+
+  // 추천 장소 데이터
+  const recommendedPlaces = [
+    { id: 1, name: '경복궁', region: '서울', category: '역사', rating: 4.5, image: 'https://picsum.photos/300/200?random=1' },
+    { id: 2, name: 'N서울타워', region: '서울', category: '야경', rating: 4.3, image: 'https://picsum.photos/300/200?random=2' },
+    { id: 3, name: '홍대입구', region: '서울', category: '데이트', rating: 4.2, image: 'https://picsum.photos/300/200?random=3' },
+    { id: 4, name: '해운대해수욕장', region: '부산', category: '휴양지', rating: 4.6, image: 'https://picsum.photos/300/200?random=4' },
+    { id: 5, name: '감천문화마을', region: '부산', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=5' },
+    { id: 6, name: '제주올레길', region: '제주', category: '자연', rating: 4.7, image: 'https://picsum.photos/300/200?random=6' },
+    { id: 7, name: '성산일출봉', region: '제주', category: '자연', rating: 4.8, image: 'https://picsum.photos/300/200?random=7' },
+    { id: 8, name: '명동교자', region: '서울', category: '음식점', rating: 4.1, image: 'https://picsum.photos/300/200?random=8' },
+    { id: 9, name: '스타벅스 압구정점', region: '서울', category: '카페', rating: 4.0, image: 'https://picsum.photos/300/200?random=9' },
+    { id: 10, name: '롯데월드', region: '서울', category: '키즈', rating: 4.5, image: 'https://picsum.photos/300/200?random=10' }
+  ];
+
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // 이미지 업로드 처리 함수
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // 파일 크기 체크 (5MB 제한)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('파일 크기는 5MB 이하로 선택해주세요.');
+        return;
+      }
+
+      // 파일 타입 체크
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드 가능합니다.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFormData(prev => ({
+          ...prev,
+          representativeImage: e.target.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // 이미지 삭제 함수
+  const handleImageRemove = () => {
+    setFormData(prev => ({
+      ...prev,
+      representativeImage: ''
+    }));
+  };
+
+  // 드래그 앤 드롭 처리 함수
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('dragover');
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        if (file.size > 5 * 1024 * 1024) {
+          alert('파일 크기는 5MB 이하로 선택해주세요.');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setFormData(prev => ({
+            ...prev,
+            representativeImage: e.target.result
+          }));
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('이미지 파일만 업로드 가능합니다.');
+      }
+    }
+  };
+
+  const handleOptionToggle = (field, option) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].includes(option)
+        ? prev[field].filter(item => item !== option)
+        : [...prev[field], option]
+    }));
+  };
+
+  const addLocation = (day = 1) => {
+    setTargetDay(day);
+    setShowLocationSearch(true);
+  };
+
+  // 장소 필터링 함수
+  const getFilteredPlaces = () => {
+    return recommendedPlaces.filter(place => {
+      const matchesRegion = selectedRegion === '전체' || place.region === selectedRegion;
+      const matchesCategory = selectedCategory === '전체' || place.category === selectedCategory;
+      const matchesSearch = !searchQuery || place.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesRegion && matchesCategory && matchesSearch;
+    });
+  };
+
+  // 일정 일수 계산
+  const getDaysBetweenDates = (startDate, endDate) => {
+    if (!startDate || !endDate) return 1;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(diffDays, 1);
+  };
+
+  // 총 일수
+  const totalDays = getDaysBetweenDates(startDate, endDate);
+
+  // 장소 선택 핸들러
+  const handlePlaceSelect = (place) => {
+    setSelectedPlace(place);
+    setShowConfirmModal(true);
+  };
+
+  // 기존 장소 카드 클릭 시 재선택
+  const handleExistingPlaceClick = (day, placeIndex) => {
+    setTargetDay(day);
+    setShowLocationSearch(true);
+  };
+
+  // 날짜 재설정 함수들
+  const handleDateClick = () => {
+    setTempStartDate(startDate || '');
+    setTempEndDate(endDate || '');
+    setShowDatePicker(true);
+  };
+
+  const handleDateConfirm = () => {
+    if (!tempStartDate || !tempEndDate) {
+      alert('시작일과 종료일을 모두 선택해주세요.');
+      return;
+    }
+
+    if (new Date(tempStartDate) > new Date(tempEndDate)) {
+      alert('종료일은 시작일보다 늦어야 합니다.');
+      return;
+    }
+
+    // 모달 닫기
+    setShowDatePicker(false);
+
+    // 새로운 날짜로 페이지 리다이렉트
+    window.location.href = `/direct-schedule-create?startDate=${tempStartDate}&endDate=${tempEndDate}`;
+  };
+
+  const handleDateCancel = () => {
+    setShowDatePicker(false);
+    setTempStartDate(startDate || '');
+    setTempEndDate(endDate || '');
+  };
+
+  // 장소 추가 확정
+  const confirmAddPlace = () => {
+    if (!selectedPlace) return;
+
+    // 지정된 일차에 추가 (targetDay 사용)
+    setDailyPlaces(prev => ({
+      ...prev,
+      [targetDay]: [...(prev[targetDay] || []), { ...selectedPlace, addedAt: Date.now() }]
+    }));
+
+    setShowConfirmModal(false);
+    setShowLocationSearch(false);
+    setSelectedPlace(null);
+  };
+
+  // 간단한 거리 계산 함수 (실제로는 지도 API를 사용해야 함)
+  const calculateDistance = (place1, place2) => {
+    // 임시로 랜덤한 거리 반환 (실제 구현시 지도 API 사용)
+    const distance = Math.floor(Math.random() * 20 + 1);
+    const time = Math.floor(Math.random() * 30 + 10);
+    return { distance, time };
+  };
+
+  // 일차 추가 함수
+  const addDay = () => {
+    const newDay = activeDays + 1;
+    setActiveDays(newDay);
+    setDailyPlaces(prev => ({
+      ...prev,
+      [newDay]: []
+    }));
+  };
+
+  // 일차 제거 함수 (1일차는 제거 불가)
+  const removeDay = (day) => {
+    if (day === 1 || activeDays <= 1) return;
+
+    const newDailyPlaces = { ...dailyPlaces };
+    delete newDailyPlaces[day];
+
+    // 일차 번호 재정렬
+    const reorderedPlaces = {};
+    let newDayCounter = 1;
+
+    for (let i = 1; i <= activeDays; i++) {
+      if (i !== day && newDailyPlaces[i]) {
+        reorderedPlaces[newDayCounter] = newDailyPlaces[i];
+        newDayCounter++;
+      }
+    }
+
+    setDailyPlaces(reorderedPlaces);
+    setActiveDays(activeDays - 1);
+  };
+
+  const handleSubmit = () => {
+    // 제목 검증
+    if (!formData.title.trim()) {
+      alert('여행 제목을 입력해주세요.\n\n예시: "제주도 3박 4일 힐링여행", "부산 맛집 투어"');
+      return;
+    }
+
+    // 여행 설명 검증
+    if (!formData.description.trim()) {
+      alert('여행 설명을 입력해주세요.\n\n여행의 목적, 테마, 특별한 계획 등을 간단히 작성해주세요.\n예시: "가족과 함께하는 힐링 여행", "친구들과의 맛집 탐방"');
+      return;
+    }
+
+    // 지역 선택 검증
+    if (!formData.region) {
+      alert('여행 지역을 선택해주세요.\n\n기본 정보 섹션에서 해당하는 지역 버튼을 클릭하세요.');
+      return;
+    }
+
+    // 교통수단 선택 검증
+    if (formData.transportation.length === 0) {
+      alert('교통수단을 최소 1개 이상 선택해주세요.\n\n여행 중 이용할 교통수단을 선택하세요.\n(자동차, 대중교통, 항공, 기차 등)');
+      return;
+    }
+
+    // 숙박 정보 검증
+    if (!formData.accommodation.trim()) {
+      alert('숙박 정보를 입력해주세요.\n\n예시: "호텔", "펜션", "게스트하우스", "당일치기" 등');
+      return;
+    }
+
+    // 동행인 정보 검증
+    if (!formData.companions.trim()) {
+      alert('동행인 정보를 입력해주세요.\n\n예시: "혼자", "가족 4명", "친구 2명", "연인과 함께" 등');
+      return;
+    }
+
+    // 일정에 추가된 장소가 있는지 확인
+    const hasPlaces = Object.values(dailyPlaces).some(places => places.length > 0);
+    if (!hasPlaces) {
+      alert('여행 일정에 최소 1개 이상의 장소를 추가해주세요.\n\n각 일차별로 "장소 추가" 버튼을 클릭하여 방문할 장소를 선택하세요.');
+      return;
+    }
+
+    // 모든 날짜에 장소가 있는지 확인
+    let emptyDays = [];
+    for (let day = 1; day <= activeDays; day++) {
+      if (!dailyPlaces[day] || dailyPlaces[day].length === 0) {
+        emptyDays.push(day);
+      }
+    }
+
+    if (emptyDays.length > 0) {
+      alert(`${emptyDays.join('일차, ')}일차에 장소를 추가해주세요.\n\n각 일차별로 방문할 장소가 최소 1개씩은 있어야 합니다.`);
+      return;
+    }
+
+    try {
+      // 새로운 일정 데이터 생성
+      const newSchedule = {
+        id: Date.now().toString(),
+        title: formData.title,
+        region: formData.region,
+        transportation: formData.transportation,
+        companions: formData.companions,
+        accommodation: formData.accommodation,
+        startDate: startDate,
+        endDate: endDate,
+        date: `${startDate} ~ ${endDate}`, // 날짜 표시용 필드 추가
+        duration: `${activeDays}박 ${activeDays + 1}일`,
+        places: dailyPlaces,
+        totalDays: activeDays,
+        author: {
+          name: getCurrentUser()?.user?.name || '여행자',
+          profileImage: getCurrentUser()?.user?.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face'
+        },
+        image: formData.representativeImage || Object.values(dailyPlaces).flat()[0]?.image || 'https://picsum.photos/300/200?random=1',
+        description: formData.description || `${formData.region}에서 ${activeDays}박 ${activeDays + 1}일 여행`,
+        createdAt: new Date().toISOString(),
+        tags: [formData.region, ...formData.transportation],
+        views: 1,
+        likes: 0
+      };
+
+      // 기존 일정 목록 가져오기
+      const existingSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
+
+      // 새 일정 추가
+      const updatedSchedules = [newSchedule, ...existingSchedules];
+
+      // localStorage에 저장
+      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
+
+      alert('일정이 성공적으로 등록되었습니다!');
+      navigate('/travel-schedules');
+    } catch (error) {
+      console.error('일정 저장 오류:', error);
+      alert('일정 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  return (
+    <DirectScheduleCreatePage>
+      <Navigation />
+
+      <CreateContainer>
+        <PageHeader>
+          <BackButton onClick={() => navigate(-1)}>
+            ←
+          </BackButton>
+          <PageTitle>여행 일정 등록</PageTitle>
+          {startDate && endDate && (
+            <DateInfo onClick={handleDateClick}>
+              {startDate} ~ {endDate}
+            </DateInfo>
+          )}
+        </PageHeader>
+
+        <FormSection>
+          <SectionTitle>기본 정보</SectionTitle>
+
+          <FormGroup>
+            <Label>제목</Label>
+            <Input
+              type="text"
+              placeholder="여행 제목을 입력하세요"
+              value={formData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label>여행 설명</Label>
+            <TextArea
+              placeholder="여행에 대한 설명을 입력하세요"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              rows={3}
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label>같이 간 사람</Label>
+            <Input
+              type="text"
+              placeholder="동행인을 입력하세요 (예: 친구 2명, 가족 4명)"
+              value={formData.companions}
+              onChange={(e) => handleInputChange('companions', e.target.value)}
+            />
+          </FormGroup>
+
+          <FormGroup>
+            <Label>대표사진</Label>
+            <ImageUploadSection>
+              {!formData.representativeImage ? (
+                <ImageUploadBox
+                  onClick={() => document.getElementById('imageUpload').click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <ImageUploadText>대표사진을 업로드하세요</ImageUploadText>
+                  <ImageUploadSubText>
+                    클릭하거나 드래그 앤 드롭으로 이미지 업로드 (최대 5MB)
+                  </ImageUploadSubText>
+                  <HiddenFileInput
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                </ImageUploadBox>
+              ) : (
+                <ImagePreview>
+                  <PreviewImage
+                    src={formData.representativeImage}
+                    alt="대표사진 미리보기"
+                  />
+                  <RemoveImageButton onClick={handleImageRemove}>
+                    ×
+                  </RemoveImageButton>
+                </ImagePreview>
+              )}
+            </ImageUploadSection>
+          </FormGroup>
+        </FormSection>
+
+        <FormSection>
+          <SectionTitle>여행 정보</SectionTitle>
+
+          <FormGroup>
+            <Label>지역</Label>
+            <KeywordButtonGroup>
+              {['서울', '부산', '제주', '경기', '강원', '전라', '충청', '경상', '인천'].map(region => (
+                <OptionButton
+                  key={region}
+                  $active={formData.region === region}
+                  onClick={() => handleInputChange('region', region)}
+                >
+                  {region}
+                </OptionButton>
+              ))}
+            </KeywordButtonGroup>
+          </FormGroup>
+
+          <FormGroup>
+            <Label>교통편 (복수 선택 가능)</Label>
+            <KeywordButtonGroup>
+              {['자동차', '기차', '버스', '비행기', '배', '도보', '자전거'].map(option => (
+                <OptionButton
+                  key={option}
+                  $active={formData.transportation.includes(option)}
+                  onClick={() => handleOptionToggle('transportation', option)}
+                >
+                  {option}
+                </OptionButton>
+              ))}
+            </KeywordButtonGroup>
+          </FormGroup>
+
+          <FormGroup>
+            <Label>숙소 종류</Label>
+            <KeywordButtonGroup>
+              {['호텔', '펜션', '리조트', '게스트하우스', '민박', '캠핑', '에어비앤비'].map(option => (
+                <OptionButton
+                  key={option}
+                  $active={formData.accommodation === option}
+                  onClick={() => handleInputChange('accommodation', option)}
+                >
+                  {option}
+                </OptionButton>
+              ))}
+            </KeywordButtonGroup>
+          </FormGroup>
+        </FormSection>
+
+        <LocationsSection>
+          <SectionTitle>방문 장소</SectionTitle>
+
+          {Array.from({ length: activeDays }, (_, index) => {
+            const day = index + 1;
+            const dayPlaceList = dailyPlaces[day] || [];
+
+            return (
+              <DaySection key={day}>
+                <DayHeader>
+                  <DayTitle>{day}일차</DayTitle>
+                  {/* 날짜 선택 시에는 삭제 버튼 숨김 */}
+                  {(!startDate || !endDate) && activeDays > 1 && (
+                    <RemoveDayButton
+                      onClick={() => removeDay(day)}
+                      disabled={day === 1}
+                    >
+                      삭제
+                    </RemoveDayButton>
+                  )}
+                </DayHeader>
+
+                {dayPlaceList.length > 0 && (
+                  <PlacesContainer>
+                    {dayPlaceList.map((place, idx) => (
+                      <div key={`${place.id}-${place.addedAt}`}>
+                        <AddedPlaceCard onClick={() => handleExistingPlaceClick(day, idx)}>
+                          <AddedPlaceImage src={place.image} alt={place.name} />
+                          <AddedPlaceInfo>
+                            <AddedPlaceName>{place.name}</AddedPlaceName>
+                            <AddedPlaceMeta>
+                              <SmallBadge type="region">{place.region}</SmallBadge>
+                              <SmallBadge type="category">{place.category}</SmallBadge>
+                            </AddedPlaceMeta>
+                          </AddedPlaceInfo>
+                        </AddedPlaceCard>
+
+                        {/* 거리 표시 (마지막 장소가 아닌 경우만) */}
+                        {idx < dayPlaceList.length - 1 && (
+                          <DistanceIndicator>
+                            <Arrow>↓</Arrow>
+                            <DistanceText>
+                              {(() => {
+                                const { distance } = calculateDistance(place, dayPlaceList[idx + 1]);
+                                return `${distance}km`;
+                              })()}
+                            </DistanceText>
+                          </DistanceIndicator>
+                        )}
+                      </div>
+                    ))}
+                  </PlacesContainer>
+                )}
+
+                <DayAddButton onClick={() => addLocation(day)}>
+                  장소 추가 +
+                </DayAddButton>
+              </DaySection>
+            );
+          })}
+
+          {/* 날짜 선택 시에는 일차 추가 버튼 숨김 */}
+          {(!startDate || !endDate) && (
+            <AddDayButton onClick={addDay}>
+              <AddDayIcon>+</AddDayIcon>
+              {activeDays + 1}일차 추가
+            </AddDayButton>
+          )}
+        </LocationsSection>
+
+        <SubmitButton onClick={handleSubmit}>
+          일정 등록하기
+        </SubmitButton>
+      </CreateContainer>
+
+      {/* 장소 검색 모달 */}
+      {showLocationSearch && (
+        <LocationSearchModalOverlay onClick={() => setShowLocationSearch(false)}>
+          <LocationSearchModalContainer onClick={(e) => e.stopPropagation()}>
+            <LocationSearchHeader>
+              <LocationSearchTitle>장소 검색</LocationSearchTitle>
+              <CloseButton onClick={() => setShowLocationSearch(false)}>
+                ×
+              </CloseButton>
+            </LocationSearchHeader>
+
+            <SearchContent>
+              <SearchBox>
+                <SearchInput
+                  type="text"
+                  placeholder="장소명을 검색하세요 (예: 경복궁, N서울타워)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </SearchBox>
+
+              <RegionSection>
+                <RegionTitle>지역</RegionTitle>
+                <RegionButtons>
+                  {['전체', '서울', '부산', '제주', '경기', '강원', '전라', '충청', '경상', '인천'].map(region => (
+                    <RegionButton
+                      key={region}
+                      $active={selectedRegion === region}
+                      onClick={() => setSelectedRegion(region)}
+                    >
+                      {region}
+                    </RegionButton>
+                  ))}
+                </RegionButtons>
+              </RegionSection>
+
+              <CategorySection>
+                <CategoryTitle>카테고리</CategoryTitle>
+                <CategoryButtons>
+                  {['전체', '음식점', '카페', '키즈', '휴양지', '자연', '체험', '전시', '레포츠', '축제공연', '역사', '숙박', '야경', '데이트'].map(category => (
+                    <CategoryButton
+                      key={category}
+                      $active={selectedCategory === category}
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      {category}
+                    </CategoryButton>
+                  ))}
+                </CategoryButtons>
+              </CategorySection>
+
+              <SearchResults>
+                {getFilteredPlaces().length > 0 ? (
+                  getFilteredPlaces().map(place => (
+                    <PlaceCard key={place.id} onClick={() => handlePlaceSelect(place)}>
+                      <PlaceImage src={place.image} alt={place.name} />
+                      <PlaceInfo>
+                        <PlaceName>{place.name}</PlaceName>
+                        <PlaceRating>⭐ {place.rating}</PlaceRating>
+                      </PlaceInfo>
+                      <PlaceMeta>
+                        <PlaceRegion>{place.region}</PlaceRegion>
+                        <PlaceCategory>{place.category}</PlaceCategory>
+                      </PlaceMeta>
+                    </PlaceCard>
+                  ))
+                ) : (
+                  <EmptyResults>
+                    선택한 조건에 맞는 장소가 없습니다.<br />
+                    다른 지역이나 카테고리를 선택해보세요.
+                  </EmptyResults>
+                )}
+              </SearchResults>
+            </SearchContent>
+          </LocationSearchModalContainer>
+        </LocationSearchModalOverlay>
+      )}
+
+      {/* 장소 선택 확인 모달 */}
+      {showConfirmModal && selectedPlace && (
+        <ConfirmModalOverlay>
+          <ConfirmModalContainer>
+            <ConfirmIcon>📍</ConfirmIcon>
+            <ConfirmTitle>장소 추가</ConfirmTitle>
+            <ConfirmMessage>
+              <strong>{selectedPlace.name}</strong>을(를)<br />
+              일정에 추가하시겠습니까?
+            </ConfirmMessage>
+            <ConfirmButtons>
+              <ConfirmButton onClick={confirmAddPlace}>
+                추가
+              </ConfirmButton>
+              <CancelConfirmButton onClick={() => setShowConfirmModal(false)}>
+                취소
+              </CancelConfirmButton>
+            </ConfirmButtons>
+          </ConfirmModalContainer>
+        </ConfirmModalOverlay>
+      )}
+
+      {/* 날짜 재설정 모달 */}
+      {showDatePicker && (
+        <DatePickerModalOverlay onClick={(e) => e.target === e.currentTarget && handleDateCancel()}>
+          <DatePickerModalContainer onClick={(e) => e.stopPropagation()}>
+            <DatePickerTitle>여행 날짜 재설정</DatePickerTitle>
+            <DatePickerMessage>새로운 여행 날짜를 선택해주세요.</DatePickerMessage>
+
+            <DateInputContainer>
+              <DateInputGroup>
+                <DateLabel>시작일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={tempStartDate}
+                  onChange={(e) => setTempStartDate(e.target.value)}
+                />
+              </DateInputGroup>
+
+              <DateInputGroup>
+                <DateLabel>종료일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={tempEndDate}
+                  onChange={(e) => setTempEndDate(e.target.value)}
+                />
+              </DateInputGroup>
+            </DateInputContainer>
+
+            <DateButtonGroup>
+              <DateCancelButton onClick={handleDateCancel}>
+                취소
+              </DateCancelButton>
+              <DateConfirmButton onClick={handleDateConfirm}>
+                확인
+              </DateConfirmButton>
+            </DateButtonGroup>
+          </DatePickerModalContainer>
+        </DatePickerModalOverlay>
+      )}
+    </DirectScheduleCreatePage>
+  );
+};
+
+
+
 const DirectScheduleCreatePage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -1058,925 +1981,5 @@ const DateCancelButton = styled.button`
     transform: translateY(-2px);
   }
 `;
-
-const DirectScheduleCreate = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // 현재 로그인된 사용자 정보 가져오기
-  const getCurrentUser = () => {
-    try {
-      const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-      return loginData ? JSON.parse(loginData) : null;
-    } catch (error) {
-      console.error('사용자 정보 가져오기 오류:', error);
-      return null;
-    }
-  };
-
-  // URL에서 날짜 정보 가져오기
-  const searchParams = new URLSearchParams(location.search);
-  const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate');
-
-  // AI에서 전달된 데이터 가져오기
-  const isAIGenerated = searchParams.get('isAIGenerated') === 'true';
-  const aiRegion = searchParams.get('region');
-  const aiRestaurantCount = searchParams.get('restaurantCount');
-  const aiCafeCount = searchParams.get('cafeCount');
-  const aiActivities = searchParams.get('activities') ? searchParams.get('activities').split(',') : [];
-
-  // 지역명을 한글로 변환하는 함수
-  const getRegionName = (regionId) => {
-    const regionMap = {
-      'seoul': '서울',
-      'busan': '부산',
-      'jeju': '제주',
-      'gangwon': '강원',
-      'gyeonggi': '경기',
-      'incheon': '인천',
-      'chungcheong': '충청',
-      'jeolla': '전라',
-      'gyeongsang': '경상'
-    };
-    return regionMap[regionId] || regionId;
-  };
-
-  // AI 기반 제목 생성 함수
-  const generateAITitle = () => {
-    if (!isAIGenerated) return '';
-    const regionName = getRegionName(aiRegion);
-    const activityText = aiActivities.length > 0 ? ` ${aiActivities[0]} 중심` : '';
-    return `${regionName}${activityText} 여행`;
-  };
-
-  // AI 기반 상세 설명 생성 함수
-  const generateAIDescription = () => {
-    if (!isAIGenerated) return '';
-
-    return `AI가 추천하는 맞춤형 여행 일정입니다. 여러분의 취향과 선호도를 바탕으로 신중히 선별한 여행 계획으로, 각 장소와 활동들이 조화롭게 연결되어 잊지 못할 여행 경험을 선사할 것입니다.`;
-  };
-
-  // 날짜 차이 계산 함수
-  const calculateDays = (start, end) => {
-    if (!start || !end) return 1;
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const timeDiff = endDate.getTime() - startDate.getTime();
-    return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-  };
-
-  // 폼 상태
-  const [formData, setFormData] = useState({
-    title: generateAITitle(),
-    description: generateAIDescription(),
-    region: isAIGenerated ? getRegionName(aiRegion) : '',
-    transportation: [],
-    companions: '',
-    accommodation: '',
-    representativeImage: '',
-  });
-
-  // 장소 검색 관련 상태
-  const [showLocationSearch, setShowLocationSearch] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('전체');
-  const [selectedRegion, setSelectedRegion] = useState('전체');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [selectedPlace, setSelectedPlace] = useState(null);
-  const [targetDay, setTargetDay] = useState(1);
-
-  // 날짜 재설정 관련 상태
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [tempStartDate, setTempStartDate] = useState(startDate || '');
-  const [tempEndDate, setTempEndDate] = useState(endDate || '');
-
-  // 선택된 장소들 관리 (일차별)
-  const [dailyPlaces, setDailyPlaces] = useState({
-    1: [] // 1일차부터 시작
-  });
-
-  // 현재 활성화된 일차 수
-  const [activeDays, setActiveDays] = useState(1);
-
-  // 날짜 차이 계산하여 일차 수 설정 및 AI 데이터 자동 입력
-  useEffect(() => {
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const timeDiff = end.getTime() - start.getTime();
-      const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1을 해서 실제 여행 일수
-
-      if (dayDiff > 0 && dayDiff <= 30) { // 최대 30일로 제한
-        setActiveDays(dayDiff);
-
-        // 일차별 장소 초기화
-        const newDailyPlaces = {};
-        for (let i = 1; i <= dayDiff; i++) {
-          newDailyPlaces[i] = [];
-        }
-
-        // AI에서 온 데이터가 있다면 자동으로 장소 추가
-        if (isAIGenerated && aiRegion) {
-          generateAIPlaces(newDailyPlaces, dayDiff);
-        } else {
-          setDailyPlaces(newDailyPlaces);
-        }
-      }
-    }
-  }, [startDate, endDate, isAIGenerated, aiRegion]);
-
-  // AI 기반 장소 자동 생성 함수
-  const generateAIPlaces = (initialPlaces, dayCount) => {
-    // 지역별 추천 장소 데이터
-    const regionPlaces = {
-      seoul: [
-        { id: 'seoul1', name: '경복궁', region: '서울', category: '역사', rating: 4.5, image: 'https://picsum.photos/300/200?random=1' },
-        { id: 'seoul2', name: 'N서울타워', region: '서울', category: '야경', rating: 4.3, image: 'https://picsum.photos/300/200?random=2' },
-        { id: 'seoul3', name: '홍대입구', region: '서울', category: '데이트', rating: 4.2, image: 'https://picsum.photos/300/200?random=3' },
-        { id: 'seoul4', name: '명동교자', region: '서울', category: '음식점', rating: 4.1, image: 'https://picsum.photos/300/200?random=8' },
-        { id: 'seoul5', name: '스타벅스 압구정점', region: '서울', category: '카페', rating: 4.0, image: 'https://picsum.photos/300/200?random=9' },
-        { id: 'seoul6', name: '북촌한옥마을', region: '서울', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=10' },
-        { id: 'seoul7', name: '강남 카페거리', region: '서울', category: '카페', rating: 4.2, image: 'https://picsum.photos/300/200?random=11' },
-        { id: 'seoul8', name: '광장시장', region: '서울', category: '음식점', rating: 4.3, image: 'https://picsum.photos/300/200?random=12' }
-      ],
-      busan: [
-        { id: 'busan1', name: '해운대해수욕장', region: '부산', category: '휴양지', rating: 4.6, image: 'https://picsum.photos/300/200?random=4' },
-        { id: 'busan2', name: '감천문화마을', region: '부산', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=5' },
-        { id: 'busan3', name: '자갈치시장', region: '부산', category: '음식점', rating: 4.5, image: 'https://picsum.photos/300/200?random=13' },
-        { id: 'busan4', name: '광안리 카페', region: '부산', category: '카페', rating: 4.2, image: 'https://picsum.photos/300/200?random=14' },
-        { id: 'busan5', name: '태종대', region: '부산', category: '자연', rating: 4.7, image: 'https://picsum.photos/300/200?random=15' },
-        { id: 'busan6', name: '부산항 맛집', region: '부산', category: '음식점', rating: 4.3, image: 'https://picsum.photos/300/200?random=16' }
-      ],
-      jeju: [
-        { id: 'jeju1', name: '제주올레길', region: '제주', category: '자연', rating: 4.7, image: 'https://picsum.photos/300/200?random=6' },
-        { id: 'jeju2', name: '성산일출봉', region: '제주', category: '자연', rating: 4.8, image: 'https://picsum.photos/300/200?random=7' },
-        { id: 'jeju3', name: '제주 흑돼지', region: '제주', category: '음식점', rating: 4.6, image: 'https://picsum.photos/300/200?random=17' },
-        { id: 'jeju4', name: '애월 카페거리', region: '제주', category: '카페', rating: 4.4, image: 'https://picsum.photos/300/200?random=18' },
-        { id: 'jeju5', name: '한라산', region: '제주', category: '자연', rating: 4.9, image: 'https://picsum.photos/300/200?random=19' },
-        { id: 'jeju6', name: '우도', region: '제주', category: '자연', rating: 4.5, image: 'https://picsum.photos/300/200?random=20' }
-      ],
-      gangwon: [
-        { id: 'gangwon1', name: '설악산', region: '강원', category: '자연', rating: 4.8, image: 'https://picsum.photos/300/200?random=21' },
-        { id: 'gangwon2', name: '강릉 커피거리', region: '강원', category: '카페', rating: 4.3, image: 'https://picsum.photos/300/200?random=22' },
-        { id: 'gangwon3', name: '평창 맛집', region: '강원', category: '음식점', rating: 4.2, image: 'https://picsum.photos/300/200?random=23' },
-        { id: 'gangwon4', name: '동해 해변', region: '강원', category: '자연', rating: 4.5, image: 'https://picsum.photos/300/200?random=24' }
-      ],
-      gyeonggi: [
-        { id: 'gyeonggi1', name: '수원화성', region: '경기', category: '역사', rating: 4.4, image: 'https://picsum.photos/300/200?random=25' },
-        { id: 'gyeonggi2', name: '경기 맛집', region: '경기', category: '음식점', rating: 4.2, image: 'https://picsum.photos/300/200?random=26' },
-        { id: 'gyeonggi3', name: '경기 카페', region: '경기', category: '카페', rating: 4.1, image: 'https://picsum.photos/300/200?random=27' },
-        { id: 'gyeonggi4', name: '한강공원', region: '경기', category: '자연', rating: 4.3, image: 'https://picsum.photos/300/200?random=28' }
-      ],
-      incheon: [
-        { id: 'incheon1', name: '차이나타운', region: '인천', category: '체험', rating: 4.2, image: 'https://picsum.photos/300/200?random=29' },
-        { id: 'incheon2', name: '월미도', region: '인천', category: '자연', rating: 4.1, image: 'https://picsum.photos/300/200?random=30' },
-        { id: 'incheon3', name: '인천 맛집', region: '인천', category: '음식점', rating: 4.0, image: 'https://picsum.photos/300/200?random=31' },
-        { id: 'incheon4', name: '인천 카페', region: '인천', category: '카페', rating: 3.9, image: 'https://picsum.photos/300/200?random=32' }
-      ],
-      chungcheong: [
-        { id: 'chungcheong1', name: '온천리조트', region: '충청', category: '휴양지', rating: 4.3, image: 'https://picsum.photos/300/200?random=33' },
-        { id: 'chungcheong2', name: '충청 맛집', region: '충청', category: '음식점', rating: 4.2, image: 'https://picsum.photos/300/200?random=34' },
-        { id: 'chungcheong3', name: '충청 카페', region: '충청', category: '카페', rating: 4.1, image: 'https://picsum.photos/300/200?random=35' },
-        { id: 'chungcheong4', name: '한옥마을', region: '충청', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=36' }
-      ],
-      jeolla: [
-        { id: 'jeolla1', name: '전주 한옥마을', region: '전라', category: '체험', rating: 4.6, image: 'https://picsum.photos/300/200?random=37' },
-        { id: 'jeolla2', name: '전라 맛집', region: '전라', category: '음식점', rating: 4.7, image: 'https://picsum.photos/300/200?random=38' },
-        { id: 'jeolla3', name: '전라 카페', region: '전라', category: '카페', rating: 4.2, image: 'https://picsum.photos/300/200?random=39' },
-        { id: 'jeolla4', name: '순천만', region: '전라', category: '자연', rating: 4.5, image: 'https://picsum.photos/300/200?random=40' }
-      ],
-      gyeongsang: [
-        { id: 'gyeongsang1', name: '경주 불국사', region: '경상', category: '역사', rating: 4.8, image: 'https://picsum.photos/300/200?random=41' },
-        { id: 'gyeongsang2', name: '경상 맛집', region: '경상', category: '음식점', rating: 4.3, image: 'https://picsum.photos/300/200?random=42' },
-        { id: 'gyeongsang3', name: '경상 카페', region: '경상', category: '카페', rating: 4.1, image: 'https://picsum.photos/300/200?random=43' },
-        { id: 'gyeongsang4', name: '안동 하회마을', region: '경상', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=44' }
-      ]
-    };
-
-    const places = regionPlaces[aiRegion] || [];
-    const restaurants = places.filter(p => p.category === '음식점');
-    const cafes = places.filter(p => p.category === '카페');
-    const activities = places.filter(p => aiActivities.includes(p.category));
-    const otherPlaces = places.filter(p => !['음식점', '카페'].includes(p.category) && !aiActivities.includes(p.category));
-
-    // 각 일차별로 장소 자동 배치
-    const newDailyPlaces = { ...initialPlaces };
-
-    for (let day = 1; day <= dayCount; day++) {
-      const dayPlaces = [];
-
-      // 맛집 추가 (설정된 횟수만큼)
-      for (let i = 0; i < parseInt(aiRestaurantCount) && i < restaurants.length; i++) {
-        const restaurant = restaurants[i % restaurants.length];
-        dayPlaces.push({ ...restaurant, id: `${restaurant.id}_day${day}_restaurant${i}` });
-      }
-
-      // 카페 추가 (설정된 횟수만큼)
-      for (let i = 0; i < parseInt(aiCafeCount) && i < cafes.length; i++) {
-        const cafe = cafes[i % cafes.length];
-        dayPlaces.push({ ...cafe, id: `${cafe.id}_day${day}_cafe${i}` });
-      }
-
-      // 선택한 활동 관련 장소 추가
-      if (activities.length > 0) {
-        const activity = activities[(day - 1) % activities.length];
-        dayPlaces.push({ ...activity, id: `${activity.id}_day${day}_activity` });
-      }
-
-      // 기타 관광지 추가
-      if (otherPlaces.length > 0) {
-        const otherPlace = otherPlaces[(day - 1) % otherPlaces.length];
-        dayPlaces.push({ ...otherPlace, id: `${otherPlace.id}_day${day}_other` });
-      }
-
-      newDailyPlaces[day] = dayPlaces;
-    }
-
-    setDailyPlaces(newDailyPlaces);
-  };
-
-  // 추천 장소 데이터
-  const recommendedPlaces = [
-    { id: 1, name: '경복궁', region: '서울', category: '역사', rating: 4.5, image: 'https://picsum.photos/300/200?random=1' },
-    { id: 2, name: 'N서울타워', region: '서울', category: '야경', rating: 4.3, image: 'https://picsum.photos/300/200?random=2' },
-    { id: 3, name: '홍대입구', region: '서울', category: '데이트', rating: 4.2, image: 'https://picsum.photos/300/200?random=3' },
-    { id: 4, name: '해운대해수욕장', region: '부산', category: '휴양지', rating: 4.6, image: 'https://picsum.photos/300/200?random=4' },
-    { id: 5, name: '감천문화마을', region: '부산', category: '체험', rating: 4.4, image: 'https://picsum.photos/300/200?random=5' },
-    { id: 6, name: '제주올레길', region: '제주', category: '자연', rating: 4.7, image: 'https://picsum.photos/300/200?random=6' },
-    { id: 7, name: '성산일출봉', region: '제주', category: '자연', rating: 4.8, image: 'https://picsum.photos/300/200?random=7' },
-    { id: 8, name: '명동교자', region: '서울', category: '음식점', rating: 4.1, image: 'https://picsum.photos/300/200?random=8' },
-    { id: 9, name: '스타벅스 압구정점', region: '서울', category: '카페', rating: 4.0, image: 'https://picsum.photos/300/200?random=9' },
-    { id: 10, name: '롯데월드', region: '서울', category: '키즈', rating: 4.5, image: 'https://picsum.photos/300/200?random=10' }
-  ];
-
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // 이미지 업로드 처리 함수
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      // 파일 크기 체크 (5MB 제한)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('파일 크기는 5MB 이하로 선택해주세요.');
-        return;
-      }
-
-      // 파일 타입 체크
-      if (!file.type.startsWith('image/')) {
-        alert('이미지 파일만 업로드 가능합니다.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData(prev => ({
-          ...prev,
-          representativeImage: e.target.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // 이미지 삭제 함수
-  const handleImageRemove = () => {
-    setFormData(prev => ({
-      ...prev,
-      representativeImage: ''
-    }));
-  };
-
-  // 드래그 앤 드롭 처리 함수
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.currentTarget.classList.add('dragover');
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove('dragover');
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove('dragover');
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.type.startsWith('image/')) {
-        if (file.size > 5 * 1024 * 1024) {
-          alert('파일 크기는 5MB 이하로 선택해주세요.');
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setFormData(prev => ({
-            ...prev,
-            representativeImage: e.target.result
-          }));
-        };
-        reader.readAsDataURL(file);
-      } else {
-        alert('이미지 파일만 업로드 가능합니다.');
-      }
-    }
-  };
-
-  const handleOptionToggle = (field, option) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].includes(option)
-        ? prev[field].filter(item => item !== option)
-        : [...prev[field], option]
-    }));
-  };
-
-  const addLocation = (day = 1) => {
-    setTargetDay(day);
-    setShowLocationSearch(true);
-  };
-
-  // 장소 필터링 함수
-  const getFilteredPlaces = () => {
-    return recommendedPlaces.filter(place => {
-      const matchesRegion = selectedRegion === '전체' || place.region === selectedRegion;
-      const matchesCategory = selectedCategory === '전체' || place.category === selectedCategory;
-      const matchesSearch = !searchQuery || place.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesRegion && matchesCategory && matchesSearch;
-    });
-  };
-
-  // 일정 일수 계산
-  const getDaysBetweenDates = (startDate, endDate) => {
-    if (!startDate || !endDate) return 1;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(diffDays, 1);
-  };
-
-  // 총 일수
-  const totalDays = getDaysBetweenDates(startDate, endDate);
-
-  // 장소 선택 핸들러
-  const handlePlaceSelect = (place) => {
-    setSelectedPlace(place);
-    setShowConfirmModal(true);
-  };
-
-  // 기존 장소 카드 클릭 시 재선택
-  const handleExistingPlaceClick = (day, placeIndex) => {
-    setTargetDay(day);
-    setShowLocationSearch(true);
-  };
-
-  // 날짜 재설정 함수들
-  const handleDateClick = () => {
-    setTempStartDate(startDate || '');
-    setTempEndDate(endDate || '');
-    setShowDatePicker(true);
-  };
-
-  const handleDateConfirm = () => {
-    if (!tempStartDate || !tempEndDate) {
-      alert('시작일과 종료일을 모두 선택해주세요.');
-      return;
-    }
-
-    if (new Date(tempStartDate) > new Date(tempEndDate)) {
-      alert('종료일은 시작일보다 늦어야 합니다.');
-      return;
-    }
-
-    // 모달 닫기
-    setShowDatePicker(false);
-
-    // 새로운 날짜로 페이지 리다이렉트
-    window.location.href = `/direct-schedule-create?startDate=${tempStartDate}&endDate=${tempEndDate}`;
-  };
-
-  const handleDateCancel = () => {
-    setShowDatePicker(false);
-    setTempStartDate(startDate || '');
-    setTempEndDate(endDate || '');
-  };
-
-  // 장소 추가 확정
-  const confirmAddPlace = () => {
-    if (!selectedPlace) return;
-
-    // 지정된 일차에 추가 (targetDay 사용)
-    setDailyPlaces(prev => ({
-      ...prev,
-      [targetDay]: [...(prev[targetDay] || []), { ...selectedPlace, addedAt: Date.now() }]
-    }));
-
-    setShowConfirmModal(false);
-    setShowLocationSearch(false);
-    setSelectedPlace(null);
-  };
-
-  // 간단한 거리 계산 함수 (실제로는 지도 API를 사용해야 함)
-  const calculateDistance = (place1, place2) => {
-    // 임시로 랜덤한 거리 반환 (실제 구현시 지도 API 사용)
-    const distance = Math.floor(Math.random() * 20 + 1);
-    const time = Math.floor(Math.random() * 30 + 10);
-    return { distance, time };
-  };
-
-  // 일차 추가 함수
-  const addDay = () => {
-    const newDay = activeDays + 1;
-    setActiveDays(newDay);
-    setDailyPlaces(prev => ({
-      ...prev,
-      [newDay]: []
-    }));
-  };
-
-  // 일차 제거 함수 (1일차는 제거 불가)
-  const removeDay = (day) => {
-    if (day === 1 || activeDays <= 1) return;
-
-    const newDailyPlaces = { ...dailyPlaces };
-    delete newDailyPlaces[day];
-
-    // 일차 번호 재정렬
-    const reorderedPlaces = {};
-    let newDayCounter = 1;
-
-    for (let i = 1; i <= activeDays; i++) {
-      if (i !== day && newDailyPlaces[i]) {
-        reorderedPlaces[newDayCounter] = newDailyPlaces[i];
-        newDayCounter++;
-      }
-    }
-
-    setDailyPlaces(reorderedPlaces);
-    setActiveDays(activeDays - 1);
-  };
-
-  const handleSubmit = () => {
-    // 제목 검증
-    if (!formData.title.trim()) {
-      alert('여행 제목을 입력해주세요.\n\n예시: "제주도 3박 4일 힐링여행", "부산 맛집 투어"');
-      return;
-    }
-
-    // 여행 설명 검증
-    if (!formData.description.trim()) {
-      alert('여행 설명을 입력해주세요.\n\n여행의 목적, 테마, 특별한 계획 등을 간단히 작성해주세요.\n예시: "가족과 함께하는 힐링 여행", "친구들과의 맛집 탐방"');
-      return;
-    }
-
-    // 지역 선택 검증
-    if (!formData.region) {
-      alert('여행 지역을 선택해주세요.\n\n기본 정보 섹션에서 해당하는 지역 버튼을 클릭하세요.');
-      return;
-    }
-
-    // 교통수단 선택 검증
-    if (formData.transportation.length === 0) {
-      alert('교통수단을 최소 1개 이상 선택해주세요.\n\n여행 중 이용할 교통수단을 선택하세요.\n(자동차, 대중교통, 항공, 기차 등)');
-      return;
-    }
-
-    // 숙박 정보 검증
-    if (!formData.accommodation.trim()) {
-      alert('숙박 정보를 입력해주세요.\n\n예시: "호텔", "펜션", "게스트하우스", "당일치기" 등');
-      return;
-    }
-
-    // 동행인 정보 검증
-    if (!formData.companions.trim()) {
-      alert('동행인 정보를 입력해주세요.\n\n예시: "혼자", "가족 4명", "친구 2명", "연인과 함께" 등');
-      return;
-    }
-
-    // 일정에 추가된 장소가 있는지 확인
-    const hasPlaces = Object.values(dailyPlaces).some(places => places.length > 0);
-    if (!hasPlaces) {
-      alert('여행 일정에 최소 1개 이상의 장소를 추가해주세요.\n\n각 일차별로 "장소 추가" 버튼을 클릭하여 방문할 장소를 선택하세요.');
-      return;
-    }
-
-    // 모든 날짜에 장소가 있는지 확인
-    let emptyDays = [];
-    for (let day = 1; day <= activeDays; day++) {
-      if (!dailyPlaces[day] || dailyPlaces[day].length === 0) {
-        emptyDays.push(day);
-      }
-    }
-
-    if (emptyDays.length > 0) {
-      alert(`${emptyDays.join('일차, ')}일차에 장소를 추가해주세요.\n\n각 일차별로 방문할 장소가 최소 1개씩은 있어야 합니다.`);
-      return;
-    }
-
-    try {
-      // 새로운 일정 데이터 생성
-      const newSchedule = {
-        id: Date.now().toString(),
-        title: formData.title,
-        region: formData.region,
-        transportation: formData.transportation,
-        companions: formData.companions,
-        accommodation: formData.accommodation,
-        startDate: startDate,
-        endDate: endDate,
-        date: `${startDate} ~ ${endDate}`, // 날짜 표시용 필드 추가
-        duration: `${activeDays}박 ${activeDays + 1}일`,
-        places: dailyPlaces,
-        totalDays: activeDays,
-        author: {
-          name: getCurrentUser()?.user?.name || '여행자',
-          profileImage: getCurrentUser()?.user?.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face'
-        },
-        image: formData.representativeImage || Object.values(dailyPlaces).flat()[0]?.image || 'https://picsum.photos/300/200?random=1',
-        description: formData.description || `${formData.region}에서 ${activeDays}박 ${activeDays + 1}일 여행`,
-        createdAt: new Date().toISOString(),
-        tags: [formData.region, ...formData.transportation],
-        views: 1,
-        likes: 0
-      };
-
-      // 기존 일정 목록 가져오기
-      const existingSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
-
-      // 새 일정 추가
-      const updatedSchedules = [newSchedule, ...existingSchedules];
-
-      // localStorage에 저장
-      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
-
-      alert('일정이 성공적으로 등록되었습니다!');
-      navigate('/travel-schedules');
-    } catch (error) {
-      console.error('일정 저장 오류:', error);
-      alert('일정 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
-    }
-  };
-
-  return (
-    <DirectScheduleCreatePage>
-      <Navigation />
-
-      <CreateContainer>
-        <PageHeader>
-          <BackButton onClick={() => navigate(-1)}>
-            ←
-          </BackButton>
-          <PageTitle>여행 일정 등록</PageTitle>
-          {startDate && endDate && (
-            <DateInfo onClick={handleDateClick}>
-              {startDate} ~ {endDate}
-            </DateInfo>
-          )}
-        </PageHeader>
-
-        <FormSection>
-          <SectionTitle>기본 정보</SectionTitle>
-
-          <FormGroup>
-            <Label>제목</Label>
-            <Input
-              type="text"
-              placeholder="여행 제목을 입력하세요"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>여행 설명</Label>
-            <TextArea
-              placeholder="여행에 대한 설명을 입력하세요"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              rows={3}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>같이 간 사람</Label>
-            <Input
-              type="text"
-              placeholder="동행인을 입력하세요 (예: 친구 2명, 가족 4명)"
-              value={formData.companions}
-              onChange={(e) => handleInputChange('companions', e.target.value)}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>대표사진</Label>
-            <ImageUploadSection>
-              {!formData.representativeImage ? (
-                <ImageUploadBox
-                  onClick={() => document.getElementById('imageUpload').click()}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <ImageUploadText>대표사진을 업로드하세요</ImageUploadText>
-                  <ImageUploadSubText>
-                    클릭하거나 드래그 앤 드롭으로 이미지 업로드 (최대 5MB)
-                  </ImageUploadSubText>
-                  <HiddenFileInput
-                    id="imageUpload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                  />
-                </ImageUploadBox>
-              ) : (
-                <ImagePreview>
-                  <PreviewImage
-                    src={formData.representativeImage}
-                    alt="대표사진 미리보기"
-                  />
-                  <RemoveImageButton onClick={handleImageRemove}>
-                    ×
-                  </RemoveImageButton>
-                </ImagePreview>
-              )}
-            </ImageUploadSection>
-          </FormGroup>
-        </FormSection>
-
-        <FormSection>
-          <SectionTitle>여행 정보</SectionTitle>
-
-          <FormGroup>
-            <Label>지역</Label>
-            <KeywordButtonGroup>
-              {['서울', '부산', '제주', '경기', '강원', '전라', '충청', '경상', '인천'].map(region => (
-                <OptionButton
-                  key={region}
-                  $active={formData.region === region}
-                  onClick={() => handleInputChange('region', region)}
-                >
-                  {region}
-                </OptionButton>
-              ))}
-            </KeywordButtonGroup>
-          </FormGroup>
-
-          <FormGroup>
-            <Label>교통편 (복수 선택 가능)</Label>
-            <KeywordButtonGroup>
-              {['자동차', '기차', '버스', '비행기', '배', '도보', '자전거'].map(option => (
-                <OptionButton
-                  key={option}
-                  $active={formData.transportation.includes(option)}
-                  onClick={() => handleOptionToggle('transportation', option)}
-                >
-                  {option}
-                </OptionButton>
-              ))}
-            </KeywordButtonGroup>
-          </FormGroup>
-
-          <FormGroup>
-            <Label>숙소 종류</Label>
-            <KeywordButtonGroup>
-              {['호텔', '펜션', '리조트', '게스트하우스', '민박', '캠핑', '에어비앤비'].map(option => (
-                <OptionButton
-                  key={option}
-                  $active={formData.accommodation === option}
-                  onClick={() => handleInputChange('accommodation', option)}
-                >
-                  {option}
-                </OptionButton>
-              ))}
-            </KeywordButtonGroup>
-          </FormGroup>
-        </FormSection>
-
-        <LocationsSection>
-          <SectionTitle>방문 장소</SectionTitle>
-
-          {Array.from({ length: activeDays }, (_, index) => {
-            const day = index + 1;
-            const dayPlaceList = dailyPlaces[day] || [];
-
-            return (
-              <DaySection key={day}>
-                <DayHeader>
-                  <DayTitle>{day}일차</DayTitle>
-                  {/* 날짜 선택 시에는 삭제 버튼 숨김 */}
-                  {(!startDate || !endDate) && activeDays > 1 && (
-                    <RemoveDayButton
-                      onClick={() => removeDay(day)}
-                      disabled={day === 1}
-                    >
-                      삭제
-                    </RemoveDayButton>
-                  )}
-                </DayHeader>
-
-                {dayPlaceList.length > 0 && (
-                  <PlacesContainer>
-                    {dayPlaceList.map((place, idx) => (
-                      <div key={`${place.id}-${place.addedAt}`}>
-                        <AddedPlaceCard onClick={() => handleExistingPlaceClick(day, idx)}>
-                          <AddedPlaceImage src={place.image} alt={place.name} />
-                          <AddedPlaceInfo>
-                            <AddedPlaceName>{place.name}</AddedPlaceName>
-                            <AddedPlaceMeta>
-                              <SmallBadge type="region">{place.region}</SmallBadge>
-                              <SmallBadge type="category">{place.category}</SmallBadge>
-                            </AddedPlaceMeta>
-                          </AddedPlaceInfo>
-                        </AddedPlaceCard>
-
-                        {/* 거리 표시 (마지막 장소가 아닌 경우만) */}
-                        {idx < dayPlaceList.length - 1 && (
-                          <DistanceIndicator>
-                            <Arrow>↓</Arrow>
-                            <DistanceText>
-                              {(() => {
-                                const { distance } = calculateDistance(place, dayPlaceList[idx + 1]);
-                                return `${distance}km`;
-                              })()}
-                            </DistanceText>
-                          </DistanceIndicator>
-                        )}
-                      </div>
-                    ))}
-                  </PlacesContainer>
-                )}
-
-                <DayAddButton onClick={() => addLocation(day)}>
-                  장소 추가 +
-                </DayAddButton>
-              </DaySection>
-            );
-          })}
-
-          {/* 날짜 선택 시에는 일차 추가 버튼 숨김 */}
-          {(!startDate || !endDate) && (
-            <AddDayButton onClick={addDay}>
-              <AddDayIcon>+</AddDayIcon>
-              {activeDays + 1}일차 추가
-            </AddDayButton>
-          )}
-        </LocationsSection>
-
-        <SubmitButton onClick={handleSubmit}>
-          일정 등록하기
-        </SubmitButton>
-      </CreateContainer>
-
-      {/* 장소 검색 모달 */}
-      {showLocationSearch && (
-        <LocationSearchModalOverlay onClick={() => setShowLocationSearch(false)}>
-          <LocationSearchModalContainer onClick={(e) => e.stopPropagation()}>
-            <LocationSearchHeader>
-              <LocationSearchTitle>장소 검색</LocationSearchTitle>
-              <CloseButton onClick={() => setShowLocationSearch(false)}>
-                ×
-              </CloseButton>
-            </LocationSearchHeader>
-
-            <SearchContent>
-              <SearchBox>
-                <SearchInput
-                  type="text"
-                  placeholder="장소명을 검색하세요 (예: 경복궁, N서울타워)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </SearchBox>
-
-              <RegionSection>
-                <RegionTitle>지역</RegionTitle>
-                <RegionButtons>
-                  {['전체', '서울', '부산', '제주', '경기', '강원', '전라', '충청', '경상', '인천'].map(region => (
-                    <RegionButton
-                      key={region}
-                      $active={selectedRegion === region}
-                      onClick={() => setSelectedRegion(region)}
-                    >
-                      {region}
-                    </RegionButton>
-                  ))}
-                </RegionButtons>
-              </RegionSection>
-
-              <CategorySection>
-                <CategoryTitle>카테고리</CategoryTitle>
-                <CategoryButtons>
-                  {['전체', '음식점', '카페', '키즈', '휴양지', '자연', '체험', '전시', '레포츠', '축제공연', '역사', '숙박', '야경', '데이트'].map(category => (
-                    <CategoryButton
-                      key={category}
-                      $active={selectedCategory === category}
-                      onClick={() => setSelectedCategory(category)}
-                    >
-                      {category}
-                    </CategoryButton>
-                  ))}
-                </CategoryButtons>
-              </CategorySection>
-
-              <SearchResults>
-                {getFilteredPlaces().length > 0 ? (
-                  getFilteredPlaces().map(place => (
-                    <PlaceCard key={place.id} onClick={() => handlePlaceSelect(place)}>
-                      <PlaceImage src={place.image} alt={place.name} />
-                      <PlaceInfo>
-                        <PlaceName>{place.name}</PlaceName>
-                        <PlaceRating>⭐ {place.rating}</PlaceRating>
-                      </PlaceInfo>
-                      <PlaceMeta>
-                        <PlaceRegion>{place.region}</PlaceRegion>
-                        <PlaceCategory>{place.category}</PlaceCategory>
-                      </PlaceMeta>
-                    </PlaceCard>
-                  ))
-                ) : (
-                  <EmptyResults>
-                    선택한 조건에 맞는 장소가 없습니다.<br />
-                    다른 지역이나 카테고리를 선택해보세요.
-                  </EmptyResults>
-                )}
-              </SearchResults>
-            </SearchContent>
-          </LocationSearchModalContainer>
-        </LocationSearchModalOverlay>
-      )}
-
-      {/* 장소 선택 확인 모달 */}
-      {showConfirmModal && selectedPlace && (
-        <ConfirmModalOverlay>
-          <ConfirmModalContainer>
-            <ConfirmIcon>📍</ConfirmIcon>
-            <ConfirmTitle>장소 추가</ConfirmTitle>
-            <ConfirmMessage>
-              <strong>{selectedPlace.name}</strong>을(를)<br />
-              일정에 추가하시겠습니까?
-            </ConfirmMessage>
-            <ConfirmButtons>
-              <ConfirmButton onClick={confirmAddPlace}>
-                추가
-              </ConfirmButton>
-              <CancelConfirmButton onClick={() => setShowConfirmModal(false)}>
-                취소
-              </CancelConfirmButton>
-            </ConfirmButtons>
-          </ConfirmModalContainer>
-        </ConfirmModalOverlay>
-      )}
-
-      {/* 날짜 재설정 모달 */}
-      {showDatePicker && (
-        <DatePickerModalOverlay onClick={(e) => e.target === e.currentTarget && handleDateCancel()}>
-          <DatePickerModalContainer onClick={(e) => e.stopPropagation()}>
-            <DatePickerTitle>여행 날짜 재설정</DatePickerTitle>
-            <DatePickerMessage>새로운 여행 날짜를 선택해주세요.</DatePickerMessage>
-
-            <DateInputContainer>
-              <DateInputGroup>
-                <DateLabel>시작일</DateLabel>
-                <DateInput
-                  type="date"
-                  value={tempStartDate}
-                  onChange={(e) => setTempStartDate(e.target.value)}
-                />
-              </DateInputGroup>
-
-              <DateInputGroup>
-                <DateLabel>종료일</DateLabel>
-                <DateInput
-                  type="date"
-                  value={tempEndDate}
-                  onChange={(e) => setTempEndDate(e.target.value)}
-                />
-              </DateInputGroup>
-            </DateInputContainer>
-
-            <DateButtonGroup>
-              <DateCancelButton onClick={handleDateCancel}>
-                취소
-              </DateCancelButton>
-              <DateConfirmButton onClick={handleDateConfirm}>
-                확인
-              </DateConfirmButton>
-            </DateButtonGroup>
-          </DatePickerModalContainer>
-        </DatePickerModalOverlay>
-      )}
-    </DirectScheduleCreatePage>
-  );
-};
 
 export default DirectScheduleCreate;

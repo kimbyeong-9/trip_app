@@ -1,10 +1,332 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
-import { fullCompanionPosts, regions, ageGroups, fillMissingData } from '../data/mockData';
+import { supabase } from '../supabaseClient';
+import { regionsData as regions, ageGroups } from '../data/mockData';
 
-// Styled Components - 기존 CSS와 동일한 스타일
+
+const CompanionList = () => {
+  const navigate = useNavigate();
+  const [selectedAge, setSelectedAge] = useState('all');
+  const [selectedRegion, setSelectedRegion] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [companionPosts, setCompanionPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const postsPerPage = 10;
+
+  // 로그인 상태 확인
+  const getLoginData = () => {
+    const localData = localStorage.getItem('loginData');
+    const sessionData = sessionStorage.getItem('loginData');
+    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+  };
+  
+  const loginData = getLoginData();
+  const isLoggedIn = loginData && loginData.isLoggedIn;
+  
+  const handleCreateCompanion = () => {
+    if (isLoggedIn) {
+      navigate('/companion/create');
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleCardClick = (postId) => {
+    if (isLoggedIn) {
+      navigate(`/companion/${postId}`);
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleLoginClick = () => {
+    setShowLoginModal(false);
+    navigate('/login');
+  };
+
+  // 소개글 50자 제한 유틸리티
+  const truncateDescription = (text, max = 50) => {
+    if (!text) return '';
+    const trimmed = text.trim();
+    return trimmed.length > max ? trimmed.slice(0, max) + '…' : trimmed;
+  };
+
+  // Supabase에서 CompanionList 데이터 가져오기
+  useEffect(() => {
+    const fetchCompanionPosts = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('CompanionList')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching companion posts:', error);
+        } else {
+          // Supabase 데이터와 사용자 localStorage 데이터 결합
+          const userPosts = getUserPosts();
+          setCompanionPosts([...userPosts, ...(data || [])]);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanionPosts();
+  }, []);
+
+  // localStorage에서 사용자가 등록한 게시물 불러오기
+  const getUserPosts = () => {
+    try {
+      return JSON.parse(localStorage.getItem('companionPosts')) || [];
+    } catch {
+      return [];
+    }
+  };
+
+  // 필터링된 포스트 계산
+  const filteredPosts = companionPosts.filter(post => {
+    const matchesAge = selectedAge === 'all' || (post.ageGroup || post.agegroup) === selectedAge;
+    const matchesRegion = selectedRegion === 'all' || post.region === selectedRegion;
+    const matchesMonth = selectedMonth === 'all' || post.date.includes(selectedMonth);
+    const matchesSearch = searchTerm === '' || 
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.region.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesAge && matchesRegion && matchesMonth && matchesSearch;
+  });
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const startIndex = (currentPage - 1) * postsPerPage;
+  const endIndex = startIndex + postsPerPage;
+  const currentPosts = filteredPosts.slice(startIndex, endIndex);
+
+  return (
+    <CompanionListPage>
+      <Navigation />
+      
+      <CompanionListContainer>
+        <PageHeader>
+          <PageTitle>동행모집</PageTitle>
+          <CreateButton onClick={handleCreateCompanion}>
+            동행모집 등록
+          </CreateButton>
+        </PageHeader>
+
+        <FilterSection>
+          <FilterTitle>맞춤 검색</FilterTitle>
+
+          {/* 검색창을 최상단으로 */}
+          <FilterGroup style={{ marginBottom: '20px' }}>
+            <FilterLabel>검색</FilterLabel>
+            <SearchInput
+              type="text"
+              placeholder="제목, 지역, 내용으로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </FilterGroup>
+
+          {/* 키워드들을 가로로 나열 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <FilterGroup>
+              <FilterLabel>나이대</FilterLabel>
+              <FilterTags>
+                {['all', ...ageGroups].map(age => (
+                  <FilterTag
+                    key={age}
+                    $active={selectedAge === age}
+                    onClick={() => setSelectedAge(age)}
+                  >
+                    {age === 'all' ? '전체' : age}
+                  </FilterTag>
+                ))}
+              </FilterTags>
+            </FilterGroup>
+
+            <FilterGroup>
+              <FilterLabel>지역</FilterLabel>
+              <FilterTags>
+                {['all', ...regions].map(region => (
+                  <FilterTag
+                    key={region}
+                    $active={selectedRegion === region}
+                    onClick={() => setSelectedRegion(region)}
+                  >
+                    {region === 'all' ? '전체' : region}
+                  </FilterTag>
+                ))}
+              </FilterTags>
+            </FilterGroup>
+
+          </div>
+        </FilterSection>
+
+        <PostsSection>
+          <TableHeader>
+            <div>사진</div>
+            <div>제목</div>
+            <div>작성자</div>
+            <div>나이</div>
+            <div>지역</div>
+            <div>기간</div>
+            <div>인원수</div>
+            <div>모집여부</div>
+          </TableHeader>
+
+          {loading ? (
+            <LoadingMessage>
+              <LoadingSpinner />
+              <LoadingText>동행 게시물을 불러오는 중...</LoadingText>
+            </LoadingMessage>
+          ) : currentPosts.length > 0 ? (
+            currentPosts.map((post) => (
+              <Fragment key={post.id}>
+                {/* 데스크톱 테이블 뷰 */}
+                <TableRow onClick={() => handleCardClick(post.id)}>
+                  <ImageCell>
+                    <RepresentativeImage src={post.image} alt={post.title} />
+                  </ImageCell>
+                  <TitleCell>
+                    {post.title}
+                  </TitleCell>
+                  <AuthorCell>
+                    {post.author && (
+                      <>
+                        <AuthorImage src={post.author.profileImage || ''} alt={post.author.name || '작성자'} />
+                        <AuthorInfo>
+                          <AuthorName>{post.author.name || '작성자'}</AuthorName>
+                          <AuthorMeta>
+                            {post.author.age && post.author.location
+                              ? `${post.author.age}세 · ${post.author.location}`
+                              : '정보 없음'}
+                          </AuthorMeta>
+                        </AuthorInfo>
+                      </>
+                    )}
+                  </AuthorCell>
+                  <AgeGroupCell>
+                    {post.ageGroup || post.agegroup}
+                  </AgeGroupCell>
+                  <MetaCell>
+                    {post.region}
+                  </MetaCell>
+                  <DateCell>
+                    {post.date}
+                  </DateCell>
+                  <ParticipantsCell>
+                    {post.participants.current}/{post.participants.max}명
+                  </ParticipantsCell>
+                  <StatusCell $isRecruiting={post.participants.current < post.participants.max}>
+                    {post.participants.current < post.participants.max ? '모집중' : '마감'}
+                  </StatusCell>
+                </TableRow>
+
+                {/* 모바일 카드 뷰 */}
+                <MobileCard onClick={() => handleCardClick(post.id)}>
+                  <MobileCardHeader>
+                    <MobileCardImage src={post.image} alt={post.title} />
+                    <MobileCardInfo>
+                      <MobileCardTitle>{post.title}</MobileCardTitle>
+                      {post.author && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                          <AuthorImage src={post.author.profileImage || ''} alt={post.author.name || '작성자'} style={{ width: '30px', height: '30px' }} />
+                          <div>
+                            <AuthorName style={{ fontSize: '12px' }}>{post.author.name || '작성자'}</AuthorName>
+                            <AuthorMeta style={{ fontSize: '10px' }}>
+                              {post.author.age && post.author.location
+                                ? `${post.author.age}세 · ${post.author.location}`
+                                : '정보 없음'}
+                            </AuthorMeta>
+                          </div>
+                        </div>
+                      )}
+                    </MobileCardInfo>
+                  </MobileCardHeader>
+                  <MobileCardMeta>
+                    <MobileCardTag type="age">{post.ageGroup || post.agegroup}</MobileCardTag>
+                    <MobileCardTag type="region">{post.region}</MobileCardTag>
+                    <MobileCardTag type="date">{post.date}</MobileCardTag>
+                    <MobileCardTag type="participants">
+                      {post.participants.current}/{post.participants.max}명
+                    </MobileCardTag>
+                    <MobileCardTag
+                      type="status"
+                      $isRecruiting={post.participants.current < post.participants.max}
+                    >
+                      {post.participants.current < post.participants.max ? '모집중' : '마감'}
+                    </MobileCardTag>
+                  </MobileCardMeta>
+                </MobileCard>
+              </Fragment>
+            ))
+          ) : (
+            <NoResults>
+              <NoResultsTitle>검색 결과가 없습니다</NoResultsTitle>
+              <NoResultsText>다른 검색어나 키워드를 시도해보세요</NoResultsText>
+            </NoResults>
+          )}
+        </PostsSection>
+
+        {/* 페이지네이션 */}
+        {filteredPosts.length > 0 && (
+          <Pagination>
+            <PageButton 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              이전
+            </PageButton>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <PageButton
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                $active={currentPage === page}
+              >
+                {page}
+              </PageButton>
+            ))}
+            
+            <PageButton 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              다음
+            </PageButton>
+          </Pagination>
+        )}
+      </CompanionListContainer>
+
+      {/* 로그인 모달 */}
+      {showLoginModal && (
+        <LoginModal onClick={() => setShowLoginModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalIcon>🔒</ModalIcon>
+            <ModalTitle>로그인이 필요합니다</ModalTitle>
+            <ModalMessage>로그인 후 이용가능 합니다</ModalMessage>
+            <ModalButtons>
+              <ModalButton primary onClick={handleLoginClick}>로그인</ModalButton>
+              <ModalButton onClick={() => setShowLoginModal(false)}>취소</ModalButton>
+            </ModalButtons>
+          </ModalContent>
+        </LoginModal>
+      )}
+    </CompanionListPage>
+  );
+};
+
+
 const CompanionListPage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -528,10 +850,6 @@ const NoResults = styled.div`
   color: #6c757d;
 `;
 
-const NoResultsIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 20px;
-`;
 
 const NoResultsTitle = styled.h3`
   font-size: 24px;
@@ -544,323 +862,35 @@ const NoResultsText = styled.p`
   margin: 0;
 `;
 
-const CompanionList = () => {
-  const navigate = useNavigate();
-  const [selectedAge, setSelectedAge] = useState('all');
-  const [selectedRegion, setSelectedRegion] = useState('all');
-  const [selectedMonth, setSelectedMonth] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const postsPerPage = 10;
+const LoadingMessage = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  width: 100%;
+`;
 
-  // 로그인 상태 확인
-  const getLoginData = () => {
-    const localData = localStorage.getItem('loginData');
-    const sessionData = sessionStorage.getItem('loginData');
-    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
-  };
-  
-  const loginData = getLoginData();
-  const isLoggedIn = loginData && loginData.isLoggedIn;
-  
-  const handleCreateCompanion = () => {
-    if (isLoggedIn) {
-      navigate('/companion/create');
-    } else {
-      setShowLoginModal(true);
-    }
-  };
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 
-  const handleCardClick = (postId) => {
-    if (isLoggedIn) {
-      navigate(`/companion/${postId}`);
-    } else {
-      setShowLoginModal(true);
-    }
-  };
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 
-  const handleLoginClick = () => {
-    setShowLoginModal(false);
-    navigate('/login');
-  };
+const LoadingText = styled.p`
+  margin-top: 20px;
+  font-size: 16px;
+  color: #6c757d;
+`;
 
-  // 소개글 50자 제한 유틸리티
-  const truncateDescription = (text, max = 50) => {
-    if (!text) return '';
-    const trimmed = text.trim();
-    return trimmed.length > max ? trimmed.slice(0, max) + '…' : trimmed;
-  };
 
-  // localStorage에서 사용자가 등록한 게시물 불러오기
-  const getUserPosts = () => {
-    try {
-      return JSON.parse(localStorage.getItem('companionPosts')) || [];
-    } catch {
-      return [];
-    }
-  };
-
-  // mockData에서 가져온 기본 데이터를 사용
-  const completedDefaultPosts = fullCompanionPosts.map(fillMissingData);
-
-  // 완성된 기본 게시물을 localStorage에 저장 (CompanionDetail에서 사용하기 위해)
-  React.useEffect(() => {
-    localStorage.setItem('companionDefaultPosts', JSON.stringify(completedDefaultPosts));
-  }, []);
-
-  // 사용자 게시물과 완성된 기본 게시물 결합
-  const userPosts = getUserPosts();
-  const companionPosts = [...userPosts, ...completedDefaultPosts];
-
-  // 필터링된 포스트 계산
-  const filteredPosts = companionPosts.filter(post => {
-    const matchesAge = selectedAge === 'all' || post.ageGroup === selectedAge;
-    const matchesRegion = selectedRegion === 'all' || post.region === selectedRegion;
-    const matchesMonth = selectedMonth === 'all' || post.date.includes(selectedMonth);
-    const matchesSearch = searchTerm === '' || 
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.region.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesAge && matchesRegion && matchesMonth && matchesSearch;
-  });
-
-  // 페이지네이션 계산
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
-  const startIndex = (currentPage - 1) * postsPerPage;
-  const endIndex = startIndex + postsPerPage;
-  const currentPosts = filteredPosts.slice(startIndex, endIndex);
-
-  return (
-    <CompanionListPage>
-      <Navigation />
-      
-      <CompanionListContainer>
-        <PageHeader>
-          <PageTitle>동행모집</PageTitle>
-          <CreateButton onClick={handleCreateCompanion}>
-            동행모집 등록
-          </CreateButton>
-        </PageHeader>
-
-        <FilterSection>
-          <FilterTitle>맞춤 검색</FilterTitle>
-
-          {/* 검색창을 최상단으로 */}
-          <FilterGroup style={{ marginBottom: '20px' }}>
-            <FilterLabel>검색</FilterLabel>
-            <SearchInput
-              type="text"
-              placeholder="제목, 지역, 내용으로 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </FilterGroup>
-
-          {/* 키워드들을 가로로 나열 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <FilterGroup>
-              <FilterLabel>나이대</FilterLabel>
-              <FilterTags>
-                {['all', ...ageGroups].map(age => (
-                  <FilterTag
-                    key={age}
-                    $active={selectedAge === age}
-                    onClick={() => setSelectedAge(age)}
-                  >
-                    {age === 'all' ? '전체' : age}
-                  </FilterTag>
-                ))}
-              </FilterTags>
-            </FilterGroup>
-
-            <FilterGroup>
-              <FilterLabel>지역</FilterLabel>
-              <FilterTags>
-                {['all', ...regions].map(region => (
-                  <FilterTag
-                    key={region}
-                    $active={selectedRegion === region}
-                    onClick={() => setSelectedRegion(region)}
-                  >
-                    {region === 'all' ? '전체' : region}
-                  </FilterTag>
-                ))}
-              </FilterTags>
-            </FilterGroup>
-
-            <FilterGroup>
-              <FilterLabel>여행일</FilterLabel>
-              <FilterTags>
-                {[
-                  { value: 'all', label: '전체' },
-                  { value: '2024-01', label: '1월' },
-                  { value: '2024-02', label: '2월' },
-                  { value: '2024-03', label: '3월' },
-                  { value: '2024-04', label: '4월' },
-                  { value: '2024-05', label: '5월' },
-                  { value: '2024-06', label: '6월' },
-                  { value: '2024-07', label: '7월' },
-                  { value: '2024-08', label: '8월' },
-                  { value: '2024-09', label: '9월' },
-                  { value: '2024-10', label: '10월' },
-                  { value: '2024-11', label: '11월' },
-                  { value: '2024-12', label: '12월' }
-                ].map(month => (
-                  <FilterTag
-                    key={month.value}
-                    $active={selectedMonth === month.value}
-                    onClick={() => setSelectedMonth(month.value)}
-                  >
-                    {month.label}
-                  </FilterTag>
-                ))}
-              </FilterTags>
-            </FilterGroup>
-          </div>
-        </FilterSection>
-
-        <PostsSection>
-          <TableHeader>
-            <div>사진</div>
-            <div>제목</div>
-            <div>작성자</div>
-            <div>나이</div>
-            <div>지역</div>
-            <div>기간</div>
-            <div>인원수</div>
-            <div>모집여부</div>
-          </TableHeader>
-
-          {currentPosts.length > 0 ? (
-            currentPosts.map((post) => (
-              <Fragment key={post.id}>
-                {/* 데스크톱 테이블 뷰 */}
-                <TableRow onClick={() => handleCardClick(post.id)}>
-                  <ImageCell>
-                    <RepresentativeImage src={post.image} alt={post.title} />
-                  </ImageCell>
-                  <TitleCell>
-                    {post.title}
-                  </TitleCell>
-                  <AuthorCell>
-                    {post.author && (
-                      <>
-                        <AuthorImage src={post.author.profileImage} alt={post.author.name} />
-                        <AuthorInfo>
-                          <AuthorName>{post.author.name}</AuthorName>
-                          <AuthorMeta>{post.author.age}세 · {post.author.location}</AuthorMeta>
-                        </AuthorInfo>
-                      </>
-                    )}
-                  </AuthorCell>
-                  <AgeGroupCell>
-                    {post.ageGroup}
-                  </AgeGroupCell>
-                  <MetaCell>
-                    {post.region}
-                  </MetaCell>
-                  <DateCell>
-                    {post.date}
-                  </DateCell>
-                  <ParticipantsCell>
-                    {post.participants.current}/{post.participants.max}명
-                  </ParticipantsCell>
-                  <StatusCell $isRecruiting={post.participants.current < post.participants.max}>
-                    {post.participants.current < post.participants.max ? '모집중' : '마감'}
-                  </StatusCell>
-                </TableRow>
-
-                {/* 모바일 카드 뷰 */}
-                <MobileCard onClick={() => handleCardClick(post.id)}>
-                  <MobileCardHeader>
-                    <MobileCardImage src={post.image} alt={post.title} />
-                    <MobileCardInfo>
-                      <MobileCardTitle>{post.title}</MobileCardTitle>
-                      {post.author && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                          <AuthorImage src={post.author.profileImage} alt={post.author.name} style={{ width: '30px', height: '30px' }} />
-                          <div>
-                            <AuthorName style={{ fontSize: '12px' }}>{post.author.name}</AuthorName>
-                            <AuthorMeta style={{ fontSize: '10px' }}>{post.author.age}세 · {post.author.location}</AuthorMeta>
-                          </div>
-                        </div>
-                      )}
-                    </MobileCardInfo>
-                  </MobileCardHeader>
-                  <MobileCardMeta>
-                    <MobileCardTag type="age">{post.ageGroup}</MobileCardTag>
-                    <MobileCardTag type="region">{post.region}</MobileCardTag>
-                    <MobileCardTag type="date">{post.date}</MobileCardTag>
-                    <MobileCardTag type="participants">
-                      {post.participants.current}/{post.participants.max}명
-                    </MobileCardTag>
-                    <MobileCardTag
-                      type="status"
-                      $isRecruiting={post.participants.current < post.participants.max}
-                    >
-                      {post.participants.current < post.participants.max ? '모집중' : '마감'}
-                    </MobileCardTag>
-                  </MobileCardMeta>
-                </MobileCard>
-              </Fragment>
-            ))
-          ) : (
-            <NoResults>
-              <NoResultsIcon>🔍</NoResultsIcon>
-              <NoResultsTitle>검색 결과가 없습니다</NoResultsTitle>
-              <NoResultsText>다른 검색어나 키워드를 시도해보세요</NoResultsText>
-            </NoResults>
-          )}
-        </PostsSection>
-
-        {/* 페이지네이션 */}
-        {filteredPosts.length > 0 && (
-          <Pagination>
-            <PageButton 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              이전
-            </PageButton>
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <PageButton
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                $active={currentPage === page}
-              >
-                {page}
-              </PageButton>
-            ))}
-            
-            <PageButton 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              다음
-            </PageButton>
-          </Pagination>
-        )}
-      </CompanionListContainer>
-
-      {/* 로그인 모달 */}
-      {showLoginModal && (
-        <LoginModal onClick={() => setShowLoginModal(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalIcon>🔒</ModalIcon>
-            <ModalTitle>로그인이 필요합니다</ModalTitle>
-            <ModalMessage>로그인 후 이용가능 합니다</ModalMessage>
-            <ModalButtons>
-              <ModalButton primary onClick={handleLoginClick}>로그인</ModalButton>
-              <ModalButton onClick={() => setShowLoginModal(false)}>취소</ModalButton>
-            </ModalButtons>
-          </ModalContent>
-        </LoginModal>
-      )}
-    </CompanionListPage>
-  );
-};
 
 export default CompanionList;

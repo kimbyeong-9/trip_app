@@ -1,14 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import repairManIcon from '../assets/icons/free-icon-repair-man-4429935.png';
+import { supabase } from '../supabaseClient';
 
-const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
+const ChatRoomsSection = ({ onCardClick }) => {
   const navigate = useNavigate();
+  const [chatRooms, setChatRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [selectedChatRoom, setSelectedChatRoom] = useState(null);
   const [showChatRoomModal, setShowChatRoomModal] = useState(false);
+
+  useEffect(() => {
+    const fetchChatRooms = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ChatRooms')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching chat rooms:', error);
+        } else {
+          setChatRooms(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching chat rooms:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChatRooms();
+  }, []);
 
   // 로그인 상태 체크 함수
   const isLoggedIn = () => {
@@ -60,6 +86,17 @@ const ChatRoomsSection = ({ chatRooms, onCardClick }) => {
     navigate(`/chat-room/${selectedChatRoom.id}`);
     closeChatRoomModal();
   };
+
+  if (loading) {
+    return (
+      <ChatRoomsSectionContainer>
+        <LoadingSpinner>
+          <Spinner />
+          <LoadingText>채팅방 로딩중...</LoadingText>
+        </LoadingSpinner>
+      </ChatRoomsSectionContainer>
+    );
+  }
 
   return (
     <ChatRoomsSectionContainer>
@@ -353,11 +390,6 @@ const RoomMembers = styled.p`
   display: flex;
   align-items: center;
   gap: 5px;
-
-  &::before {
-    content: '👥';
-    font-size: 12px;
-  }
 `;
 
 const FloatingButtons = styled.div`
@@ -747,6 +779,35 @@ const JoinButton = styled.button`
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(255, 152, 0, 0.6);
   }
+`;
+
+const LoadingSpinner = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+`;
+
+const Spinner = styled.div`
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #ff9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
 `;
 
 export default ChatRoomsSection;

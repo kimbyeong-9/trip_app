@@ -10,9 +10,6 @@ import TourismSection from '../components/TourismSection';
 import ChatRoomsSection from '../components/ChatRoomsSection';
 import HeroSlider from '../components/HeroSlider';
 import {
-  magazineCards,
-  tourismCards,
-  chatRooms,
   heroSlides
 } from '../data/mockData';
 
@@ -130,7 +127,6 @@ const Home = () => {
 
       {/* 동행모집 채팅방 섹션 */}
       <ChatRoomsSection
-        chatRooms={chatRooms}
         onCardClick={handleCardClick}
       />
 
@@ -142,14 +138,12 @@ const Home = () => {
 
       {/* 여행 매거진 섹션 */}
       <MagazineSection
-        magazineCards={magazineCards}
         selectedRegion={selectedRegion}
         onCardClick={handleCardClick}
       />
 
       {/* 관광공사 추천여행지 섹션 */}
       <TourismSection
-        tourismCards={tourismCards}
         onCardClick={handleCardClick}
       />
 

@@ -1,8 +1,118 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { supabase } from '../supabaseClient';
 
-// Styled Components
+
+const TourismSection = ({ onCardClick }) => {
+  const navigate = useNavigate();
+  const [tourismCards, setTourismCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const fetchTourismCards = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('TourismSections')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching tourism cards:', error);
+        } else {
+          setTourismCards(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching tourism cards:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTourismCards();
+  }, []);
+
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
+
+  const handleCardClick = (card) => {
+    if (isLoggedIn()) {
+      // 로그인된 상태에서는 준비중 모달 표시
+      setShowModal(true);
+    } else {
+      // 로그인되지 않은 상태에서는 로그인 모달 표시
+      onCardClick(`/tourism/${card.id}`);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleViewAll = () => {
+    navigate('/tourism-list');
+  };
+
+  if (loading) {
+    return (
+      <TourismSectionContainer>
+        <SectionHeader>
+          <h2>관광공사 추천여행지</h2>
+        </SectionHeader>
+        <LoadingSpinner>
+          <Spinner />
+          <LoadingText>관광지 로딩중...</LoadingText>
+        </LoadingSpinner>
+      </TourismSectionContainer>
+    );
+  }
+
+  return (
+    <TourismSectionContainer>
+      <SectionHeader>
+        <h2>관광공사 추천여행지</h2>
+        <ViewAllButton onClick={handleViewAll}>
+          전체보기
+        </ViewAllButton>
+      </SectionHeader>
+      <TourismCards>
+        {tourismCards.map((card) => (
+          <TourismCard key={card.id} onClick={() => handleCardClick(card)}>
+            <CardImage src={card.image} alt={card.title} />
+            <CardContent>
+              <PlaceName>{card.title}</PlaceName>
+              <Description>{card.description}</Description>
+            </CardContent>
+          </TourismCard>
+        ))}
+      </TourismCards>
+
+      {/* 준비중 모달 */}
+      {showModal && (
+        <ModalOverlay onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+          <ModalContainer>
+            <ModalIcon>🚧</ModalIcon>
+            <ModalTitle>준비중입니다</ModalTitle>
+            <ModalMessage>
+              관광공사 추천여행지 상세 정보는<br />
+              현재 준비중입니다.<br />
+              조금만 기다려주세요!
+            </ModalMessage>
+            <ModalButton onClick={handleCloseModal}>
+              확인
+            </ModalButton>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
+    </TourismSectionContainer>
+  );
+};
+
+
 const TourismSectionContainer = styled.div`
   padding: 60px 20px;
   background: #f8f9fa;
@@ -205,73 +315,36 @@ const ModalButton = styled.button`
   }
 `;
 
-const TourismSection = ({ tourismCards, onCardClick }) => {
-  const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(false);
+const LoadingSpinner = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
 
-  // 로그인 상태 체크 함수
-  const isLoggedIn = () => {
-    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-    return !!loginData;
-  };
+const Spinner = styled.div`
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #4caf50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 
-  const handleCardClick = (card) => {
-    if (isLoggedIn()) {
-      // 로그인된 상태에서는 준비중 모달 표시
-      setShowModal(true);
-    } else {
-      // 로그인되지 않은 상태에서는 로그인 모달 표시
-      onCardClick(`/tourism/${card.id}`);
-    }
-  };
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
+const LoadingText = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
+`;
 
-  const handleViewAll = () => {
-    navigate('/tourism-list');
-  };
-
-  return (
-    <TourismSectionContainer>
-      <SectionHeader>
-        <h2>관광공사 추천여행지</h2>
-        <ViewAllButton onClick={handleViewAll}>
-          전체보기
-        </ViewAllButton>
-      </SectionHeader>
-      <TourismCards>
-        {tourismCards.map((card) => (
-          <TourismCard key={card.id} onClick={() => handleCardClick(card)}>
-            <CardImage src={card.image} alt={card.title} />
-            <CardContent>
-              <PlaceName>{card.title}</PlaceName>
-              <Description>{card.description}</Description>
-            </CardContent>
-          </TourismCard>
-        ))}
-      </TourismCards>
-
-      {/* 준비중 모달 */}
-      {showModal && (
-        <ModalOverlay onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
-          <ModalContainer>
-            <ModalIcon>🚧</ModalIcon>
-            <ModalTitle>준비중입니다</ModalTitle>
-            <ModalMessage>
-              관광공사 추천여행지 상세 정보는<br />
-              현재 준비중입니다.<br />
-              조금만 기다려주세요!
-            </ModalMessage>
-            <ModalButton onClick={handleCloseModal}>
-              확인
-            </ModalButton>
-          </ModalContainer>
-        </ModalOverlay>
-      )}
-    </TourismSectionContainer>
-  );
-};
 
 export default TourismSection;

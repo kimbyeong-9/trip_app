@@ -1,9 +1,210 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { tourismCards } from '../data/mockData';
+import { supabase } from '../supabaseClient';
 
-// Styled Components
+
+const TourismList = () => {
+  const navigate = useNavigate();
+  const [tourismCards, setTourismCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedRegion, setSelectedRegion] = useState('전체');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const itemsPerPage = 9;
+
+  useEffect(() => {
+    const fetchTourismCards = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('TourismSections')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching tourism cards:', error);
+        } else {
+          setTourismCards(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching tourism cards:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTourismCards();
+  }, []);
+
+  // 로그인 상태 확인
+  const getLoginData = () => {
+    const localData = localStorage.getItem('loginData');
+    const sessionData = sessionStorage.getItem('loginData');
+    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+  };
+
+  const loginData = getLoginData();
+  const isLoggedIn = loginData && loginData.isLoggedIn;
+
+  const regions = ['전체', '서울', '부산', '제주', '강원', '경기', '전라', '경상', '충청'];
+
+  const filteredCards = tourismCards.filter(card => {
+    const regionMatch = selectedRegion === '전체' || card.region === selectedRegion;
+    return regionMatch;
+  });
+
+  const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCards = filteredCards.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleCardClick = () => {
+    if (isLoggedIn) {
+      setShowModal(true);
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleLoginClick = () => {
+    setShowLoginModal(false);
+    navigate('/login');
+  };
+
+  const handleFilterChange = (value) => {
+    setSelectedRegion(value);
+    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (loading) {
+    return (
+      <TourismListPage>
+        <TourismListContainer>
+          <PageHeader>
+            <PageTitle>관광공사 추천여행지</PageTitle>
+          </PageHeader>
+          <LoadingSpinner>
+            <Spinner />
+            <LoadingText>관광지 로딩중...</LoadingText>
+          </LoadingSpinner>
+        </TourismListContainer>
+      </TourismListPage>
+    );
+  }
+
+  return (
+    <TourismListPage>
+      <TourismListContainer>
+        <PageHeader>
+          <PageTitle>관광공사 추천여행지</PageTitle>
+        </PageHeader>
+
+        <FilterSection>
+          <FilterTitle>지역별 맞춤 검색</FilterTitle>
+          <FilterTags>
+            {regions.map(region => (
+              <FilterTag
+                key={region}
+                $active={selectedRegion === region}
+                onClick={() => handleFilterChange(region)}
+              >
+                {region}
+              </FilterTag>
+            ))}
+          </FilterTags>
+        </FilterSection>
+
+        <TourismGrid>
+          {paginatedCards.map((card) => (
+            <TourismCard key={card.id} onClick={handleCardClick}>
+              <CardImage src={card.image} alt={card.title} />
+              <CardContent>
+                <PlaceName>{card.title}</PlaceName>
+                <Description>{card.description}</Description>
+                <CardMeta>
+                  <Region>{card.region}</Region>
+                  <span>관광공사 추천</span>
+                </CardMeta>
+              </CardContent>
+            </TourismCard>
+          ))}
+        </TourismGrid>
+
+        {totalPages > 1 && (
+          <PaginationContainer>
+            <PaginationButton
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              이전
+            </PaginationButton>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <PaginationButton
+                key={page}
+                $active={currentPage === page}
+                onClick={() => handlePageChange(page)}
+              >
+                {page}
+              </PaginationButton>
+            ))}
+
+            <PaginationButton
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              다음
+            </PaginationButton>
+          </PaginationContainer>
+        )}
+      </TourismListContainer>
+
+      {/* 준비중 모달 */}
+      {showModal && (
+        <ModalOverlay onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+          <ModalContainer>
+            <ModalIcon>🚧</ModalIcon>
+            <ModalTitle>준비중입니다</ModalTitle>
+            <ModalMessage>
+              관광공사 추천여행지 상세 정보는<br />
+              현재 준비중입니다.<br />
+              조금만 기다려주세요!
+            </ModalMessage>
+            <ModalButton onClick={handleCloseModal}>
+              확인
+            </ModalButton>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
+
+      {/* 로그인 모달 */}
+      {showLoginModal && (
+        <LoginModal onClick={() => setShowLoginModal(false)}>
+          <LoginModalContainer onClick={(e) => e.stopPropagation()}>
+            <LoginModalIcon>🔒</LoginModalIcon>
+            <LoginModalTitle>로그인이 필요합니다</LoginModalTitle>
+            <LoginModalMessage>로그인 후 이용가능 합니다</LoginModalMessage>
+            <LoginModalButtons>
+              <LoginModalButton $primary onClick={handleLoginClick}>로그인</LoginModalButton>
+              <LoginModalButton onClick={() => setShowLoginModal(false)}>취소</LoginModalButton>
+            </LoginModalButtons>
+          </LoginModalContainer>
+        </LoginModal>
+      )}
+    </TourismListPage>
+  );
+};
+
+
 const TourismListPage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -342,163 +543,33 @@ const LoginModalButton = styled.button`
   `}
 `;
 
-const TourismList = () => {
-  const navigate = useNavigate();
-  const [selectedRegion, setSelectedRegion] = useState('전체');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const itemsPerPage = 9;
+const LoadingSpinner = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 20px;
+`;
 
-  // 로그인 상태 확인
-  const getLoginData = () => {
-    const localData = localStorage.getItem('loginData');
-    const sessionData = sessionStorage.getItem('loginData');
-    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
-  };
+const Spinner = styled.div`
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #4caf50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 
-  const loginData = getLoginData();
-  const isLoggedIn = loginData && loginData.isLoggedIn;
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 
-  const regions = ['전체', '서울', '부산', '제주', '강원', '경기', '전라', '경상', '충청'];
-
-  const filteredCards = tourismCards.filter(card => {
-    const regionMatch = selectedRegion === '전체' || card.region === selectedRegion;
-    return regionMatch;
-  });
-
-  const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedCards = filteredCards.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleCardClick = () => {
-    if (isLoggedIn) {
-      setShowModal(true);
-    } else {
-      setShowLoginModal(true);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
-
-  const handleLoginClick = () => {
-    setShowLoginModal(false);
-    navigate('/login');
-  };
-
-  const handleFilterChange = (value) => {
-    setSelectedRegion(value);
-    setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  return (
-    <TourismListPage>
-      <TourismListContainer>
-        <PageHeader>
-          <PageTitle>관광공사 추천여행지</PageTitle>
-        </PageHeader>
-
-        <FilterSection>
-          <FilterTitle>지역별 맞춤 검색</FilterTitle>
-          <FilterTags>
-            {regions.map(region => (
-              <FilterTag
-                key={region}
-                $active={selectedRegion === region}
-                onClick={() => handleFilterChange(region)}
-              >
-                {region}
-              </FilterTag>
-            ))}
-          </FilterTags>
-        </FilterSection>
-
-        <TourismGrid>
-          {paginatedCards.map((card) => (
-            <TourismCard key={card.id} onClick={handleCardClick}>
-              <CardImage src={card.image} alt={card.title} />
-              <CardContent>
-                <PlaceName>{card.title}</PlaceName>
-                <Description>{card.description}</Description>
-                <CardMeta>
-                  <Region>{card.region}</Region>
-                  <span>관광공사 추천</span>
-                </CardMeta>
-              </CardContent>
-            </TourismCard>
-          ))}
-        </TourismGrid>
-
-        {totalPages > 1 && (
-          <PaginationContainer>
-            <PaginationButton
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              이전
-            </PaginationButton>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <PaginationButton
-                key={page}
-                $active={currentPage === page}
-                onClick={() => handlePageChange(page)}
-              >
-                {page}
-              </PaginationButton>
-            ))}
-
-            <PaginationButton
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              다음
-            </PaginationButton>
-          </PaginationContainer>
-        )}
-      </TourismListContainer>
-
-      {/* 준비중 모달 */}
-      {showModal && (
-        <ModalOverlay onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
-          <ModalContainer>
-            <ModalIcon>🚧</ModalIcon>
-            <ModalTitle>준비중입니다</ModalTitle>
-            <ModalMessage>
-              관광공사 추천여행지 상세 정보는<br />
-              현재 준비중입니다.<br />
-              조금만 기다려주세요!
-            </ModalMessage>
-            <ModalButton onClick={handleCloseModal}>
-              확인
-            </ModalButton>
-          </ModalContainer>
-        </ModalOverlay>
-      )}
-
-      {/* 로그인 모달 */}
-      {showLoginModal && (
-        <LoginModal onClick={() => setShowLoginModal(false)}>
-          <LoginModalContainer onClick={(e) => e.stopPropagation()}>
-            <LoginModalIcon>🔒</LoginModalIcon>
-            <LoginModalTitle>로그인이 필요합니다</LoginModalTitle>
-            <LoginModalMessage>로그인 후 이용가능 합니다</LoginModalMessage>
-            <LoginModalButtons>
-              <LoginModalButton $primary onClick={handleLoginClick}>로그인</LoginModalButton>
-              <LoginModalButton onClick={() => setShowLoginModal(false)}>취소</LoginModalButton>
-            </LoginModalButtons>
-          </LoginModalContainer>
-        </LoginModal>
-      )}
-    </TourismListPage>
-  );
-};
+const LoadingText = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
+`;
 
 export default TourismList;

@@ -1,6 +1,116 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
+
+const WebsiteFooter = () => {
+  const currentYear = new Date().getFullYear();
+  const [showServiceModal, setShowServiceModal] = useState(false);
+
+  const handleLinkClick = (e) => {
+    e.preventDefault();
+    setShowServiceModal(true);
+  };
+
+  const closeServiceModal = () => {
+    setShowServiceModal(false);
+  };
+
+  return (
+    <WebsiteFooterContainer>
+      <FooterContainer>
+        {/* 상단 섹션 - 모든 회사정보를 1줄에 나열 */}
+        <FooterTopCompact>
+          <CompanyInfoLine>
+            <FooterLogo>여행대로</FooterLogo>
+            <Divider>|</Divider>
+            <span>📞 1588-1234</span>
+            <Divider>|</Divider>
+            <span>📧 support@tripdalro.com</span>
+            <Divider>|</Divider>
+            <span>상호: (주)여행대로</span>
+            <Divider>|</Divider>
+            <span>대표: 김여행</span>
+            <Divider>|</Divider>
+            <span>사업자등록번호: 123-45-67890</span>
+            <Divider>|</Divider>
+            <span>📍 서울특별시 강남구 테헤란로 123, 여행대로빌딩 5층</span>
+          </CompanyInfoLine>
+        </FooterTopCompact>
+
+        {/* 하단 섹션 - 링크들과 저작권 */}
+        <FooterBottomCompact>
+          <FooterLinksCompact>
+            <LinkGroup>
+              <h5>고객지원</h5>
+              <ul>
+                <li><a href="/faq" onClick={handleLinkClick}>자주묻는질문</a></li>
+                <li><a href="/notice" onClick={handleLinkClick}>공지사항</a></li>
+                <li><a href="/contact" onClick={handleLinkClick}>문의하기</a></li>
+                <li><a href="/guide" onClick={handleLinkClick}>이용가이드</a></li>
+              </ul>
+            </LinkGroup>
+
+            <LinkGroup>
+              <h5>정책</h5>
+              <ul>
+                <li><a href="/terms" className="important-link" onClick={handleLinkClick}>이용약관</a></li>
+                <li><a href="/privacy" className="important-link" onClick={handleLinkClick}>개인정보처리방침</a></li>
+                <li><a href="/location" onClick={handleLinkClick}>위치기반서비스약관</a></li>
+                <li><a href="/refund" onClick={handleLinkClick}>취소/환불정책</a></li>
+              </ul>
+            </LinkGroup>
+
+            <LinkGroup>
+              <h5>소셜미디어</h5>
+              <ul>
+                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📷 Instagram</a></li>
+                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📘 Facebook</a></li>
+                <li><a href="https://blog.naver.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📝 Blog</a></li>
+                <li><a href="https://youtube.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📺 YouTube</a></li>
+              </ul>
+            </LinkGroup>
+          </FooterLinksCompact>
+
+          <FooterCopyright>
+            <CopyrightLeft>
+              <Copyright>© {currentYear} 여행대로. All rights reserved.</Copyright>
+              <Certifications>
+                <CertBadge>✓ 관광사업자 등록</CertBadge>
+                <CertBadge>✓ 개인정보보호 인증</CertBadge>
+              </Certifications>
+            </CopyrightLeft>
+            <CopyrightRight>
+              <Disclaimer>
+                여행대로는 통신판매중개자로서 통신판매의 당사자가 아니며, 상품의 예약, 이용 및 환불 등과 관련한 의무와 책임은 각 판매자에게 있습니다.
+              </Disclaimer>
+            </CopyrightRight>
+          </FooterCopyright>
+        </FooterBottomCompact>
+      </FooterContainer>
+
+      {/* 준비중인 서비스 모달 */}
+      {showServiceModal && (
+        <ModalOverlay>
+          <ServiceModal>
+            <ModalContent>
+              <ModalIcon>🚧</ModalIcon>
+              <ModalTitle>준비중입니다</ModalTitle>
+              <ModalMessage>
+                해당 서비스는 현재 준비중입니다.<br />
+                조금만 기다려주세요!
+              </ModalMessage>
+              <ModalConfirmBtn onClick={closeServiceModal}>
+                확인
+              </ModalConfirmBtn>
+            </ModalContent>
+          </ServiceModal>
+        </ModalOverlay>
+      )}
+    </WebsiteFooterContainer>
+  );
+};
+
+
 const WebsiteFooterContainer = styled.footer`
   background: #2c3e50;
   color: white;
@@ -230,113 +340,5 @@ const ModalConfirmBtn = styled.button`
     transform: translateY(0);
   }
 `;
-
-const WebsiteFooter = () => {
-  const currentYear = new Date().getFullYear();
-  const [showServiceModal, setShowServiceModal] = useState(false);
-
-  const handleLinkClick = (e) => {
-    e.preventDefault();
-    setShowServiceModal(true);
-  };
-
-  const closeServiceModal = () => {
-    setShowServiceModal(false);
-  };
-
-  return (
-    <WebsiteFooterContainer>
-      <FooterContainer>
-        {/* 상단 섹션 - 모든 회사정보를 1줄에 나열 */}
-        <FooterTopCompact>
-          <CompanyInfoLine>
-            <FooterLogo>여행대로</FooterLogo>
-            <Divider>|</Divider>
-            <span>📞 1588-1234</span>
-            <Divider>|</Divider>
-            <span>📧 support@tripdalro.com</span>
-            <Divider>|</Divider>
-            <span>상호: (주)여행대로</span>
-            <Divider>|</Divider>
-            <span>대표: 김여행</span>
-            <Divider>|</Divider>
-            <span>사업자등록번호: 123-45-67890</span>
-            <Divider>|</Divider>
-            <span>📍 서울특별시 강남구 테헤란로 123, 여행대로빌딩 5층</span>
-          </CompanyInfoLine>
-        </FooterTopCompact>
-
-        {/* 하단 섹션 - 링크들과 저작권 */}
-        <FooterBottomCompact>
-          <FooterLinksCompact>
-            <LinkGroup>
-              <h5>고객지원</h5>
-              <ul>
-                <li><a href="/faq" onClick={handleLinkClick}>자주묻는질문</a></li>
-                <li><a href="/notice" onClick={handleLinkClick}>공지사항</a></li>
-                <li><a href="/contact" onClick={handleLinkClick}>문의하기</a></li>
-                <li><a href="/guide" onClick={handleLinkClick}>이용가이드</a></li>
-              </ul>
-            </LinkGroup>
-
-            <LinkGroup>
-              <h5>정책</h5>
-              <ul>
-                <li><a href="/terms" className="important-link" onClick={handleLinkClick}>이용약관</a></li>
-                <li><a href="/privacy" className="important-link" onClick={handleLinkClick}>개인정보처리방침</a></li>
-                <li><a href="/location" onClick={handleLinkClick}>위치기반서비스약관</a></li>
-                <li><a href="/refund" onClick={handleLinkClick}>취소/환불정책</a></li>
-              </ul>
-            </LinkGroup>
-
-            <LinkGroup>
-              <h5>소셜미디어</h5>
-              <ul>
-                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📷 Instagram</a></li>
-                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📘 Facebook</a></li>
-                <li><a href="https://blog.naver.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📝 Blog</a></li>
-                <li><a href="https://youtube.com" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>📺 YouTube</a></li>
-              </ul>
-            </LinkGroup>
-          </FooterLinksCompact>
-
-          <FooterCopyright>
-            <CopyrightLeft>
-              <Copyright>© {currentYear} 여행대로. All rights reserved.</Copyright>
-              <Certifications>
-                <CertBadge>✓ 관광사업자 등록</CertBadge>
-                <CertBadge>✓ 개인정보보호 인증</CertBadge>
-              </Certifications>
-            </CopyrightLeft>
-            <CopyrightRight>
-              <Disclaimer>
-                여행대로는 통신판매중개자로서 통신판매의 당사자가 아니며, 상품의 예약, 이용 및 환불 등과 관련한 의무와 책임은 각 판매자에게 있습니다.
-              </Disclaimer>
-            </CopyrightRight>
-          </FooterCopyright>
-        </FooterBottomCompact>
-      </FooterContainer>
-
-      {/* 준비중인 서비스 모달 */}
-      {showServiceModal && (
-        <ModalOverlay>
-          <ServiceModal>
-            <ModalContent>
-              <ModalIcon>🚧</ModalIcon>
-              <ModalTitle>준비중입니다</ModalTitle>
-              <ModalMessage>
-                해당 서비스는 현재 준비중입니다.<br />
-                조금만 기다려주세요!
-              </ModalMessage>
-              <ModalConfirmBtn onClick={closeServiceModal}>
-                확인
-              </ModalConfirmBtn>
-            </ModalContent>
-          </ServiceModal>
-        </ModalOverlay>
-      )}
-    </WebsiteFooterContainer>
-  );
-};
 
 export default WebsiteFooter;

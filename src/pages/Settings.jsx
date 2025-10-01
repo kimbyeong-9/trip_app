@@ -3,215 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 
-// Styled Components
-const SettingsPage = styled.div`
-  min-height: 100vh;
-  background: #f8f9fa;
-  padding-top: 70px;
-  padding-bottom: 20px;
-
-  @media (max-width: 1024px) {
-    padding-bottom: 100px;
-  }
-`;
-
-const SettingsContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
-`;
-
-const PageHeader = styled.div`
-  text-align: center;
-  margin-bottom: 50px;
-  position: relative;
-`;
-
-const BackButton = styled.button`
-  position: absolute;
-  left: 0;
-  top: -60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: 12px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: white;
-  font-size: 20px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-`;
-
-const PageTitle = styled.h1`
-  font-size: 36px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-`;
-
-const PageSubtitle = styled.p`
-  font-size: 18px;
-  color: #6c757d;
-  line-height: 1.6;
-  margin: 0;
-`;
-
-const SettingsSection = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 30px;
-  margin-bottom: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 1px solid #f0f0f0;
-`;
-
-const SectionTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 20px 0;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #f8f9fa;
-`;
-
-const SettingItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 0;
-  border-bottom: 1px solid #f8f9fa;
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const SettingLabel = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const SettingTitle = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 5px;
-`;
-
-const SettingDescription = styled.span`
-  font-size: 14px;
-  color: #6c757d;
-`;
-
-const ToggleSwitch = styled.div`
-  position: relative;
-  width: 50px;
-  height: 25px;
-  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e9ecef'};
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: ${props => props.$active ? '27px' : '2px'};
-    width: 21px;
-    height: 21px;
-    background: white;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-`;
-
-const SelectBox = styled.select`
-  padding: 8px 12px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  background: white;
-  color: #495057;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-`;
-
-const Button = styled.button`
-  background: ${props => props.$variant === 'danger' ? '#dc3545' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px ${props => props.$variant === 'danger' ? 'rgba(220, 53, 69, 0.4)' : 'rgba(102, 126, 234, 0.4)'};
-  opacity: ${props => props.disabled ? 0.6 : 1};
-  position: relative;
-  overflow: hidden;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px ${props => props.$variant === 'danger' ? 'rgba(220, 53, 69, 0.6)' : 'rgba(102, 126, 234, 0.6)'};
-  }
-
-  &:disabled {
-    transform: none;
-  }
-`;
-
-const LoadingSpinner = styled.div`
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top: 2px solid white;
-  animation: spin 1s linear infinite;
-  margin-right: 8px;
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 15px;
-  margin-top: 20px;
-  justify-content: flex-end;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-  }
-`;
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -537,5 +328,215 @@ const Settings = () => {
     </SettingsPage>
   );
 };
+
+
+const SettingsPage = styled.div`
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding-top: 70px;
+  padding-bottom: 20px;
+
+  @media (max-width: 1024px) {
+    padding-bottom: 100px;
+  }
+`;
+
+const SettingsContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+`;
+
+const PageHeader = styled.div`
+  text-align: center;
+  margin-bottom: 50px;
+  position: relative;
+`;
+
+const BackButton = styled.button`
+  position: absolute;
+  left: 0;
+  top: -60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const PageTitle = styled.h1`
+  font-size: 36px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+`;
+
+const PageSubtitle = styled.p`
+  font-size: 18px;
+  color: #6c757d;
+  line-height: 1.6;
+  margin: 0;
+`;
+
+const SettingsSection = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+`;
+
+const SectionTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f8f9fa;
+`;
+
+const SettingItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #f8f9fa;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const SettingLabel = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const SettingTitle = styled.span`
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 5px;
+`;
+
+const SettingDescription = styled.span`
+  font-size: 14px;
+  color: #6c757d;
+`;
+
+const ToggleSwitch = styled.div`
+  position: relative;
+  width: 50px;
+  height: 25px;
+  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e9ecef'};
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: ${props => props.$active ? '27px' : '2px'};
+    width: 21px;
+    height: 21px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+`;
+
+const SelectBox = styled.select`
+  padding: 8px 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  color: #495057;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+`;
+
+const Button = styled.button`
+  background: ${props => props.$variant === 'danger' ? '#dc3545' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px ${props => props.$variant === 'danger' ? 'rgba(220, 53, 69, 0.4)' : 'rgba(102, 126, 234, 0.4)'};
+  opacity: ${props => props.disabled ? 0.6 : 1};
+  position: relative;
+  overflow: hidden;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px ${props => props.$variant === 'danger' ? 'rgba(220, 53, 69, 0.6)' : 'rgba(102, 126, 234, 0.6)'};
+  }
+
+  &:disabled {
+    transform: none;
+  }
+`;
+
+const LoadingSpinner = styled.div`
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 2px solid white;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+  justify-content: flex-end;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+`;
 
 export default Settings;

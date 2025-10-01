@@ -1,9 +1,149 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { chatRooms } from '../data/mockData';
+import { supabase } from '../supabaseClient';
 
-// Styled Components
+
+
+const ChatRoomList = () => {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [chatRooms, setChatRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchChatRooms = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ChatRooms')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching chat rooms:', error);
+        } else {
+          setChatRooms(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching chat rooms:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChatRooms();
+  }, []);
+
+  // 검색 필터링
+  const filteredChatRooms = chatRooms.filter(room =>
+    room.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleCreateChatRoom = () => {
+    navigate('/chat-room-create');
+  };
+
+  const handleJoinChatRoom = (roomId) => {
+    navigate(`/chat-room/${roomId}`);
+  };
+
+  if (loading) {
+    return (
+      <ChatRoomListContainer>
+        <Header>
+          <HeaderContent>
+            <HeaderTitle>
+              <h1>동행모집 채팅방</h1>
+              <p>여행 동행을 찾고 새로운 인연을 만나보세요</p>
+            </HeaderTitle>
+          </HeaderContent>
+        </Header>
+        <Content>
+          <LoadingSpinner>
+            <Spinner />
+            <LoadingText>채팅방 목록 로딩중...</LoadingText>
+          </LoadingSpinner>
+        </Content>
+      </ChatRoomListContainer>
+    );
+  }
+
+  return (
+    <ChatRoomListContainer>
+      <Header>
+        <HeaderContent>
+          <HeaderTitle>
+            <h1>동행모집 채팅방</h1>
+            <p>여행 동행을 찾고 새로운 인연을 만나보세요</p>
+          </HeaderTitle>
+          <CreateButton onClick={handleCreateChatRoom}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            채팅방 생성
+          </CreateButton>
+        </HeaderContent>
+      </Header>
+
+      <SearchContainer>
+        <SearchBox>
+          <SearchIcon>🔍</SearchIcon>
+          <SearchInput
+            type="text"
+            placeholder="채팅방을 검색해보세요..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </SearchBox>
+      </SearchContainer>
+
+      <Content>
+        <SectionTitle>활성 채팅방 ({filteredChatRooms.length}개)</SectionTitle>
+
+        {filteredChatRooms.length > 0 ? (
+          <ChatRoomGrid>
+            {filteredChatRooms.map((room) => (
+              <ChatRoomCard key={room.id} onClick={() => handleJoinChatRoom(room.id)}>
+                <CardImageContainer>
+                  <CardImage src={room.image} alt={room.title} />
+                  <MembersCount>{room.members}명</MembersCount>
+                  <CreatorProfile>
+                    <CreatorAvatar
+                      src={room.creator?.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"}
+                      alt={room.creator?.name || "채팅방 생성자"}
+                    />
+                    <CreatorName>{room.creator?.name || "여행매니저"}</CreatorName>
+                  </CreatorProfile>
+                </CardImageContainer>
+                <CardContent>
+                  <CardTitle>{room.title}</CardTitle>
+                  <CardDescription>
+                    함께 {room.title.split(' ')[0]}를 즐기며 새로운 인연을 만들어보세요.
+                    다양한 연령대의 여행객들과 소통하며 특별한 추억을 만들어보세요.
+                  </CardDescription>
+                  <JoinButton onClick={(e) => {
+                    e.stopPropagation();
+                    handleJoinChatRoom(room.id);
+                  }}>
+                    채팅방 참여하기
+                  </JoinButton>
+                </CardContent>
+              </ChatRoomCard>
+            ))}
+          </ChatRoomGrid>
+        ) : (
+          <EmptyState>
+            <div className="icon">💬</div>
+            <h3>검색 결과가 없습니다</h3>
+            <p>다른 검색어로 시도해보시거나<br />새로운 채팅방을 생성해보세요!</p>
+          </EmptyState>
+        )}
+      </Content>
+    </ChatRoomListContainer>
+  );
+};
+
+
 const ChatRoomListContainer = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -322,96 +462,33 @@ const EmptyState = styled.div`
   }
 `;
 
-const ChatRoomList = () => {
-  const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
+const LoadingSpinner = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 20px;
+`;
 
-  // 검색 필터링
-  const filteredChatRooms = chatRooms.filter(room =>
-    room.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+const Spinner = styled.div`
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #ff9800;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 
-  const handleCreateChatRoom = () => {
-    navigate('/chat-room-create');
-  };
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 
-  const handleJoinChatRoom = (roomId) => {
-    navigate(`/chat-room/${roomId}`);
-  };
-
-  return (
-    <ChatRoomListContainer>
-      <Header>
-        <HeaderContent>
-          <HeaderTitle>
-            <h1>동행모집 채팅방</h1>
-            <p>여행 동행을 찾고 새로운 인연을 만나보세요</p>
-          </HeaderTitle>
-          <CreateButton onClick={handleCreateChatRoom}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-            채팅방 생성
-          </CreateButton>
-        </HeaderContent>
-      </Header>
-
-      <SearchContainer>
-        <SearchBox>
-          <SearchIcon>🔍</SearchIcon>
-          <SearchInput
-            type="text"
-            placeholder="채팅방을 검색해보세요..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </SearchBox>
-      </SearchContainer>
-
-      <Content>
-        <SectionTitle>활성 채팅방 ({filteredChatRooms.length}개)</SectionTitle>
-
-        {filteredChatRooms.length > 0 ? (
-          <ChatRoomGrid>
-            {filteredChatRooms.map((room) => (
-              <ChatRoomCard key={room.id} onClick={() => handleJoinChatRoom(room.id)}>
-                <CardImageContainer>
-                  <CardImage src={room.image} alt={room.title} />
-                  <MembersCount>{room.members}명</MembersCount>
-                  <CreatorProfile>
-                    <CreatorAvatar
-                      src={room.creator?.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"}
-                      alt={room.creator?.name || "채팅방 생성자"}
-                    />
-                    <CreatorName>{room.creator?.name || "여행매니저"}</CreatorName>
-                  </CreatorProfile>
-                </CardImageContainer>
-                <CardContent>
-                  <CardTitle>{room.title}</CardTitle>
-                  <CardDescription>
-                    함께 {room.title.split(' ')[0]}를 즐기며 새로운 인연을 만들어보세요.
-                    다양한 연령대의 여행객들과 소통하며 특별한 추억을 만들어보세요.
-                  </CardDescription>
-                  <JoinButton onClick={(e) => {
-                    e.stopPropagation();
-                    handleJoinChatRoom(room.id);
-                  }}>
-                    채팅방 참여하기
-                  </JoinButton>
-                </CardContent>
-              </ChatRoomCard>
-            ))}
-          </ChatRoomGrid>
-        ) : (
-          <EmptyState>
-            <div className="icon">💬</div>
-            <h3>검색 결과가 없습니다</h3>
-            <p>다른 검색어로 시도해보시거나<br />새로운 채팅방을 생성해보세요!</p>
-          </EmptyState>
-        )}
-      </Content>
-    </ChatRoomListContainer>
-  );
-};
+const LoadingText = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
+`;
 
 export default ChatRoomList;

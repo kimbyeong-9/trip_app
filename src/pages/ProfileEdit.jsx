@@ -2,6 +2,268 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
+
+const ProfileEdit = () => {
+  const navigate = useNavigate();
+  
+  // 현재 로그인한 사용자 정보 가져오기
+  const getCurrentUser = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    if (loginData) {
+      return JSON.parse(loginData);
+    }
+    return null;
+  };
+
+  const currentUser = getCurrentUser();
+  
+  const [formData, setFormData] = useState({
+    name: currentUser?.user?.name || '홍길동',
+    email: currentUser?.user?.email || 'hong@example.com',
+    phone: currentUser?.user?.phone || '010-1234-5678',
+    bio: currentUser?.user?.bio || '여행을 사랑하는 사용자입니다. 새로운 곳을 탐험하고 좋은 사람들과 만나는 것을 좋아해요.',
+    location: currentUser?.user?.location || '서울',
+    interests: currentUser?.user?.interests || ['여행', '사진', '맛집', '문화'],
+    profileImage: currentUser?.user?.profileImage || null
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+
+    try {
+      // 현재 로그인 데이터 가져오기
+      const localData = localStorage.getItem('loginData');
+      const sessionData = sessionStorage.getItem('loginData');
+
+      if (localData) {
+        const updatedData = JSON.parse(localData);
+        // 사용자 정보 업데이트
+        updatedData.user = {
+          ...updatedData.user,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          bio: formData.bio,
+          location: formData.location,
+          interests: formData.interests,
+          profileImage: formData.profileImage
+        };
+        // localStorage에 저장
+        localStorage.setItem('loginData', JSON.stringify(updatedData));
+      }
+
+      if (sessionData) {
+        const updatedData = JSON.parse(sessionData);
+        // 사용자 정보 업데이트
+        updatedData.user = {
+          ...updatedData.user,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          bio: formData.bio,
+          location: formData.location,
+          interests: formData.interests,
+          profileImage: formData.profileImage
+        };
+        // sessionStorage에 저장
+        sessionStorage.setItem('loginData', JSON.stringify(updatedData));
+      }
+
+      alert('프로필이 성공적으로 저장되었습니다!');
+      navigate('/');
+
+    } catch (error) {
+      console.error('프로필 저장 중 오류가 발생했습니다:', error);
+      alert('프로필 저장에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  const handleCancel = () => {
+    navigate('/profile/user');
+  };
+
+  const handleImageChange = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setFormData(prev => ({
+            ...prev,
+            profileImage: e.target.result
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleResetToDefault = () => {
+    setFormData(prev => ({
+      ...prev,
+      profileImage: null
+    }));
+  };
+
+  const handleAddInterest = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const value = e.target.value.trim();
+      if (value && !formData.interests.includes(value)) {
+        setFormData(prev => ({
+          ...prev,
+          interests: [...prev.interests, value]
+        }));
+        e.target.value = '';
+      }
+    }
+  };
+
+  const removeInterest = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      interests: prev.interests.filter((_, i) => i !== index)
+    }));
+  };
+
+  return (
+    <ProfileEditContainer>
+      <ProfileEditContent>
+        <ProfileEditCard>
+          <CardHeader>
+            <CardBackButton onClick={() => navigate(-1)}>
+              ← 뒤로가기
+            </CardBackButton>
+            <CardTitle>프로필 편집</CardTitle>
+          </CardHeader>
+          
+          <ProfileImageSection>
+            <ProfileImageContainer>
+              <ProfileImage>
+                {formData.profileImage ? (
+                  <img src={formData.profileImage} alt="프로필 이미지" />
+                ) : (
+                  formData.name.charAt(0)
+                )}
+              </ProfileImage>
+              <ChangeImageButton onClick={handleImageChange} title="이미지 변경">
+                📷
+              </ChangeImageButton>
+            </ProfileImageContainer>
+            <ImageButtonGroup>
+              <ImageActionButton onClick={handleImageChange}>
+                <span>📷</span>
+                이미지 변경
+              </ImageActionButton>
+              <ImageActionButton className="default" onClick={handleResetToDefault}>
+                <span>👤</span>
+                기본 이미지로 변경
+              </ImageActionButton>
+            </ImageButtonGroup>
+          </ProfileImageSection>
+
+          <Form onSubmit={handleSave}>
+            <FormGroup>
+              <Label htmlFor="name">이름</Label>
+              <Input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="email">이메일</Label>
+              <Input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="phone">전화번호</Label>
+              <Input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="010-1234-5678"
+                required
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="location">지역</Label>
+              <Input
+                type="text"
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                required
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="bio">소개</Label>
+              <TextArea
+                id="bio"
+                name="bio"
+                value={formData.bio}
+                onChange={handleInputChange}
+                placeholder="자신을 소개해주세요"
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>관심사</Label>
+              <InterestTags>
+                {formData.interests.map((interest, index) => (
+                  <InterestTag key={index}>
+                    {interest}
+                    <RemoveButton onClick={() => removeInterest(index)}>×</RemoveButton>
+                  </InterestTag>
+                ))}
+                <AddInterestInput
+                  type="text"
+                  placeholder="관심사 추가..."
+                  onKeyDown={handleAddInterest}
+                />
+              </InterestTags>
+            </FormGroup>
+
+            <ButtonGroup>
+              <SaveButton type="submit">저장하기</SaveButton>
+              <CancelButton type="button" onClick={handleCancel}>취소</CancelButton>
+            </ButtonGroup>
+          </Form>
+        </ProfileEditCard>
+      </ProfileEditContent>
+    </ProfileEditContainer>
+  );
+};
+
+
 const ProfileEditContainer = styled.div`
   min-height: 100vh;
   background: white;
@@ -301,265 +563,5 @@ const AddInterestInput = styled.input`
     border-color: #667eea;
   }
 `;
-
-const ProfileEdit = () => {
-  const navigate = useNavigate();
-  
-  // 현재 로그인한 사용자 정보 가져오기
-  const getCurrentUser = () => {
-    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-    if (loginData) {
-      return JSON.parse(loginData);
-    }
-    return null;
-  };
-
-  const currentUser = getCurrentUser();
-  
-  const [formData, setFormData] = useState({
-    name: currentUser?.user?.name || '홍길동',
-    email: currentUser?.user?.email || 'hong@example.com',
-    phone: currentUser?.user?.phone || '010-1234-5678',
-    bio: currentUser?.user?.bio || '여행을 사랑하는 사용자입니다. 새로운 곳을 탐험하고 좋은 사람들과 만나는 것을 좋아해요.',
-    location: currentUser?.user?.location || '서울',
-    interests: currentUser?.user?.interests || ['여행', '사진', '맛집', '문화'],
-    profileImage: currentUser?.user?.profileImage || null
-  });
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSave = (e) => {
-    e.preventDefault();
-
-    try {
-      // 현재 로그인 데이터 가져오기
-      const localData = localStorage.getItem('loginData');
-      const sessionData = sessionStorage.getItem('loginData');
-
-      if (localData) {
-        const updatedData = JSON.parse(localData);
-        // 사용자 정보 업데이트
-        updatedData.user = {
-          ...updatedData.user,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          bio: formData.bio,
-          location: formData.location,
-          interests: formData.interests,
-          profileImage: formData.profileImage
-        };
-        // localStorage에 저장
-        localStorage.setItem('loginData', JSON.stringify(updatedData));
-      }
-
-      if (sessionData) {
-        const updatedData = JSON.parse(sessionData);
-        // 사용자 정보 업데이트
-        updatedData.user = {
-          ...updatedData.user,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          bio: formData.bio,
-          location: formData.location,
-          interests: formData.interests,
-          profileImage: formData.profileImage
-        };
-        // sessionStorage에 저장
-        sessionStorage.setItem('loginData', JSON.stringify(updatedData));
-      }
-
-      alert('프로필이 성공적으로 저장되었습니다!');
-      navigate('/');
-
-    } catch (error) {
-      console.error('프로필 저장 중 오류가 발생했습니다:', error);
-      alert('프로필 저장에 실패했습니다. 다시 시도해주세요.');
-    }
-  };
-
-  const handleCancel = () => {
-    navigate('/profile/user');
-  };
-
-  const handleImageChange = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setFormData(prev => ({
-            ...prev,
-            profileImage: e.target.result
-          }));
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-    input.click();
-  };
-
-  const handleResetToDefault = () => {
-    setFormData(prev => ({
-      ...prev,
-      profileImage: null
-    }));
-  };
-
-  const handleAddInterest = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const value = e.target.value.trim();
-      if (value && !formData.interests.includes(value)) {
-        setFormData(prev => ({
-          ...prev,
-          interests: [...prev.interests, value]
-        }));
-        e.target.value = '';
-      }
-    }
-  };
-
-  const removeInterest = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      interests: prev.interests.filter((_, i) => i !== index)
-    }));
-  };
-
-  return (
-    <ProfileEditContainer>
-      <ProfileEditContent>
-        <ProfileEditCard>
-          <CardHeader>
-            <CardBackButton onClick={() => navigate(-1)}>
-              ← 뒤로가기
-            </CardBackButton>
-            <CardTitle>프로필 편집</CardTitle>
-          </CardHeader>
-          
-          <ProfileImageSection>
-            <ProfileImageContainer>
-              <ProfileImage>
-                {formData.profileImage ? (
-                  <img src={formData.profileImage} alt="프로필 이미지" />
-                ) : (
-                  formData.name.charAt(0)
-                )}
-              </ProfileImage>
-              <ChangeImageButton onClick={handleImageChange} title="이미지 변경">
-                📷
-              </ChangeImageButton>
-            </ProfileImageContainer>
-            <ImageButtonGroup>
-              <ImageActionButton onClick={handleImageChange}>
-                <span>📷</span>
-                이미지 변경
-              </ImageActionButton>
-              <ImageActionButton className="default" onClick={handleResetToDefault}>
-                <span>👤</span>
-                기본 이미지로 변경
-              </ImageActionButton>
-            </ImageButtonGroup>
-          </ProfileImageSection>
-
-          <Form onSubmit={handleSave}>
-            <FormGroup>
-              <Label htmlFor="name">이름</Label>
-              <Input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="email">이메일</Label>
-              <Input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="phone">전화번호</Label>
-              <Input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="010-1234-5678"
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="location">지역</Label>
-              <Input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="bio">소개</Label>
-              <TextArea
-                id="bio"
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                placeholder="자신을 소개해주세요"
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>관심사</Label>
-              <InterestTags>
-                {formData.interests.map((interest, index) => (
-                  <InterestTag key={index}>
-                    {interest}
-                    <RemoveButton onClick={() => removeInterest(index)}>×</RemoveButton>
-                  </InterestTag>
-                ))}
-                <AddInterestInput
-                  type="text"
-                  placeholder="관심사 추가..."
-                  onKeyDown={handleAddInterest}
-                />
-              </InterestTags>
-            </FormGroup>
-
-            <ButtonGroup>
-              <SaveButton type="submit">저장하기</SaveButton>
-              <CancelButton type="button" onClick={handleCancel}>취소</CancelButton>
-            </ButtonGroup>
-          </Form>
-        </ProfileEditCard>
-      </ProfileEditContent>
-    </ProfileEditContainer>
-  );
-};
 
 export default ProfileEdit;

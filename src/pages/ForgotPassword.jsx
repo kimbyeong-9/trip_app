@@ -2,7 +2,130 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-// Styled Components (로그인 페이지와 동일한 디자인)
+
+
+const ForgotPassword = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email) {
+      setError('이메일을 입력해주세요.');
+      return;
+    }
+
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('올바른 이메일 형식을 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // 비밀번호 재설정 이메일 발송 시뮬레이션
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      setSuccess(true);
+    } catch (err) {
+      setError('이메일 발송 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    navigate('/login');
+  };
+
+  return (
+    <ForgotPasswordContainer>
+      <ForgotPasswordCard>
+        <BackArrowButton onClick={() => navigate(-1)}>
+          ←
+        </BackArrowButton>
+        <Logo onClick={() => navigate('/')}>여행대로</Logo>
+
+        {!success ? (
+          <>
+            <Title>비밀번호 재설정</Title>
+            <Subtitle>
+              가입하신 이메일 주소를 입력하시면<br />
+              비밀번호 재설정 링크를 보내드립니다.
+            </Subtitle>
+
+            <Form onSubmit={handleSubmit}>
+              {error && <ErrorMessage>{error}</ErrorMessage>}
+
+              <InputGroup>
+                <Label htmlFor="email">이메일</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="이메일을 입력하세요"
+                  required
+                  disabled={isLoading}
+                  className={error && error.includes('이메일') ? 'error' : ''}
+                />
+              </InputGroup>
+
+              <SubmitButton
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <LoadingSpinner>
+                    <span className="spinner"></span>
+                    전송 중...
+                  </LoadingSpinner>
+                ) : (
+                  '비밀번호 재설정 이메일 보내기'
+                )}
+              </SubmitButton>
+            </Form>
+
+            <BackToLoginLink>
+              로그인 페이지로 돌아가기
+              <button
+                onClick={handleBackToLogin}
+                disabled={isLoading}
+              >
+                로그인
+              </button>
+            </BackToLoginLink>
+          </>
+        ) : (
+          <SuccessContainer>
+            <SuccessIcon>✅</SuccessIcon>
+            <SuccessTitle>이메일을 확인해주세요</SuccessTitle>
+            <SuccessMessage>
+              <strong>{email}</strong>로<br />
+              비밀번호 재설정 링크를 보냈습니다.
+            </SuccessMessage>
+            <SuccessNote>
+              이메일이 오지 않았다면 스팸함을 확인해주세요.
+            </SuccessNote>
+            <BackToLoginButton onClick={handleBackToLogin}>
+              로그인 페이지로 돌아가기
+            </BackToLoginButton>
+          </SuccessContainer>
+        )}
+      </ForgotPasswordCard>
+    </ForgotPasswordContainer>
+  );
+};
+
+
+
 const ForgotPasswordContainer = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -262,125 +385,5 @@ const BackArrowButton = styled.button`
     transform: translateX(-2px);
   }
 `;
-
-const ForgotPassword = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (!email) {
-      setError('이메일을 입력해주세요.');
-      return;
-    }
-
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // 비밀번호 재설정 이메일 발송 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      setSuccess(true);
-    } catch (err) {
-      setError('이메일 발송 중 오류가 발생했습니다. 다시 시도해주세요.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBackToLogin = () => {
-    navigate('/login');
-  };
-
-  return (
-    <ForgotPasswordContainer>
-      <ForgotPasswordCard>
-        <BackArrowButton onClick={() => navigate(-1)}>
-          ←
-        </BackArrowButton>
-        <Logo onClick={() => navigate('/')}>여행대로</Logo>
-
-        {!success ? (
-          <>
-            <Title>비밀번호 재설정</Title>
-            <Subtitle>
-              가입하신 이메일 주소를 입력하시면<br />
-              비밀번호 재설정 링크를 보내드립니다.
-            </Subtitle>
-
-            <Form onSubmit={handleSubmit}>
-              {error && <ErrorMessage>{error}</ErrorMessage>}
-
-              <InputGroup>
-                <Label htmlFor="email">이메일</Label>
-                <Input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="이메일을 입력하세요"
-                  required
-                  disabled={isLoading}
-                  className={error && error.includes('이메일') ? 'error' : ''}
-                />
-              </InputGroup>
-
-              <SubmitButton
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <LoadingSpinner>
-                    <span className="spinner"></span>
-                    전송 중...
-                  </LoadingSpinner>
-                ) : (
-                  '비밀번호 재설정 이메일 보내기'
-                )}
-              </SubmitButton>
-            </Form>
-
-            <BackToLoginLink>
-              로그인 페이지로 돌아가기
-              <button
-                onClick={handleBackToLogin}
-                disabled={isLoading}
-              >
-                로그인
-              </button>
-            </BackToLoginLink>
-          </>
-        ) : (
-          <SuccessContainer>
-            <SuccessIcon>✅</SuccessIcon>
-            <SuccessTitle>이메일을 확인해주세요</SuccessTitle>
-            <SuccessMessage>
-              <strong>{email}</strong>로<br />
-              비밀번호 재설정 링크를 보냈습니다.
-            </SuccessMessage>
-            <SuccessNote>
-              이메일이 오지 않았다면 스팸함을 확인해주세요.
-            </SuccessNote>
-            <BackToLoginButton onClick={handleBackToLogin}>
-              로그인 페이지로 돌아가기
-            </BackToLoginButton>
-          </SuccessContainer>
-        )}
-      </ForgotPasswordCard>
-    </ForgotPasswordContainer>
-  );
-};
 
 export default ForgotPassword;

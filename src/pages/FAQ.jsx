@@ -2,156 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-const FAQContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  min-height: 100vh;
-`;
 
-const FAQHeader = styled.div`
-  text-align: center;
-  margin-bottom: 50px;
-  position: relative;
-`;
-
-const BackButton = styled.button`
-  position: absolute;
-  left: 0;
-  top: -20px;
-  background: #667eea;
-  border: none;
-  border-radius: 12px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: white;
-  font-size: 20px;
-  z-index: 10;
-
-  &:hover {
-    background: #5a6fd8;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  @media (max-width: 768px) {
-    top: -10px;
-  }
-`;
-
-const FAQTitle = styled.h1`
-  font-size: 36px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-`;
-
-const FAQSubtitle = styled.p`
-  font-size: 18px;
-  color: #6c757d;
-  line-height: 1.6;
-`;
-
-
-const FAQList = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-`;
-
-const FAQItem = styled.div`
-  margin-bottom: 20px;
-  border: 1px solid #e9ecef;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-
-  &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const FAQQuestion = styled.div`
-  padding: 20px 25px;
-  background: white;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background 0.3s ease;
-
-  &:hover {
-    background: #f8f9fa;
-  }
-`;
-
-const QuestionText = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0;
-  flex: 1;
-  line-height: 1.4;
-`;
-
-const ExpandIcon = styled.div`
-  font-size: 20px;
-  color: #667eea;
-  transition: transform 0.3s ease;
-  transform: ${props => props.expanded ? 'rotate(180deg)' : 'rotate(0deg)'};
-  margin-left: 15px;
-`;
-
-const FAQAnswer = styled.div`
-  max-height: ${props => props.expanded ? '500px' : '0'};
-  opacity: ${props => props.expanded ? '1' : '0'};
-  overflow: hidden;
-  transition: all 0.3s ease;
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-`;
-
-const AnswerContent = styled.div`
-  padding: 25px;
-  color: #6c757d;
-  font-size: 16px;
-  line-height: 1.6;
-
-  p {
-    margin: 0 0 15px 0;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  strong {
-    color: #2c3e50;
-    font-weight: 600;
-  }
-
-  ul {
-    margin: 15px 0;
-    padding-left: 20px;
-
-    li {
-      margin-bottom: 8px;
-    }
-  }
-`;
 
 const FAQ = () => {
   const navigate = useNavigate();
@@ -340,5 +191,157 @@ const FAQ = () => {
     </FAQContainer>
   );
 };
+
+
+const FAQContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: 100vh;
+`;
+
+const FAQHeader = styled.div`
+  text-align: center;
+  margin-bottom: 50px;
+  position: relative;
+`;
+
+const BackButton = styled.button`
+  position: absolute;
+  left: 0;
+  top: -20px;
+  background: #667eea;
+  border: none;
+  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 20px;
+  z-index: 10;
+
+  &:hover {
+    background: #5a6fd8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    top: -10px;
+  }
+`;
+
+const FAQTitle = styled.h1`
+  font-size: 36px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+`;
+
+const FAQSubtitle = styled.p`
+  font-size: 18px;
+  color: #6c757d;
+  line-height: 1.6;
+`;
+
+
+const FAQList = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+`;
+
+const FAQItem = styled.div`
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const FAQQuestion = styled.div`
+  padding: 20px 25px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: #f8f9fa;
+  }
+`;
+
+const QuestionText = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+  flex: 1;
+  line-height: 1.4;
+`;
+
+const ExpandIcon = styled.div`
+  font-size: 20px;
+  color: #667eea;
+  transition: transform 0.3s ease;
+  transform: ${props => props.expanded ? 'rotate(180deg)' : 'rotate(0deg)'};
+  margin-left: 15px;
+`;
+
+const FAQAnswer = styled.div`
+  max-height: ${props => props.expanded ? '500px' : '0'};
+  opacity: ${props => props.expanded ? '1' : '0'};
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+`;
+
+const AnswerContent = styled.div`
+  padding: 25px;
+  color: #6c757d;
+  font-size: 16px;
+  line-height: 1.6;
+
+  p {
+    margin: 0 0 15px 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  strong {
+    color: #2c3e50;
+    font-weight: 600;
+  }
+
+  ul {
+    margin: 15px 0;
+    padding-left: 20px;
+
+    li {
+      margin-bottom: 8px;
+    }
+  }
+`;
 
 export default FAQ;

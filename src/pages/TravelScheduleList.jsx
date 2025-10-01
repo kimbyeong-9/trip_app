@@ -4,7 +4,414 @@ import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 import { supabase } from '../supabaseClient';
 
-// Styled Components
+
+
+const TravelScheduleList = () => {
+  const navigate = useNavigate();
+  const [selectedRegion, setSelectedRegion] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedStartDate, setSelectedStartDate] = useState('');
+  const [selectedEndDate, setSelectedEndDate] = useState('');
+  const [sortBy, setSortBy] = useState('latest'); // 'latest', 'popular'
+  const [isAICreate, setIsAICreate] = useState(false); // AI 작성 여부
+  const [itineraryCards, setItineraryCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const schedulesPerPage = 9;
+
+  // Supabase에서 Itinerary 데이터 가져오기
+  useEffect(() => {
+    const fetchItineraryCards = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('Itinerary')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching itinerary cards:', error);
+        } else {
+          setItineraryCards(data || []);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItineraryCards();
+  }, []);
+
+  // 로그인 상태 확인
+  const getLoginData = () => {
+    const localData = localStorage.getItem('loginData');
+    const sessionData = sessionStorage.getItem('loginData');
+    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+  };
+
+  const loginData = getLoginData();
+  const isLoggedIn = loginData && loginData.isLoggedIn;
+
+  // 사용자가 등록한 여행 일정 불러오기
+  const getUserSchedules = () => {
+    try {
+      const userSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
+      // 특정 조건의 카드들을 필터링하여 제거 (화면에서만)
+      return userSchedules.filter(schedule => {
+        const title = schedule.title || '';
+
+        // 제목이 "김병호"인 카드만 제거
+        return title !== '김병호';
+      });
+    } catch {
+      return [];
+    }
+  };
+
+  // 모든 여행 일정 결합 (사용자 + 기본)
+  const userSchedules = getUserSchedules();
+  const allSchedules = [...userSchedules, ...itineraryCards];
+
+  // 필터링 및 정렬된 일정 계산
+  const filteredSchedules = allSchedules.filter(schedule => {
+    const matchesRegion = selectedRegion === 'all' || schedule.region === selectedRegion;
+
+    // 날짜 필터링 - 사용자 생성 일정과 기본 일정 모두 지원
+    let matchesMonth = selectedMonth === 'all';
+    if (!matchesMonth) {
+      const scheduleDate = schedule.date || schedule.startDate || '';
+      matchesMonth = scheduleDate.includes(selectedMonth);
+    }
+
+    const matchesSearch = searchTerm === '' ||
+      schedule.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      schedule.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (schedule.author &&
+        (typeof schedule.author === 'string' ?
+          schedule.author.toLowerCase().includes(searchTerm.toLowerCase()) :
+          schedule.author.name && schedule.author.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+
+    return matchesRegion && matchesMonth && matchesSearch;
+  }).sort((a, b) => {
+    if (sortBy === 'latest') {
+      // 최신순: createdAt이 있으면 사용, 없으면 date 사용
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(a.date.split('~')[0]);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(b.date.split('~')[0]);
+      return dateB - dateA; // 내림차순 (최신순)
+    } else if (sortBy === 'popular') {
+      // 인기순: views가 있으면 사용, 없으면 랜덤 값 사용
+      const viewsA = a.views || Math.floor(Math.random() * 1000) + 100;
+      const viewsB = b.views || Math.floor(Math.random() * 1000) + 100;
+      return viewsB - viewsA; // 내림차순 (조회수 높은 순)
+    }
+    return 0;
+  });
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(filteredSchedules.length / schedulesPerPage);
+  const startIndex = (currentPage - 1) * schedulesPerPage;
+  const endIndex = startIndex + schedulesPerPage;
+  const currentSchedules = filteredSchedules.slice(startIndex, endIndex);
+
+  const handleCreateSchedule = () => {
+    if (isLoggedIn) {
+      setShowCreateModal(true);
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleDirectCreate = () => {
+    setIsAICreate(false);
+    setShowCreateModal(false);
+    setShowDatePicker(true);
+  };
+
+  const handleAICreate = () => {
+    setIsAICreate(true);
+    setShowCreateModal(false);
+    setShowDatePicker(true);
+  };
+
+  const handleDateConfirm = () => {
+    if (selectedStartDate && selectedEndDate) {
+      setShowDatePicker(false);
+
+      if (isAICreate) {
+        // AI 일정 작성 페이지로 이동
+        navigate(`/ai-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+      } else {
+        // 직접 일정 작성 페이지로 이동
+        navigate(`/direct-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
+      }
+    } else {
+      alert('출발일과 도착일을 모두 선택해주세요.');
+    }
+  };
+
+  const handleDateCancel = () => {
+    setShowDatePicker(false);
+    setSelectedStartDate('');
+    setSelectedEndDate('');
+    setIsAICreate(false);
+  };
+
+  const handleCardClick = (scheduleId) => {
+    if (isLoggedIn) {
+      navigate(`/travel-schedule/${scheduleId}`);
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleLoginClick = () => {
+    setShowLoginModal(false);
+    navigate('/login');
+  };
+
+  return (
+    <TravelScheduleListPage>
+      <Navigation />
+
+      <TravelScheduleListContainer>
+        <PageHeader>
+          <PageTitle>여행 일정</PageTitle>
+          <CreateButton onClick={handleCreateSchedule}>
+            일정 등록
+          </CreateButton>
+        </PageHeader>
+
+        <FilterSection>
+          <FilterTitle>맞춤 검색</FilterTitle>
+
+          <FilterGroup style={{ marginBottom: '20px' }}>
+            <FilterLabel>검색</FilterLabel>
+            <SearchInput
+              type="text"
+              placeholder="제목, 지역, 작성자로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel>지역</FilterLabel>
+            <FilterTags>
+              {['all', '서울', '경기', '인천', '강원', '충청', '전라', '경상', '제주', '부산'].map(region => (
+                <FilterTag
+                  key={region}
+                  $active={selectedRegion === region}
+                  onClick={() => setSelectedRegion(region)}
+                >
+                  {region === 'all' ? '전체' : region}
+                </FilterTag>
+              ))}
+            </FilterTags>
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel>정렬</FilterLabel>
+            <FilterTags>
+              <FilterTag
+                $active={sortBy === 'latest'}
+                onClick={() => setSortBy('latest')}
+              >
+                최신순
+              </FilterTag>
+              <FilterTag
+                $active={sortBy === 'popular'}
+                onClick={() => setSortBy('popular')}
+              >
+                인기순
+              </FilterTag>
+            </FilterTags>
+          </FilterGroup>
+        </FilterSection>
+
+        {currentSchedules.length > 0 ? (
+          <SchedulesGrid>
+            {currentSchedules.map((schedule) => (
+              <ScheduleCard
+                key={schedule.id}
+                onClick={() => handleCardClick(schedule.id)}
+              >
+                <ScheduleImage src={schedule.image} alt={schedule.title} />
+                <ScheduleContent>
+                  <div>
+                    <ScheduleTitle>{schedule.title}</ScheduleTitle>
+                    <ScheduleMeta>
+                      <ScheduleTag type="region">{schedule.region}</ScheduleTag>
+                      <ScheduleTag type="date">{schedule.date}</ScheduleTag>
+                    </ScheduleMeta>
+                  </div>
+
+                  <div>
+                    {/* 작성자 정보 */}
+                    {schedule.author && (
+                      <AuthorInfo>
+                        <AuthorAvatar>
+                          <img
+                            src={typeof schedule.author === 'string' ?
+                              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" :
+                              schedule.author.profileImage
+                            }
+                            alt={typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
+                          />
+                        </AuthorAvatar>
+                        <AuthorName>
+                          {typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
+                        </AuthorName>
+                      </AuthorInfo>
+                    )}
+
+
+                    <ScheduleStats>
+                      <ScheduleStat>
+                        <EyeIcon />
+                        <span>{schedule.views || 0}</span>
+                      </ScheduleStat>
+                      <ScheduleStat>
+                        <HeartIconSmall />
+                        <span>{schedule.likes || 0}</span>
+                      </ScheduleStat>
+                    </ScheduleStats>
+                  </div>
+                </ScheduleContent>
+              </ScheduleCard>
+            ))}
+          </SchedulesGrid>
+        ) : (
+          <NoResults>
+            <NoResultsTitle>검색 결과가 없습니다</NoResultsTitle>
+            <NoResultsText>다른 검색어나 맞춤 검색을 시도해보세요</NoResultsText>
+          </NoResults>
+        )}
+
+        {/* 페이지네이션 */}
+        {filteredSchedules.length > 0 && totalPages > 1 && (
+          <Pagination>
+            <PageButton
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              이전
+            </PageButton>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <PageButton
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                $active={currentPage === page}
+              >
+                {page}
+              </PageButton>
+            ))}
+
+            <PageButton
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              다음
+            </PageButton>
+          </Pagination>
+        )}
+      </TravelScheduleListContainer>
+
+      {/* 로그인 모달 */}
+      {showLoginModal && (
+        <LoginModal onClick={() => setShowLoginModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalIcon>🔒</ModalIcon>
+            <ModalTitle>로그인이 필요합니다</ModalTitle>
+            <ModalMessage>로그인 후 이용가능 합니다</ModalMessage>
+            <ModalButtons>
+              <ModalButton $primary onClick={handleLoginClick}>로그인</ModalButton>
+              <ModalButton onClick={() => setShowLoginModal(false)}>취소</ModalButton>
+            </ModalButtons>
+          </ModalContent>
+        </LoginModal>
+      )}
+
+      {/* 일정 생성 선택 모달 */}
+      {showCreateModal && (
+        <CreateModalOverlay onClick={() => setShowCreateModal(false)}>
+          <CreateModalContainer onClick={(e) => e.stopPropagation()}>
+            <CreateModalTitle>일정 작성 방법 선택</CreateModalTitle>
+            <CreateModalMessage>
+              어떤 방식으로 일정을 작성하시겠습니까?
+            </CreateModalMessage>
+
+            <CreateOptionsContainer>
+              <CreateOptionButton onClick={handleDirectCreate}>
+                <CreateOptionText>직접일정 작성</CreateOptionText>
+              </CreateOptionButton>
+
+              <CreateOptionButton $primary onClick={handleAICreate}>
+                <CreateOptionText>AI 일정 작성</CreateOptionText>
+              </CreateOptionButton>
+            </CreateOptionsContainer>
+
+            <CreateCancelButton onClick={() => setShowCreateModal(false)}>
+              취소
+            </CreateCancelButton>
+          </CreateModalContainer>
+        </CreateModalOverlay>
+      )}
+
+      {/* 날짜 선택 모달 */}
+      {showDatePicker && (
+        <DatePickerModalOverlay onClick={() => setShowDatePicker(false)}>
+          <DatePickerModalContainer onClick={(e) => e.stopPropagation()}>
+            <DatePickerTitle>여행 날짜 선택</DatePickerTitle>
+            <DatePickerMessage>
+              여행 시작일과 종료일을 선택해주세요
+            </DatePickerMessage>
+
+            <DateInputContainer>
+              <DateInputGroup>
+                <DateLabel>출발일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={selectedStartDate}
+                  onChange={(e) => setSelectedStartDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </DateInputGroup>
+
+              <DateInputGroup>
+                <DateLabel>도착일</DateLabel>
+                <DateInput
+                  type="date"
+                  value={selectedEndDate}
+                  onChange={(e) => setSelectedEndDate(e.target.value)}
+                  min={selectedStartDate || new Date().toISOString().split('T')[0]}
+                />
+              </DateInputGroup>
+            </DateInputContainer>
+
+            <DateButtonGroup>
+              <DateConfirmButton onClick={handleDateConfirm}>
+                확인
+              </DateConfirmButton>
+              <DateCancelButton onClick={handleDateCancel}>
+                취소
+              </DateCancelButton>
+            </DateButtonGroup>
+          </DatePickerModalContainer>
+        </DatePickerModalOverlay>
+      )}
+    </TravelScheduleListPage>
+  );
+};
+
 const TravelScheduleListPage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -661,440 +1068,5 @@ const DateCancelButton = styled.button`
     background: #5a6268;
   }
 `;
-
-const TravelScheduleList = () => {
-  const navigate = useNavigate();
-  const [selectedRegion, setSelectedRegion] = useState('all');
-  const [selectedMonth, setSelectedMonth] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedStartDate, setSelectedStartDate] = useState('');
-  const [selectedEndDate, setSelectedEndDate] = useState('');
-  const [sortBy, setSortBy] = useState('latest'); // 'latest', 'popular'
-  const [isAICreate, setIsAICreate] = useState(false); // AI 작성 여부
-  const [itineraryCards, setItineraryCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const schedulesPerPage = 9;
-
-  // Supabase에서 Itinerary 데이터 가져오기
-  useEffect(() => {
-    const fetchItineraryCards = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('Itinerary')
-          .select('*')
-          .order('id', { ascending: true });
-
-        if (error) {
-          console.error('Error fetching itinerary cards:', error);
-        } else {
-          setItineraryCards(data || []);
-        }
-      } catch (err) {
-        console.error('Error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchItineraryCards();
-  }, []);
-
-  // 로그인 상태 확인
-  const getLoginData = () => {
-    const localData = localStorage.getItem('loginData');
-    const sessionData = sessionStorage.getItem('loginData');
-    return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
-  };
-
-  const loginData = getLoginData();
-  const isLoggedIn = loginData && loginData.isLoggedIn;
-
-  // 사용자가 등록한 여행 일정 불러오기
-  const getUserSchedules = () => {
-    try {
-      const userSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
-      // 특정 조건의 카드들을 필터링하여 제거 (화면에서만)
-      return userSchedules.filter(schedule => {
-        const title = schedule.title || '';
-
-        // 제목이 "김병호"인 카드만 제거
-        return title !== '김병호';
-      });
-    } catch {
-      return [];
-    }
-  };
-
-  // 모든 여행 일정 결합 (사용자 + 기본)
-  const userSchedules = getUserSchedules();
-  const allSchedules = [...userSchedules, ...itineraryCards];
-
-  // 필터링 및 정렬된 일정 계산
-  const filteredSchedules = allSchedules.filter(schedule => {
-    const matchesRegion = selectedRegion === 'all' || schedule.region === selectedRegion;
-
-    // 날짜 필터링 - 사용자 생성 일정과 기본 일정 모두 지원
-    let matchesMonth = selectedMonth === 'all';
-    if (!matchesMonth) {
-      const scheduleDate = schedule.date || schedule.startDate || '';
-      matchesMonth = scheduleDate.includes(selectedMonth);
-    }
-
-    const matchesSearch = searchTerm === '' ||
-      schedule.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      schedule.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (schedule.author &&
-        (typeof schedule.author === 'string' ?
-          schedule.author.toLowerCase().includes(searchTerm.toLowerCase()) :
-          schedule.author.name && schedule.author.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-
-    return matchesRegion && matchesMonth && matchesSearch;
-  }).sort((a, b) => {
-    if (sortBy === 'latest') {
-      // 최신순: createdAt이 있으면 사용, 없으면 date 사용
-      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(a.date.split('~')[0]);
-      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(b.date.split('~')[0]);
-      return dateB - dateA; // 내림차순 (최신순)
-    } else if (sortBy === 'popular') {
-      // 인기순: views가 있으면 사용, 없으면 랜덤 값 사용
-      const viewsA = a.views || Math.floor(Math.random() * 1000) + 100;
-      const viewsB = b.views || Math.floor(Math.random() * 1000) + 100;
-      return viewsB - viewsA; // 내림차순 (조회수 높은 순)
-    }
-    return 0;
-  });
-
-  // 페이지네이션 계산
-  const totalPages = Math.ceil(filteredSchedules.length / schedulesPerPage);
-  const startIndex = (currentPage - 1) * schedulesPerPage;
-  const endIndex = startIndex + schedulesPerPage;
-  const currentSchedules = filteredSchedules.slice(startIndex, endIndex);
-
-  const handleCreateSchedule = () => {
-    if (isLoggedIn) {
-      setShowCreateModal(true);
-    } else {
-      setShowLoginModal(true);
-    }
-  };
-
-  const handleDirectCreate = () => {
-    setIsAICreate(false);
-    setShowCreateModal(false);
-    setShowDatePicker(true);
-  };
-
-  const handleAICreate = () => {
-    setIsAICreate(true);
-    setShowCreateModal(false);
-    setShowDatePicker(true);
-  };
-
-  const handleDateConfirm = () => {
-    if (selectedStartDate && selectedEndDate) {
-      setShowDatePicker(false);
-
-      if (isAICreate) {
-        // AI 일정 작성 페이지로 이동
-        navigate(`/ai-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
-      } else {
-        // 직접 일정 작성 페이지로 이동
-        navigate(`/direct-schedule-create?startDate=${selectedStartDate}&endDate=${selectedEndDate}`);
-      }
-    } else {
-      alert('출발일과 도착일을 모두 선택해주세요.');
-    }
-  };
-
-  const handleDateCancel = () => {
-    setShowDatePicker(false);
-    setSelectedStartDate('');
-    setSelectedEndDate('');
-    setIsAICreate(false);
-  };
-
-  const handleCardClick = (scheduleId) => {
-    if (isLoggedIn) {
-      navigate(`/travel-schedule/${scheduleId}`);
-    } else {
-      setShowLoginModal(true);
-    }
-  };
-
-  const handleLoginClick = () => {
-    setShowLoginModal(false);
-    navigate('/login');
-  };
-
-  return (
-    <TravelScheduleListPage>
-      <Navigation />
-
-      <TravelScheduleListContainer>
-        <PageHeader>
-          <PageTitle>여행 일정</PageTitle>
-          <CreateButton onClick={handleCreateSchedule}>
-            일정 등록
-          </CreateButton>
-        </PageHeader>
-
-        <FilterSection>
-          <FilterTitle>필터</FilterTitle>
-
-          <FilterGroup style={{ marginBottom: '20px' }}>
-            <FilterLabel>검색</FilterLabel>
-            <SearchInput
-              type="text"
-              placeholder="제목, 지역, 작성자로 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </FilterGroup>
-
-          <FilterGroup>
-            <FilterLabel>지역</FilterLabel>
-            <FilterTags>
-              {['all', '서울', '경기', '인천', '강원', '충청', '전라', '경상', '제주', '부산'].map(region => (
-                <FilterTag
-                  key={region}
-                  $active={selectedRegion === region}
-                  onClick={() => setSelectedRegion(region)}
-                >
-                  {region === 'all' ? '전체' : region}
-                </FilterTag>
-              ))}
-            </FilterTags>
-          </FilterGroup>
-
-          <FilterGroup>
-            <FilterLabel>여행일</FilterLabel>
-            <FilterTags>
-              {[
-                { value: 'all', label: '전체' },
-                { value: '2024-01', label: '1월' },
-                { value: '2024-02', label: '2월' },
-                { value: '2024-03', label: '3월' },
-                { value: '2024-04', label: '4월' },
-                { value: '2024-05', label: '5월' },
-                { value: '2024-06', label: '6월' },
-                { value: '2024-07', label: '7월' },
-                { value: '2024-08', label: '8월' },
-                { value: '2024-09', label: '9월' },
-                { value: '2024-10', label: '10월' },
-                { value: '2024-11', label: '11월' },
-                { value: '2024-12', label: '12월' }
-              ].map(month => (
-                <FilterTag
-                  key={month.value}
-                  $active={selectedMonth === month.value}
-                  onClick={() => setSelectedMonth(month.value)}
-                >
-                  {month.label}
-                </FilterTag>
-              ))}
-            </FilterTags>
-          </FilterGroup>
-          <FilterGroup>
-            <FilterLabel>정렬</FilterLabel>
-            <FilterTags>
-              <FilterTag
-                $active={sortBy === 'latest'}
-                onClick={() => setSortBy('latest')}
-              >
-                최신순
-              </FilterTag>
-              <FilterTag
-                $active={sortBy === 'popular'}
-                onClick={() => setSortBy('popular')}
-              >
-                인기순
-              </FilterTag>
-            </FilterTags>
-          </FilterGroup>
-        </FilterSection>
-
-        {currentSchedules.length > 0 ? (
-          <SchedulesGrid>
-            {currentSchedules.map((schedule) => (
-              <ScheduleCard
-                key={schedule.id}
-                onClick={() => handleCardClick(schedule.id)}
-              >
-                <ScheduleImage src={schedule.image} alt={schedule.title} />
-                <ScheduleContent>
-                  <div>
-                    <ScheduleTitle>{schedule.title}</ScheduleTitle>
-                    <ScheduleMeta>
-                      <ScheduleTag type="region">{schedule.region}</ScheduleTag>
-                      <ScheduleTag type="date">{schedule.date}</ScheduleTag>
-                    </ScheduleMeta>
-                  </div>
-
-                  <div>
-                    {/* 작성자 정보 */}
-                    {schedule.author && (
-                      <AuthorInfo>
-                        <AuthorAvatar>
-                          <img
-                            src={typeof schedule.author === 'string' ?
-                              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" :
-                              schedule.author.profileImage
-                            }
-                            alt={typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
-                          />
-                        </AuthorAvatar>
-                        <AuthorName>
-                          {typeof schedule.author === 'string' ? schedule.author : schedule.author.name}
-                        </AuthorName>
-                      </AuthorInfo>
-                    )}
-
-
-                    <ScheduleStats>
-                      <ScheduleStat>
-                        <EyeIcon />
-                        <span>{schedule.views || 0}</span>
-                      </ScheduleStat>
-                      <ScheduleStat>
-                        <HeartIconSmall />
-                        <span>{schedule.likes || 0}</span>
-                      </ScheduleStat>
-                    </ScheduleStats>
-                  </div>
-                </ScheduleContent>
-              </ScheduleCard>
-            ))}
-          </SchedulesGrid>
-        ) : (
-          <NoResults>
-            <NoResultsIcon>📅</NoResultsIcon>
-            <NoResultsTitle>검색 결과가 없습니다</NoResultsTitle>
-            <NoResultsText>다른 검색어나 맞춤 검색을 시도해보세요</NoResultsText>
-          </NoResults>
-        )}
-
-        {/* 페이지네이션 */}
-        {filteredSchedules.length > 0 && totalPages > 1 && (
-          <Pagination>
-            <PageButton
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              이전
-            </PageButton>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <PageButton
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                $active={currentPage === page}
-              >
-                {page}
-              </PageButton>
-            ))}
-
-            <PageButton
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              다음
-            </PageButton>
-          </Pagination>
-        )}
-      </TravelScheduleListContainer>
-
-      {/* 로그인 모달 */}
-      {showLoginModal && (
-        <LoginModal onClick={() => setShowLoginModal(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalIcon>🔒</ModalIcon>
-            <ModalTitle>로그인이 필요합니다</ModalTitle>
-            <ModalMessage>로그인 후 이용가능 합니다</ModalMessage>
-            <ModalButtons>
-              <ModalButton $primary onClick={handleLoginClick}>로그인</ModalButton>
-              <ModalButton onClick={() => setShowLoginModal(false)}>취소</ModalButton>
-            </ModalButtons>
-          </ModalContent>
-        </LoginModal>
-      )}
-
-      {/* 일정 생성 선택 모달 */}
-      {showCreateModal && (
-        <CreateModalOverlay onClick={() => setShowCreateModal(false)}>
-          <CreateModalContainer onClick={(e) => e.stopPropagation()}>
-            <CreateModalTitle>일정 작성 방법 선택</CreateModalTitle>
-            <CreateModalMessage>
-              어떤 방식으로 일정을 작성하시겠습니까?
-            </CreateModalMessage>
-
-            <CreateOptionsContainer>
-              <CreateOptionButton onClick={handleDirectCreate}>
-                <CreateOptionText>직접일정 작성</CreateOptionText>
-              </CreateOptionButton>
-
-              <CreateOptionButton $primary onClick={handleAICreate}>
-                <CreateOptionText>AI 일정 작성</CreateOptionText>
-              </CreateOptionButton>
-            </CreateOptionsContainer>
-
-            <CreateCancelButton onClick={() => setShowCreateModal(false)}>
-              취소
-            </CreateCancelButton>
-          </CreateModalContainer>
-        </CreateModalOverlay>
-      )}
-
-      {/* 날짜 선택 모달 */}
-      {showDatePicker && (
-        <DatePickerModalOverlay onClick={() => setShowDatePicker(false)}>
-          <DatePickerModalContainer onClick={(e) => e.stopPropagation()}>
-            <DatePickerTitle>여행 날짜 선택</DatePickerTitle>
-            <DatePickerMessage>
-              여행 시작일과 종료일을 선택해주세요
-            </DatePickerMessage>
-
-            <DateInputContainer>
-              <DateInputGroup>
-                <DateLabel>출발일</DateLabel>
-                <DateInput
-                  type="date"
-                  value={selectedStartDate}
-                  onChange={(e) => setSelectedStartDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </DateInputGroup>
-
-              <DateInputGroup>
-                <DateLabel>도착일</DateLabel>
-                <DateInput
-                  type="date"
-                  value={selectedEndDate}
-                  onChange={(e) => setSelectedEndDate(e.target.value)}
-                  min={selectedStartDate || new Date().toISOString().split('T')[0]}
-                />
-              </DateInputGroup>
-            </DateInputContainer>
-
-            <DateButtonGroup>
-              <DateConfirmButton onClick={handleDateConfirm}>
-                확인
-              </DateConfirmButton>
-              <DateCancelButton onClick={handleDateCancel}>
-                취소
-              </DateCancelButton>
-            </DateButtonGroup>
-          </DatePickerModalContainer>
-        </DatePickerModalOverlay>
-      )}
-    </TravelScheduleListPage>
-  );
-};
 
 export default TravelScheduleList;

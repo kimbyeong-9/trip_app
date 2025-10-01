@@ -3,306 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 
-// Styled Components
-const NoticePage = styled.div`
-  min-height: 100vh;
-  background: #f8f9fa;
-  padding-top: 70px;
-  padding-bottom: 20px;
-
-  @media (max-width: 1024px) {
-    padding-bottom: 100px;
-  }
-`;
-
-const NoticeContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
-`;
-
-const PageHeader = styled.div`
-  text-align: center;
-  margin-bottom: 50px;
-  position: relative;
-`;
-
-const BackButton = styled.button`
-  position: absolute;
-  left: 0;
-  top: -60px;
-  background: #28a745;
-  border: none;
-  border-radius: 12px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: white;
-  font-size: 20px;
-
-  &:hover {
-    background: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-`;
-
-const PageTitle = styled.h1`
-  font-size: 36px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 15px;
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-`;
-
-const PageSubtitle = styled.p`
-  font-size: 18px;
-  color: #6c757d;
-  line-height: 1.6;
-  margin: 0;
-`;
-
-const NoticeList = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 1px solid #f0f0f0;
-`;
-
-const NoticeItem = styled.div`
-  padding: 20px 0;
-  border-bottom: 1px solid #f8f9fa;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #f8f9fa;
-    margin: 0 -30px;
-    padding: 20px 30px;
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const NoticeHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 8px;
-  }
-`;
-
-const NoticeTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0;
-  line-height: 1.4;
-`;
-
-const NoticeMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: #6c757d;
-`;
-
-const NoticeDate = styled.span`
-  font-weight: 500;
-`;
-
-const NoticeType = styled.span`
-  background: ${props => {
-    switch (props.type) {
-      case '중요': return 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)';
-      case '업데이트': return 'linear-gradient(135deg, #007bff 0%, #6f42c1 100%)';
-      case '이벤트': return 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-      default: return 'linear-gradient(135deg, #6c757d 0%, #adb5bd 100%)';
-    }
-  }};
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-`;
-
-const NoticePreview = styled.p`
-  font-size: 14px;
-  color: #6c757d;
-  margin: 0;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
-const NoticeModal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 20px;
-`;
-
-const NoticeModalContainer = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 600px;
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-
-  @media (max-width: 480px) {
-    max-width: 90vw;
-    padding: 30px 20px;
-  }
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #f8f9fa;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0;
-  line-height: 1.3;
-  flex: 1;
-  margin-right: 20px;
-`;
-
-const ModalClose = styled.button`
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    color: #495057;
-  }
-`;
-
-const ModalContent = styled.div`
-  font-size: 16px;
-  line-height: 1.6;
-  color: #495057;
-  white-space: pre-line;
-`;
-
-const ModalMeta = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #6c757d;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-`;
-
-const EmptyNotice = styled.div`
-  text-align: center;
-  padding: 60px 20px;
-  color: #6c757d;
-`;
-
-const EmptyIcon = styled.div`
-  font-size: 64px;
-  margin-bottom: 20px;
-`;
-
-const EmptyTitle = styled.h3`
-  font-size: 24px;
-  margin: 0 0 10px 0;
-`;
-
-const EmptyMessage = styled.p`
-  font-size: 16px;
-  margin: 0;
-`;
-
-const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 30px;
-  gap: 10px;
-`;
-
-const PaginationButton = styled.button`
-  padding: 10px 15px;
-  border: 1px solid #e9ecef;
-  background: ${props => props.$active ? '#667eea' : 'white'};
-  color: ${props => props.$active ? 'white' : '#6c757d'};
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  min-width: 40px;
-
-  &:hover:not(:disabled) {
-    background: ${props => props.$active ? '#667eea' : '#f8f9fa'};
-    border-color: #667eea;
-    color: ${props => props.$active ? 'white' : '#667eea'};
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const PaginationInfo = styled.div`
-  color: #6c757d;
-  font-size: 14px;
-  margin-bottom: 20px;
-  text-align: center;
-`;
 
 const Notice = () => {
   const navigate = useNavigate();
@@ -642,5 +342,299 @@ const Notice = () => {
     </NoticePage>
   );
 };
+
+
+const NoticePage = styled.div`
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding-top: 70px;
+  padding-bottom: 20px;
+
+  @media (max-width: 1024px) {
+    padding-bottom: 100px;
+  }
+`;
+
+const NoticeContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+`;
+
+const PageHeader = styled.div`
+  text-align: center;
+  margin-bottom: 50px;
+  position: relative;
+`;
+
+const BackButton = styled.button`
+  position: absolute;
+  left: 0;
+  top: -60px;
+  background: #28a745;
+  border: none;
+  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 20px;
+
+  &:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const PageTitle = styled.h1`
+  font-size: 36px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+`;
+
+const PageSubtitle = styled.p`
+  font-size: 18px;
+  color: #6c757d;
+  line-height: 1.6;
+  margin: 0;
+`;
+
+const NoticeList = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+`;
+
+const NoticeItem = styled.div`
+  padding: 20px 0;
+  border-bottom: 1px solid #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f8f9fa;
+    margin: 0 -30px;
+    padding: 20px 30px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const NoticeHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+`;
+
+const NoticeTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+  line-height: 1.4;
+`;
+
+const NoticeMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #6c757d;
+`;
+
+const NoticeDate = styled.span`
+  font-weight: 500;
+`;
+
+const NoticeType = styled.span`
+  background: ${props => {
+    switch (props.type) {
+      case '중요': return 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)';
+      case '업데이트': return 'linear-gradient(135deg, #007bff 0%, #6f42c1 100%)';
+      case '이벤트': return 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+      default: return 'linear-gradient(135deg, #6c757d 0%, #adb5bd 100%)';
+    }
+  }};
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
+const NoticePreview = styled.p`
+  font-size: 14px;
+  color: #6c757d;
+  margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const NoticeModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+`;
+
+const NoticeModalContainer = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+
+  @media (max-width: 480px) {
+    max-width: 90vw;
+    padding: 30px 20px;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f8f9fa;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+  line-height: 1.3;
+  flex: 1;
+  margin-right: 20px;
+`;
+
+const ModalClose = styled.button`
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #495057;
+  }
+`;
+
+const ModalContent = styled.div`
+  font-size: 16px;
+  line-height: 1.6;
+  color: #495057;
+  white-space: pre-line;
+`;
+
+const ModalMeta = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #6c757d;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+`;
+
+const EmptyNotice = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+`;
+
+const EmptyIcon = styled.div`
+  font-size: 64px;
+  margin-bottom: 20px;
+`;
+
+const EmptyTitle = styled.h3`
+  font-size: 24px;
+  margin: 0 0 10px 0;
+`;
+
+const EmptyMessage = styled.p`
+  font-size: 16px;
+  margin: 0;
+`;
+
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  gap: 10px;
+`;
+
+const PaginationButton = styled.button`
+  padding: 10px 15px;
+  border: 1px solid #e9ecef;
+  background: ${props => props.$active ? '#667eea' : 'white'};
+  color: ${props => props.$active ? 'white' : '#6c757d'};
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 40px;
+
+  &:hover:not(:disabled) {
+    background: ${props => props.$active ? '#667eea' : '#f8f9fa'};
+    border-color: #667eea;
+    color: ${props => props.$active ? 'white' : '#667eea'};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
 
 export default Notice;

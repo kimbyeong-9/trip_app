@@ -2,7 +2,171 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
-// Styled Components
+
+
+const AICategorySelect = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [restaurantCount, setRestaurantCount] = useState(1);
+  const [cafeCount, setCafeCount] = useState(1);
+  const [selectedActivities, setSelectedActivities] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // URL에서 파라미터 추출
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const region = params.get('region');
+    const start = params.get('startDate');
+    const end = params.get('endDate');
+
+    if (region) setSelectedRegion(region);
+    if (start) setStartDate(start);
+    if (end) setEndDate(end);
+  }, [location]);
+
+  const handleClose = () => {
+    navigate('/travel-schedules');
+  };
+
+  const handleBack = () => {
+    // 이전 AI 지역 선택 모달로 돌아가기
+    navigate(`/ai-schedule-create?startDate=${startDate}&endDate=${endDate}`);
+  };
+
+  const handleRestaurantIncrement = () => {
+    setRestaurantCount(prev => prev + 1);
+  };
+
+  const handleRestaurantDecrement = () => {
+    if (restaurantCount > 1) {
+      setRestaurantCount(prev => prev - 1);
+    }
+  };
+
+  const handleCafeIncrement = () => {
+    setCafeCount(prev => prev + 1);
+  };
+
+  const handleCafeDecrement = () => {
+    if (cafeCount > 1) {
+      setCafeCount(prev => prev - 1);
+    }
+  };
+
+  const handleActivityToggle = (activity) => {
+    setSelectedActivities(prev =>
+      prev.includes(activity)
+        ? prev.filter(a => a !== activity)
+        : [...prev, activity]
+    );
+  };
+
+  const handleNext = () => {
+    // 선택한 모든 데이터를 직접 일정 등록 페이지로 전달
+    const params = new URLSearchParams({
+      startDate: startDate,
+      endDate: endDate,
+      region: selectedRegion,
+      restaurantCount: restaurantCount,
+      cafeCount: cafeCount,
+      activities: selectedActivities.join(','),
+      isAIGenerated: 'true'
+    });
+
+    navigate(`/direct-schedule-create?${params.toString()}`);
+  };
+
+  // 지역명을 한글로 변환하는 함수
+  const getRegionName = (regionId) => {
+    const regionMap = {
+      'seoul': '서울',
+      'busan': '부산',
+      'jeju': '제주',
+      'gangwon': '강원',
+      'gyeonggi': '경기',
+      'incheon': '인천',
+      'chungcheong': '충청',
+      'jeolla': '전라',
+      'gyeongsang': '경상'
+    };
+    return regionMap[regionId] || regionId;
+  };
+
+  return (
+    <AICategorySelectModal onClick={(e) => e.target === e.currentTarget && handleClose()}>
+      <AICategoryContainer onClick={(e) => e.stopPropagation()}>
+        <CloseButton onClick={handleClose}>
+          ×
+        </CloseButton>
+
+        <CategorySection>
+          <CategoryTitle>
+            {selectedRegion && `${getRegionName(selectedRegion)} 여행 계획`}
+          </CategoryTitle>
+
+          <QuestionContainer>
+            <QuestionText>하루에 방문하고 싶은 맛집의 횟수는?</QuestionText>
+            <CounterContainer>
+              <CounterButton
+                onClick={handleRestaurantDecrement}
+                disabled={restaurantCount <= 1}
+              >
+                −
+              </CounterButton>
+              <CounterValue>{restaurantCount}</CounterValue>
+              <CounterButton onClick={handleRestaurantIncrement}>
+                +
+              </CounterButton>
+            </CounterContainer>
+          </QuestionContainer>
+
+          <QuestionContainer>
+            <QuestionText>하루에 방문하고 싶은 카페 횟수는?</QuestionText>
+            <CounterContainer>
+              <CounterButton
+                onClick={handleCafeDecrement}
+                disabled={cafeCount <= 1}
+              >
+                −
+              </CounterButton>
+              <CounterValue>{cafeCount}</CounterValue>
+              <CounterButton onClick={handleCafeIncrement}>
+                +
+              </CounterButton>
+            </CounterContainer>
+          </QuestionContainer>
+
+          <ActivitySection>
+            <ActivityTitle>식사 전후 또는 하고싶은 활동은?</ActivityTitle>
+            <ActivityGrid>
+              {['체험', '레포츠', '자연', '역사', '건축/조형물', '축제/공연'].map((activity) => (
+                <ActivityButton
+                  key={activity}
+                  selected={selectedActivities.includes(activity)}
+                  onClick={() => handleActivityToggle(activity)}
+                >
+                  {activity}
+                </ActivityButton>
+              ))}
+            </ActivityGrid>
+          </ActivitySection>
+
+          <ButtonGroup>
+            <ActionButton onClick={handleBack}>
+              이전으로
+            </ActionButton>
+            <ActionButton $primary onClick={handleNext}>
+              다음
+            </ActionButton>
+          </ButtonGroup>
+        </CategorySection>
+      </AICategoryContainer>
+    </AICategorySelectModal>
+  );
+};
+
 const AICategorySelectModal = styled.div`
   position: fixed;
   top: 0;
@@ -226,168 +390,5 @@ const ActivityButton = styled.button`
     transform: translateY(0);
   }
 `;
-
-const AICategorySelect = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [restaurantCount, setRestaurantCount] = useState(1);
-  const [cafeCount, setCafeCount] = useState(1);
-  const [selectedActivities, setSelectedActivities] = useState([]);
-  const [selectedRegion, setSelectedRegion] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  // URL에서 파라미터 추출
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const region = params.get('region');
-    const start = params.get('startDate');
-    const end = params.get('endDate');
-
-    if (region) setSelectedRegion(region);
-    if (start) setStartDate(start);
-    if (end) setEndDate(end);
-  }, [location]);
-
-  const handleClose = () => {
-    navigate('/travel-schedules');
-  };
-
-  const handleBack = () => {
-    // 이전 AI 지역 선택 모달로 돌아가기
-    navigate(`/ai-schedule-create?startDate=${startDate}&endDate=${endDate}`);
-  };
-
-  const handleRestaurantIncrement = () => {
-    setRestaurantCount(prev => prev + 1);
-  };
-
-  const handleRestaurantDecrement = () => {
-    if (restaurantCount > 1) {
-      setRestaurantCount(prev => prev - 1);
-    }
-  };
-
-  const handleCafeIncrement = () => {
-    setCafeCount(prev => prev + 1);
-  };
-
-  const handleCafeDecrement = () => {
-    if (cafeCount > 1) {
-      setCafeCount(prev => prev - 1);
-    }
-  };
-
-  const handleActivityToggle = (activity) => {
-    setSelectedActivities(prev =>
-      prev.includes(activity)
-        ? prev.filter(a => a !== activity)
-        : [...prev, activity]
-    );
-  };
-
-  const handleNext = () => {
-    // 선택한 모든 데이터를 직접 일정 등록 페이지로 전달
-    const params = new URLSearchParams({
-      startDate: startDate,
-      endDate: endDate,
-      region: selectedRegion,
-      restaurantCount: restaurantCount,
-      cafeCount: cafeCount,
-      activities: selectedActivities.join(','),
-      isAIGenerated: 'true'
-    });
-
-    navigate(`/direct-schedule-create?${params.toString()}`);
-  };
-
-  // 지역명을 한글로 변환하는 함수
-  const getRegionName = (regionId) => {
-    const regionMap = {
-      'seoul': '서울',
-      'busan': '부산',
-      'jeju': '제주',
-      'gangwon': '강원',
-      'gyeonggi': '경기',
-      'incheon': '인천',
-      'chungcheong': '충청',
-      'jeolla': '전라',
-      'gyeongsang': '경상'
-    };
-    return regionMap[regionId] || regionId;
-  };
-
-  return (
-    <AICategorySelectModal onClick={(e) => e.target === e.currentTarget && handleClose()}>
-      <AICategoryContainer onClick={(e) => e.stopPropagation()}>
-        <CloseButton onClick={handleClose}>
-          ×
-        </CloseButton>
-
-        <CategorySection>
-          <CategoryTitle>
-            {selectedRegion && `${getRegionName(selectedRegion)} 여행 계획`}
-          </CategoryTitle>
-
-          <QuestionContainer>
-            <QuestionText>하루에 방문하고 싶은 맛집의 횟수는?</QuestionText>
-            <CounterContainer>
-              <CounterButton
-                onClick={handleRestaurantDecrement}
-                disabled={restaurantCount <= 1}
-              >
-                −
-              </CounterButton>
-              <CounterValue>{restaurantCount}</CounterValue>
-              <CounterButton onClick={handleRestaurantIncrement}>
-                +
-              </CounterButton>
-            </CounterContainer>
-          </QuestionContainer>
-
-          <QuestionContainer>
-            <QuestionText>하루에 방문하고 싶은 카페 횟수는?</QuestionText>
-            <CounterContainer>
-              <CounterButton
-                onClick={handleCafeDecrement}
-                disabled={cafeCount <= 1}
-              >
-                −
-              </CounterButton>
-              <CounterValue>{cafeCount}</CounterValue>
-              <CounterButton onClick={handleCafeIncrement}>
-                +
-              </CounterButton>
-            </CounterContainer>
-          </QuestionContainer>
-
-          <ActivitySection>
-            <ActivityTitle>식사 전후 또는 하고싶은 활동은?</ActivityTitle>
-            <ActivityGrid>
-              {['체험', '레포츠', '자연', '역사', '건축/조형물', '축제/공연'].map((activity) => (
-                <ActivityButton
-                  key={activity}
-                  selected={selectedActivities.includes(activity)}
-                  onClick={() => handleActivityToggle(activity)}
-                >
-                  {activity}
-                </ActivityButton>
-              ))}
-            </ActivityGrid>
-          </ActivitySection>
-
-          <ButtonGroup>
-            <ActionButton onClick={handleBack}>
-              이전으로
-            </ActionButton>
-            <ActionButton $primary onClick={handleNext}>
-              다음
-            </ActionButton>
-          </ButtonGroup>
-        </CategorySection>
-      </AICategoryContainer>
-    </AICategorySelectModal>
-  );
-};
 
 export default AICategorySelect;

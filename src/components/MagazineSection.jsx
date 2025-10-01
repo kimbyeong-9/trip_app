@@ -1,9 +1,150 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import MagazineDetailModal from './MagazineDetailModal';
+import { supabase } from '../supabaseClient';
 
-// Styled Components
+
+
+const MagazineSection = ({ selectedRegion, onCardClick }) => {
+  const navigate = useNavigate();
+  const [magazineCards, setMagazineCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedMagazine, setSelectedMagazine] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchMagazineCards = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('MagazineSections')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching magazine cards:', error);
+        } else {
+          setMagazineCards(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching magazine cards:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMagazineCards();
+  }, []);
+
+  const handleViewAll = () => {
+    navigate('/magazines');
+  };
+
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
+
+  const handleMagazineClick = (magazine) => {
+    if (isLoggedIn()) {
+      // 로그인된 상태에서는 상세 모달 표시
+      setSelectedMagazine(magazine);
+      setIsModalOpen(true);
+    } else {
+      // 로그인되지 않은 상태에서는 로그인 모달 표시
+      onCardClick(`/magazine/${magazine.id}`);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedMagazine(null);
+  };
+
+  // 카드 필터링 함수
+  const filterCards = (cards, selectedRegion) => {
+    let filtered = cards;
+    const regionMapping = {
+      'seoul': '서울',
+      'busan': '부산',
+      'jeju': '제주',
+      'gyeonggi': '경기',
+      'gangwon': '강원',
+      'jeolla': '전라',
+      'chungcheong': '충청',
+      'gyeongsang': '경상',
+      'incheon': '인천'
+    };
+
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(card => card.region === regionMapping[selectedRegion]);
+    }
+
+    return filtered;
+  };
+
+  // 필터링된 카드들
+  const filteredMagazineCards = filterCards(magazineCards, selectedRegion);
+
+  if (loading) {
+    return (
+      <MagazineSectionContainer>
+        <SectionHeader>
+          <h2>여행 매거진</h2>
+        </SectionHeader>
+        <LoadingSpinner>
+          <Spinner />
+          <LoadingText>매거진 로딩중...</LoadingText>
+        </LoadingSpinner>
+      </MagazineSectionContainer>
+    );
+  }
+
+  return (
+    <MagazineSectionContainer>
+      <SectionHeader>
+        <h2>여행 매거진</h2>
+        <ViewAllButton onClick={handleViewAll}>전체보기</ViewAllButton>
+      </SectionHeader>
+
+      <MagazineCards>
+        {filteredMagazineCards.length > 0 ? (
+          filteredMagazineCards.map((card) => (
+            <MagazineCard key={card.id} onClick={() => handleMagazineClick(card)}>
+              <CardImage src={card.image} alt={card.title} />
+              <LocationBadge>{card.region}</LocationBadge>
+              <CardContent>
+                <CardTitle>{card.title}</CardTitle>
+                <CardMeta>
+                  <Date>{card.date}</Date>
+                </CardMeta>
+              </CardContent>
+            </MagazineCard>
+          ))
+        ) : (
+          <NoResultsMessage>
+            <NoResultsIcon>🔍</NoResultsIcon>
+            <NoResultsTitle>검색된 내용이 없습니다</NoResultsTitle>
+            <NoResultsText>다른 키워드로 검색해보세요</NoResultsText>
+          </NoResultsMessage>
+        )}
+      </MagazineCards>
+
+      {/* 매거진 상세 모달 */}
+      {isModalOpen && selectedMagazine && (
+        <MagazineDetailModal
+          magazine={selectedMagazine}
+          onClose={handleCloseModal}
+        />
+      )}
+    </MagazineSectionContainer>
+  );
+};
+
+
+
+
 const MagazineSectionContainer = styled.div`
   padding: 60px 20px;
   background: #f8f9fa;
@@ -156,101 +297,36 @@ const NoResultsText = styled.p`
   margin: 0;
 `;
 
-const MagazineSection = ({ magazineCards, selectedRegion, onCardClick }) => {
-  const navigate = useNavigate();
-  const [selectedMagazine, setSelectedMagazine] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const LoadingSpinner = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+`;
 
-  const handleViewAll = () => {
-    navigate('/magazines');
-  };
+const Spinner = styled.div`
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #9c27b0;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 
-  // 로그인 상태 체크 함수
-  const isLoggedIn = () => {
-    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-    return !!loginData;
-  };
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 
-  const handleMagazineClick = (magazine) => {
-    if (isLoggedIn()) {
-      // 로그인된 상태에서는 상세 모달 표시
-      setSelectedMagazine(magazine);
-      setIsModalOpen(true);
-    } else {
-      // 로그인되지 않은 상태에서는 로그인 모달 표시
-      onCardClick(`/magazine/${magazine.id}`);
-    }
-  };
+const LoadingText = styled.p`
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
+`;
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedMagazine(null);
-  };
-
-  // 카드 필터링 함수
-  const filterCards = (cards, selectedRegion) => {
-    let filtered = cards;
-    const regionMapping = {
-      'seoul': '서울',
-      'busan': '부산',
-      'jeju': '제주',
-      'gyeonggi': '경기',
-      'gangwon': '강원',
-      'jeolla': '전라',
-      'chungcheong': '충청',
-      'gyeongsang': '경상',
-      'incheon': '인천'
-    };
-
-    if (selectedRegion !== 'all') {
-      filtered = filtered.filter(card => card.region === regionMapping[selectedRegion]);
-    }
-
-    return filtered;
-  };
-
-  // 필터링된 카드들
-  const filteredMagazineCards = filterCards(magazineCards, selectedRegion);
-
-  return (
-    <MagazineSectionContainer>
-      <SectionHeader>
-        <h2>여행 매거진</h2>
-        <ViewAllButton onClick={handleViewAll}>전체보기</ViewAllButton>
-      </SectionHeader>
-
-      <MagazineCards>
-        {filteredMagazineCards.length > 0 ? (
-          filteredMagazineCards.map((card) => (
-            <MagazineCard key={card.id} onClick={() => handleMagazineClick(card)}>
-              <CardImage src={card.image} alt={card.title} />
-              <LocationBadge>{card.region}</LocationBadge>
-              <CardContent>
-                <CardTitle>{card.title}</CardTitle>
-                <CardMeta>
-                  <Date>{card.date}</Date>
-                </CardMeta>
-              </CardContent>
-            </MagazineCard>
-          ))
-        ) : (
-          <NoResultsMessage>
-            <NoResultsIcon>🔍</NoResultsIcon>
-            <NoResultsTitle>검색된 내용이 없습니다</NoResultsTitle>
-            <NoResultsText>다른 키워드로 검색해보세요</NoResultsText>
-          </NoResultsMessage>
-        )}
-      </MagazineCards>
-
-      {/* 매거진 상세 모달 */}
-      {isModalOpen && selectedMagazine && (
-        <MagazineDetailModal
-          magazine={selectedMagazine}
-          onClose={handleCloseModal}
-        />
-      )}
-    </MagazineSectionContainer>
-  );
-};
 
 export default MagazineSection;

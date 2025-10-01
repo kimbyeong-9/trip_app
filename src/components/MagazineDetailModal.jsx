@@ -1,7 +1,120 @@
 import React from 'react';
 import styled from 'styled-components';
 
-// Styled Components
+
+
+
+const MagazineDetailModal = ({ magazine, onClose }) => {
+  if (!magazine) return null;
+
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <ModalOverlay onClick={handleOverlayClick}>
+      <ModalContainer>
+        <CloseButton onClick={onClose}>
+          ✕
+        </CloseButton>
+
+        <ModalContent>
+          <HeroImage src={magazine.image} alt={magazine.title} />
+
+          <BlogHeader>
+            <BlogTitle>{magazine.title}</BlogTitle>
+            <BlogMeta>
+              <MetaItem icon="👤">
+                by {magazine.author}
+              </MetaItem>
+              <MetaItem icon="📅">
+                {formatDate(magazine.date)}
+              </MetaItem>
+              <MetaItem icon="👁">
+                {magazine.views || 0} views
+              </MetaItem>
+            </BlogMeta>
+          </BlogHeader>
+
+          <BlogContent>
+            <ComingSoonSection>
+              <ComingSoonIcon>🚧</ComingSoonIcon>
+              <ComingSoonTitle>준비 중입니다</ComingSoonTitle>
+              <ComingSoonText>
+                이 매거진 콘텐츠는 현재 준비 중입니다.
+              </ComingSoonText>
+              <ComingSoonSubtext>
+                곧 네이버/구글 블로그와 연결하여 풍부한 내용을 제공할 예정입니다.
+              </ComingSoonSubtext>
+            </ComingSoonSection>
+
+            {/* 블로그 형식 템플릿 구조 */}
+            <BlogSection>
+              <SectionTitle>여행 개요</SectionTitle>
+              <BlogText>
+                {magazine.description || "이곳에 여행 개요가 표시됩니다."}
+              </BlogText>
+            </BlogSection>
+
+            <BlogSection>
+              <SectionTitle>주요 명소</SectionTitle>
+              <BlogText>
+                주요 명소와 추천 장소들이 여기에 표시됩니다.
+              </BlogText>
+            </BlogSection>
+
+            <BlogSection>
+              <SectionTitle>여행 팁</SectionTitle>
+              <BlogText>
+                실용적인 여행 팁과 현지 정보가 여기에 표시됩니다.
+              </BlogText>
+            </BlogSection>
+
+            <BlogSection>
+              <SectionTitle>맛집 추천</SectionTitle>
+              <BlogText>
+                현지 맛집과 음식 추천이 여기에 표시됩니다.
+              </BlogText>
+            </BlogSection>
+
+            <BlogSection>
+              <SectionTitle>교통 정보</SectionTitle>
+              <BlogText>
+                교통편과 이동 방법에 대한 정보가 여기에 표시됩니다.
+              </BlogText>
+            </BlogSection>
+          </BlogContent>
+
+          <TagSection>
+            <TagTitle>태그</TagTitle>
+            <TagList>
+              {[magazine.region, magazine.category, '여행', '매거진', '가이드']
+                .filter(tag => tag && tag.trim() !== '')
+                .map((tag, index) => (
+                  <Tag key={index}>{tag}</Tag>
+                ))
+              }
+            </TagList>
+          </TagSection>
+        </ModalContent>
+      </ModalContainer>
+    </ModalOverlay>
+  );
+};
+
+
+
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -282,113 +395,5 @@ const Tag = styled.span`
   }
 `;
 
-const MagazineDetailModal = ({ magazine, onClose }) => {
-  if (!magazine) return null;
-
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <ModalOverlay onClick={handleOverlayClick}>
-      <ModalContainer>
-        <CloseButton onClick={onClose}>
-          ✕
-        </CloseButton>
-
-        <ModalContent>
-          <HeroImage src={magazine.image} alt={magazine.title} />
-
-          <BlogHeader>
-            <BlogTitle>{magazine.title}</BlogTitle>
-            <BlogMeta>
-              <MetaItem icon="👤">
-                by {magazine.author}
-              </MetaItem>
-              <MetaItem icon="📅">
-                {formatDate(magazine.date)}
-              </MetaItem>
-              <MetaItem icon="👁">
-                {magazine.views || 0} views
-              </MetaItem>
-            </BlogMeta>
-          </BlogHeader>
-
-          <BlogContent>
-            <ComingSoonSection>
-              <ComingSoonIcon>🚧</ComingSoonIcon>
-              <ComingSoonTitle>준비 중입니다</ComingSoonTitle>
-              <ComingSoonText>
-                이 매거진 콘텐츠는 현재 준비 중입니다.
-              </ComingSoonText>
-              <ComingSoonSubtext>
-                곧 네이버/구글 블로그와 연결하여 풍부한 내용을 제공할 예정입니다.
-              </ComingSoonSubtext>
-            </ComingSoonSection>
-
-            {/* 블로그 형식 템플릿 구조 */}
-            <BlogSection>
-              <SectionTitle>여행 개요</SectionTitle>
-              <BlogText>
-                {magazine.description || "이곳에 여행 개요가 표시됩니다."}
-              </BlogText>
-            </BlogSection>
-
-            <BlogSection>
-              <SectionTitle>주요 명소</SectionTitle>
-              <BlogText>
-                주요 명소와 추천 장소들이 여기에 표시됩니다.
-              </BlogText>
-            </BlogSection>
-
-            <BlogSection>
-              <SectionTitle>여행 팁</SectionTitle>
-              <BlogText>
-                실용적인 여행 팁과 현지 정보가 여기에 표시됩니다.
-              </BlogText>
-            </BlogSection>
-
-            <BlogSection>
-              <SectionTitle>맛집 추천</SectionTitle>
-              <BlogText>
-                현지 맛집과 음식 추천이 여기에 표시됩니다.
-              </BlogText>
-            </BlogSection>
-
-            <BlogSection>
-              <SectionTitle>교통 정보</SectionTitle>
-              <BlogText>
-                교통편과 이동 방법에 대한 정보가 여기에 표시됩니다.
-              </BlogText>
-            </BlogSection>
-          </BlogContent>
-
-          <TagSection>
-            <TagTitle>태그</TagTitle>
-            <TagList>
-              {[magazine.region, magazine.category, '여행', '매거진', '가이드']
-                .filter(tag => tag && tag.trim() !== '')
-                .map((tag, index) => (
-                  <Tag key={index}>{tag}</Tag>
-                ))
-              }
-            </TagList>
-          </TagSection>
-        </ModalContent>
-      </ModalContainer>
-    </ModalOverlay>
-  );
-};
 
 export default MagazineDetailModal;

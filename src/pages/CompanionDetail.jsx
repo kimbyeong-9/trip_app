@@ -1,10 +1,237 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
-import { fullCompanionPosts, fillMissingData } from '../data/mockData';
+import { supabase } from '../supabaseClient';
 
-// Styled Components - 기존 CSS와 동일한 스타일
+
+
+const CompanionDetail = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [companion, setCompanion] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isUserPost, setIsUserPost] = useState(false);
+
+  // localStorage에서 사용자가 등록한 게시물 불러오기
+  const getUserPosts = () => {
+    try {
+      return JSON.parse(localStorage.getItem('companionPosts')) || [];
+    } catch {
+      return [];
+    }
+  };
+
+  // Supabase와 localStorage에서 데이터 가져오기
+  useEffect(() => {
+    const fetchCompanion = async () => {
+      try {
+        setLoading(true);
+
+        // 먼저 localStorage에서 찾기 (사용자가 작성한 게시물)
+        const userPosts = getUserPosts();
+        const userPost = userPosts.find(post => post.id.toString() === id);
+
+        if (userPost) {
+          setCompanion(userPost);
+          setIsUserPost(true);
+        } else {
+          // Supabase에서 찾기
+          const { data, error } = await supabase
+            .from('CompanionList')
+            .select('*')
+            .eq('id', parseInt(id))
+            .single();
+
+          if (error) {
+            console.error('Error fetching companion:', error);
+            setCompanion(null);
+          } else {
+            setCompanion(data);
+            setIsUserPost(false);
+          }
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        setCompanion(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanion();
+  }, [id]);
+
+  // 작성자 프로필 클릭 핸들러
+  const handleAuthorClick = () => {
+    if (isUserPost) {
+      // 내가 작성한 게시물인 경우 마이페이지로 이동
+      navigate('/profile/user');
+    } else {
+      // 다른 사용자 게시물인 경우 해당 사용자 프로필로 이동
+      navigate(`/profile/${companion.author?.name || companion.author}`);
+    }
+  };
+
+  // 동행모집 삭제 핸들러
+  const handleDelete = () => {
+    if (window.confirm('정말로 이 동행모집을 삭제하시겠습니까?')) {
+      try {
+        const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
+        const updatedPosts = storedPosts.filter(post => post.id.toString() !== id);
+        localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
+
+        alert('동행모집이 성공적으로 삭제되었습니다.');
+        navigate('/profile/user'); // 마이페이지로 이동
+      } catch (error) {
+        console.error('동행모집 삭제 실패:', error);
+        alert('삭제에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <CompanionDetailPage>
+        <Navigation />
+        <LoadingMessage>
+          <LoadingSpinner />
+          <LoadingText>동행 정보를 불러오는 중...</LoadingText>
+        </LoadingMessage>
+      </CompanionDetailPage>
+    );
+  }
+
+  if (!companion) {
+    return (
+      <CompanionDetailPage>
+        <Navigation />
+        <NotFound>
+          <NotFoundTitle>동행 모집글을 찾을 수 없습니다.</NotFoundTitle>
+          <NotFoundMessage>요청하신 동행 모집글이 존재하지 않습니다.</NotFoundMessage>
+          <NotFoundButton onClick={() => navigate('/')}>홈으로 돌아가기</NotFoundButton>
+        </NotFound>
+      </CompanionDetailPage>
+    );
+  }
+
+  return (
+    <CompanionDetailPage>
+      <Navigation />
+      
+      <CompanionDetailContainer>
+        <DetailHeader>
+          <BackButton onClick={() => navigate(-1)}>
+            ← 뒤로가기
+          </BackButton>
+        </DetailHeader>
+
+        <CompanionDetailContent>
+          <div>
+            <DetailImage src={companion.image} alt={companion.title} />
+            <LocationBadge>{companion.region}</LocationBadge>
+          </div>
+
+          <DetailInfo>
+            <TitleSection>
+              <Title>{companion.title}</Title>
+              <MetaInfo>
+                <AgeGroup>{companion.ageGroup || companion.agegroup}</AgeGroup>
+                <Date>{companion.date}</Date>
+              </MetaInfo>
+            </TitleSection>
+
+            <AuthorSection onClick={handleAuthorClick}>
+              <AuthorAvatar
+                src={companion.author?.profileImage || companion.authorImage}
+                alt={companion.author?.name || companion.author}
+              />
+              <AuthorInfo>
+                <AuthorName>{companion.author?.name || companion.author}</AuthorName>
+                <AuthorRole>
+                  {companion.author?.age && companion.author?.location
+                    ? `${companion.author.age}세 · ${companion.author.location}`
+                    : '모집자'
+                  }
+                </AuthorRole>
+              </AuthorInfo>
+              <ProfileArrow>→</ProfileArrow>
+            </AuthorSection>
+
+            <DescriptionSection>
+              <h3>여행 소개</h3>
+              <Description>{companion.description}</Description>
+            </DescriptionSection>
+
+            <DetailsGrid>
+              <DetailItem>
+                <DetailLabel>예산</DetailLabel>
+                <DetailValue>{companion.estimatedCost || companion.budget || '협의 후 결정'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>모임 장소</DetailLabel>
+                <DetailValue>{companion.meetingPoint || '추후 공지'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>참여 인원</DetailLabel>
+                <DetailValue>{companion.participants.current}/{companion.participants.max}명</DetailValue>
+              </DetailItem>
+            </DetailsGrid>
+
+            {(companion.travelStyle && companion.travelStyle.length > 0) && (
+              <InterestsSection>
+                <h3>여행 스타일</h3>
+                <InterestTags>
+                  {companion.travelStyle.map((style, index) => (
+                    <InterestTag key={index}>{style}</InterestTag>
+                  ))}
+                </InterestTags>
+              </InterestsSection>
+            )}
+
+            {(companion.interests && companion.interests.length > 0) && (
+              <InterestsSection>
+                <h3>관심사</h3>
+                <InterestTags>
+                  {companion.interests.map((interest, index) => (
+                    <InterestTag key={index}>{interest}</InterestTag>
+                  ))}
+                </InterestTags>
+              </InterestsSection>
+            )}
+
+            {companion.notice && (
+              <DescriptionSection>
+                <h3>특별 안내사항</h3>
+                <Description>{companion.notice}</Description>
+              </DescriptionSection>
+            )}
+
+            <ActionButtons>
+              {isUserPost ? (
+                // 내가 작성한 게시물인 경우 삭제 버튼만 표시
+                <DeleteButton onClick={handleDelete}>
+                  동행모집 삭제
+                </DeleteButton>
+              ) : (
+                // 다른 사용자의 게시물인 경우 참여하기/문의하기 버튼 표시
+                <>
+                  <JoinButton disabled={companion.participants.current >= companion.participants.max}>
+                    {companion.participants.current >= companion.participants.max ? '모집마감' : '참여하기'}
+                  </JoinButton>
+                  <ContactButton>문의하기</ContactButton>
+                </>
+              )}
+            </ActionButtons>
+          </DetailInfo>
+        </CompanionDetailContent>
+      </CompanionDetailContainer>
+    </CompanionDetailPage>
+  );
+};
+
+
+
 const CompanionDetailPage = styled.div`
   min-height: 100vh;
   background: #f8f9fa;
@@ -324,186 +551,36 @@ const NotFoundButton = styled.button`
   }
 `;
 
-const CompanionDetail = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
+const LoadingMessage = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  min-height: 400px;
+  width: 100%;
+`;
 
-  // localStorage에서 사용자가 등록한 게시물 불러오기
-  const getUserPosts = () => {
-    try {
-      return JSON.parse(localStorage.getItem('companionPosts')) || [];
-    } catch {
-      return [];
-    }
-  };
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 
-  // mockData에서 가져온 기본 데이터를 사용 (CompanionList와 동일)
-  const completedDefaultPosts = fullCompanionPosts.map(fillMissingData);
-
-  // 사용자 게시물과 완성된 기본 게시물 결합 (CompanionList와 동일)
-  const userPosts = getUserPosts();
-  const allCompanionPosts = [...userPosts, ...completedDefaultPosts];
-
-  // ID를 기준으로 게시물 찾기
-  const companion = allCompanionPosts.find(post => post.id.toString() === id);
-
-  // 사용자가 작성한 게시물인지 확인
-  const isUserPost = userPosts.some(post => post.id.toString() === id);
-
-  // 작성자 프로필 클릭 핸들러
-  const handleAuthorClick = () => {
-    if (isUserPost) {
-      // 내가 작성한 게시물인 경우 마이페이지로 이동
-      navigate('/profile/user');
-    } else {
-      // 다른 사용자 게시물인 경우 해당 사용자 프로필로 이동
-      navigate(`/profile/${companion.author?.name || companion.author}`);
-    }
-  };
-
-  // 동행모집 삭제 핸들러
-  const handleDelete = () => {
-    if (window.confirm('정말로 이 동행모집을 삭제하시겠습니까?')) {
-      try {
-        const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-        const updatedPosts = storedPosts.filter(post => post.id.toString() !== id);
-        localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
-
-        alert('동행모집이 성공적으로 삭제되었습니다.');
-        navigate('/profile/user'); // 마이페이지로 이동
-      } catch (error) {
-        console.error('동행모집 삭제 실패:', error);
-        alert('삭제에 실패했습니다. 다시 시도해주세요.');
-      }
-    }
-  };
-
-  if (!companion) {
-    return (
-      <CompanionDetailPage>
-        <Navigation />
-        <NotFound>
-          <NotFoundTitle>동행 모집글을 찾을 수 없습니다.</NotFoundTitle>
-          <NotFoundMessage>요청하신 동행 모집글이 존재하지 않습니다.</NotFoundMessage>
-          <NotFoundButton onClick={() => navigate('/')}>홈으로 돌아가기</NotFoundButton>
-        </NotFound>
-      </CompanionDetailPage>
-    );
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
+`;
 
-  return (
-    <CompanionDetailPage>
-      <Navigation />
-      
-      <CompanionDetailContainer>
-        <DetailHeader>
-          <BackButton onClick={() => navigate(-1)}>
-            ← 뒤로가기
-          </BackButton>
-        </DetailHeader>
+const LoadingText = styled.p`
+  margin-top: 20px;
+  font-size: 16px;
+  color: #6c757d;
+`;
 
-        <CompanionDetailContent>
-          <div>
-            <DetailImage src={companion.image} alt={companion.title} />
-            <LocationBadge>{companion.region}</LocationBadge>
-          </div>
 
-          <DetailInfo>
-            <TitleSection>
-              <Title>{companion.title}</Title>
-              <MetaInfo>
-                <AgeGroup>{companion.ageGroup}</AgeGroup>
-                <Date>{companion.date}</Date>
-              </MetaInfo>
-            </TitleSection>
-
-            <AuthorSection onClick={handleAuthorClick}>
-              <AuthorAvatar
-                src={companion.author?.profileImage || companion.authorImage}
-                alt={companion.author?.name || companion.author}
-              />
-              <AuthorInfo>
-                <AuthorName>{companion.author?.name || companion.author}</AuthorName>
-                <AuthorRole>
-                  {companion.author?.age && companion.author?.location
-                    ? `${companion.author.age}세 · ${companion.author.location}`
-                    : '모집자'
-                  }
-                </AuthorRole>
-              </AuthorInfo>
-              <ProfileArrow>→</ProfileArrow>
-            </AuthorSection>
-
-            <DescriptionSection>
-              <h3>여행 소개</h3>
-              <Description>{companion.description}</Description>
-            </DescriptionSection>
-
-            <DetailsGrid>
-              <DetailItem>
-                <DetailLabel>예산</DetailLabel>
-                <DetailValue>{companion.estimatedCost || companion.budget || '협의 후 결정'}</DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>모임 장소</DetailLabel>
-                <DetailValue>{companion.meetingPoint || '추후 공지'}</DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>참여 인원</DetailLabel>
-                <DetailValue>{companion.participants.current}/{companion.participants.max}명</DetailValue>
-              </DetailItem>
-            </DetailsGrid>
-
-            {(companion.travelStyle && companion.travelStyle.length > 0) && (
-              <InterestsSection>
-                <h3>여행 스타일</h3>
-                <InterestTags>
-                  {companion.travelStyle.map((style, index) => (
-                    <InterestTag key={index}>{style}</InterestTag>
-                  ))}
-                </InterestTags>
-              </InterestsSection>
-            )}
-
-            {(companion.interests && companion.interests.length > 0) && (
-              <InterestsSection>
-                <h3>관심사</h3>
-                <InterestTags>
-                  {companion.interests.map((interest, index) => (
-                    <InterestTag key={index}>{interest}</InterestTag>
-                  ))}
-                </InterestTags>
-              </InterestsSection>
-            )}
-
-            {companion.notice && (
-              <DescriptionSection>
-                <h3>특별 안내사항</h3>
-                <Description>{companion.notice}</Description>
-              </DescriptionSection>
-            )}
-
-            <ActionButtons>
-              {isUserPost ? (
-                // 내가 작성한 게시물인 경우 삭제 버튼만 표시
-                <DeleteButton onClick={handleDelete}>
-                  동행모집 삭제
-                </DeleteButton>
-              ) : (
-                // 다른 사용자의 게시물인 경우 참여하기/문의하기 버튼 표시
-                <>
-                  <JoinButton disabled={companion.participants.current >= companion.participants.max}>
-                    {companion.participants.current >= companion.participants.max ? '모집마감' : '참여하기'}
-                  </JoinButton>
-                  <ContactButton>문의하기</ContactButton>
-                </>
-              )}
-            </ActionButtons>
-          </DetailInfo>
-        </CompanionDetailContent>
-      </CompanionDetailContainer>
-    </CompanionDetailPage>
-  );
-};
 
 export default CompanionDetail;

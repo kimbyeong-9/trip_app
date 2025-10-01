@@ -1,7 +1,50 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { regions } from '../data/mockData';
 
-// Styled Components - 동그란 디자인과 가로 스크롤
+
+
+const RegionCategories = ({ selectedRegion = 'all', onRegionSelect }) => {
+  const [internalSelectedRegion, setInternalSelectedRegion] = useState(selectedRegion);
+  
+  const currentSelectedRegion = selectedRegion || internalSelectedRegion;
+
+
+  const handleRegionClick = (regionId) => {
+    setInternalSelectedRegion(regionId);
+    if (onRegionSelect) {
+      onRegionSelect(regionId);
+    }
+    console.log(`Selected region: ${regionId}`);
+  };
+
+  return (
+    <RegionCategoriesContainer>
+      <RegionScrollWrapper>
+        <RegionItemsContainer>
+          {regions.map((region) => (
+            <RegionItem 
+              key={region.id} 
+              onClick={() => handleRegionClick(region.id)}
+            >
+              <RegionImageWrapper selected={currentSelectedRegion === region.id}>
+                <RegionImage 
+                  src={region.image} 
+                  alt={region.name}
+                />
+              </RegionImageWrapper>
+              <RegionName selected={currentSelectedRegion === region.id}>
+                {region.name}
+              </RegionName>
+            </RegionItem>
+          ))}
+        </RegionItemsContainer>
+      </RegionScrollWrapper>
+    </RegionCategoriesContainer>
+  );
+};
+
+
 const RegionCategoriesContainer = styled.div`
   padding: 20px 0;
   background: white;
@@ -130,97 +173,5 @@ const RegionName = styled.span`
     font-size: 12px;
   }
 `;
-
-const RegionCategories = ({ selectedRegion = 'all', onRegionSelect }) => {
-  const [internalSelectedRegion, setInternalSelectedRegion] = useState(selectedRegion);
-  
-  const currentSelectedRegion = selectedRegion || internalSelectedRegion;
-
-  const regions = [
-    {
-      id: 'all',
-      name: '전체',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'seoul',
-      name: '서울',
-      image: 'https://images.unsplash.com/photo-1549693578-d683be217e58?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'incheon',
-      name: '인천',
-      image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'gyeonggi',
-      name: '경기',
-      image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'gyeongsang',
-      name: '경상',
-      image: 'https://images.unsplash.com/photo-1541698444083-023c97d3f4b6?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'busan',
-      name: '부산',
-      image: 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'jeju',
-      name: '제주',
-      image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'gangwon',
-      name: '강원',
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'jeolla',
-      name: '전라',
-      image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=150&h=150&fit=crop&crop=center'
-    },
-    {
-      id: 'chungcheong',
-      name: '충청',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=150&h=150&fit=crop&crop=center'
-    }
-  ];
-
-  const handleRegionClick = (regionId) => {
-    setInternalSelectedRegion(regionId);
-    if (onRegionSelect) {
-      onRegionSelect(regionId);
-    }
-    console.log(`Selected region: ${regionId}`);
-  };
-
-  return (
-    <RegionCategoriesContainer>
-      <RegionScrollWrapper>
-        <RegionItemsContainer>
-          {regions.map((region) => (
-            <RegionItem 
-              key={region.id} 
-              onClick={() => handleRegionClick(region.id)}
-            >
-              <RegionImageWrapper selected={currentSelectedRegion === region.id}>
-                <RegionImage 
-                  src={region.image} 
-                  alt={region.name}
-                />
-              </RegionImageWrapper>
-              <RegionName selected={currentSelectedRegion === region.id}>
-                {region.name}
-              </RegionName>
-            </RegionItem>
-          ))}
-        </RegionItemsContainer>
-      </RegionScrollWrapper>
-    </RegionCategoriesContainer>
-  );
-};
 
 export default RegionCategories;
