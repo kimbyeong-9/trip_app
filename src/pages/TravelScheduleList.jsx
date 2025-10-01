@@ -1,8 +1,8 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
-import { itineraryCards } from '../data/mockData';
+import { supabase } from '../supabaseClient';
 
 // Styled Components
 const TravelScheduleListPage = styled.div`
@@ -675,7 +675,34 @@ const TravelScheduleList = () => {
   const [selectedEndDate, setSelectedEndDate] = useState('');
   const [sortBy, setSortBy] = useState('latest'); // 'latest', 'popular'
   const [isAICreate, setIsAICreate] = useState(false); // AI 작성 여부
+  const [itineraryCards, setItineraryCards] = useState([]);
+  const [loading, setLoading] = useState(true);
   const schedulesPerPage = 9;
+
+  // Supabase에서 Itinerary 데이터 가져오기
+  useEffect(() => {
+    const fetchItineraryCards = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('Itinerary')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching itinerary cards:', error);
+        } else {
+          setItineraryCards(data || []);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItineraryCards();
+  }, []);
 
   // 로그인 상태 확인
   const getLoginData = () => {

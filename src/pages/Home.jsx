@@ -9,14 +9,284 @@ import MagazineSection from '../components/MagazineSection';
 import TourismSection from '../components/TourismSection';
 import ChatRoomsSection from '../components/ChatRoomsSection';
 import HeroSlider from '../components/HeroSlider';
-import { 
-  companionCards, 
-  itineraryCards, 
-  magazineCards, 
-  tourismCards, 
-  chatRooms, 
-  heroSlides 
+import {
+  magazineCards,
+  tourismCards,
+  chatRooms,
+  heroSlides
 } from '../data/mockData';
+
+
+const Home = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [selectedRegion, setSelectedRegion] = useState('all');
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isFloatingMenuOpen, setIsFloatingMenuOpen] = useState(false);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+
+  // 로그인 상태 체크 함수
+  const isLoggedIn = () => {
+    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
+    return !!loginData;
+  };
+
+  // 카드 클릭 핸들러
+  const handleCardClick = (navigateTo) => {
+    // 다른 섹션 클릭 시 플로팅 메뉴 닫기
+    setIsFloatingMenuOpen(false);
+
+    if (!isLoggedIn()) {
+      setShowLoginModal(true);
+      return;
+    }
+    navigate(navigateTo);
+  };
+
+  // 플로팅 메뉴 토글
+  const toggleFloatingMenu = () => {
+    setIsFloatingMenuOpen(!isFloatingMenuOpen);
+  };
+
+  // 플로팅 서브메뉴 클릭 핸들러
+  const handleFloatingSubMenuClick = (path) => {
+    if (!isLoggedIn()) {
+      setShowLoginModal(true);
+      setIsFloatingMenuOpen(false);
+      return;
+    }
+
+    if (path === '/gallery-shop') {
+      setShowGalleryModal(true);
+    } else {
+      navigate(path);
+    }
+    setIsFloatingMenuOpen(false);
+  };
+
+  // 갤러리 모달 닫기
+  const closeGalleryModal = () => {
+    setShowGalleryModal(false);
+  };
+
+  // URL 파라미터에서 지역 정보 읽기
+  useEffect(() => {
+    const regionParam = searchParams.get('region');
+    if (regionParam) {
+      // 지역명을 ID로 변환
+      const regionMapping = {
+        '서울': 'seoul',
+        '부산': 'busan',
+        '제주': 'jeju',
+        '경기': 'gyeonggi',
+        '강원': 'gangwon',
+        '전라': 'jeolla',
+        '충청': 'chungcheong',
+        '경상': 'gyeongsang',
+        '인천': 'incheon'
+      };
+      const regionId = regionMapping[regionParam];
+      if (regionId) {
+        setSelectedRegion(regionId);
+      }
+    }
+  }, [searchParams]);
+
+  // 모달 닫기 함수
+  const closeServiceModal = () => {
+    setShowServiceModal(false);
+  };
+
+  const closeLoginModal = () => {
+    setShowLoginModal(false);
+  };
+
+  const goToLogin = () => {
+    setShowLoginModal(false);
+    navigate('/login');
+  };
+
+  return (
+    <HomePage onClick={() => setIsFloatingMenuOpen(false)}>
+      <RegionCategories 
+        selectedRegion={selectedRegion} 
+        onRegionSelect={setSelectedRegion}
+      />
+      
+      {/* 대형 이미지 슬라이더 섹션 */}
+      <HeroSlider
+        heroSlides={heroSlides}
+        showServiceModal={showServiceModal}
+        setShowServiceModal={setShowServiceModal}
+        onCardClick={handleCardClick}
+      />
+      
+      {/* 함께 동행해요 섹션 */}
+      <CompanionSection
+        selectedRegion={selectedRegion}
+        onCardClick={handleCardClick}
+      />
+
+      {/* 동행모집 채팅방 섹션 */}
+      <ChatRoomsSection
+        chatRooms={chatRooms}
+        onCardClick={handleCardClick}
+      />
+
+      {/* 여행 일정 섹션 */}
+      <ItinerarySection
+        selectedRegion={selectedRegion}
+        onCardClick={handleCardClick}
+      />
+
+      {/* 여행 매거진 섹션 */}
+      <MagazineSection
+        magazineCards={magazineCards}
+        selectedRegion={selectedRegion}
+        onCardClick={handleCardClick}
+      />
+
+      {/* 관광공사 추천여행지 섹션 */}
+      <TourismSection
+        tourismCards={tourismCards}
+        onCardClick={handleCardClick}
+      />
+
+      {/* 준비중인 서비스 모달 */}
+      {showServiceModal && (
+        <ModalOverlay>
+          <ServiceModal>
+            <ModalContent>
+              <ModalIcon>🚧</ModalIcon>
+              <ModalTitle>준비중인 서비스입니다</ModalTitle>
+              <ModalMessage>
+                해당 서비스는 현재 준비중입니다.<br />
+                조금만 기다려주세요!
+              </ModalMessage>
+              <ModalConfirmBtn onClick={closeServiceModal}>
+                확인
+              </ModalConfirmBtn>
+            </ModalContent>
+          </ServiceModal>
+        </ModalOverlay>
+      )}
+
+      {/* 플로팅 메뉴 버튼들 */}
+      <FloatingButtons onClick={(e) => e.stopPropagation()}>
+        <MenuButton
+          className={isFloatingMenuOpen ? 'active' : ''}
+          onClick={toggleFloatingMenu}
+        >
+          <CompanionIcon>
+            {isFloatingMenuOpen ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 6L18 18" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 6H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 18H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </CompanionIcon>
+          <CompanionText className="menu-text">메뉴</CompanionText>
+        </MenuButton>
+
+        <SubMenuContainer $isOpen={isFloatingMenuOpen}>
+          <SubMenuButton
+            color="#667eea"
+            onClick={() => handleFloatingSubMenuClick('/community')}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16 17v2H2v-2s0-4 7-4 7 4 7 4zm-3.5-9.5A3.5 3.5 0 1 0 9 11a3.5 3.5 0 0 0 3.5-3.5zm3.44 11.5A5.5 5.5 0 0 1 22 13.5a5.5 5.5 0 0 1-5.06-7.5 3.5 3.5 0 1 0-1 7z"/>
+            </svg>
+            커뮤니티
+          </SubMenuButton>
+
+          <SubMenuButton
+            color="#ff9800"
+            onClick={() => handleFloatingSubMenuClick('/gallery-shop')}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+            갤러리샵
+          </SubMenuButton>
+
+          <SubMenuButton
+            color="#4caf50"
+            onClick={() => handleFloatingSubMenuClick('/notice')}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            공지사항
+          </SubMenuButton>
+        </SubMenuContainer>
+
+        <CompanionButton onClick={() => handleCardClick('/companion-list')}>
+          <CompanionIcon>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 4C18.2091 4 20 5.79086 20 8C20 10.2091 18.2091 12 16 12C13.7909 12 12 10.2091 12 8C12 5.79086 13.7909 4 16 4Z" fill="white"/>
+              <path d="M8 6C9.65685 6 11 7.34315 11 9C11 10.6569 9.65685 12 8 12C6.34315 12 5 10.6569 5 9C5 7.34315 6.34315 6 8 6Z" fill="white"/>
+              <path d="M8 14C11.866 14 15 17.134 15 21H1C1 17.134 4.134 14 8 14Z" fill="white"/>
+              <path d="M16.5 14C19.538 14 22 16.462 22 19.5V21H16V19.5C16 17.567 15.433 15.783 14.461 14.301C15.099 14.108 15.787 14 16.5 14Z" fill="white"/>
+            </svg>
+          </CompanionIcon>
+          <CompanionText>동행{"\n"}모집</CompanionText>
+        </CompanionButton>
+      </FloatingButtons>
+
+      {/* 갤러리샵 준비중 모달 */}
+      {showGalleryModal && (
+        <GalleryModalOverlay onClick={(e) => e.target === e.currentTarget && closeGalleryModal()}>
+          <GalleryModalContainer>
+            <GalleryModalIcon>
+              <img src={repairManIcon} alt="작업중" style={{ width: '64px', height: '64px' }} />
+            </GalleryModalIcon>
+            <GalleryModalTitle>갤러리샵 준비중</GalleryModalTitle>
+            <GalleryModalMessage>
+              갤러리샵 서비스는 현재 준비중입니다.<br />
+              더욱 멋진 서비스로 찾아뵙겠습니다!
+            </GalleryModalMessage>
+            <GalleryModalButton onClick={closeGalleryModal}>
+              확인
+            </GalleryModalButton>
+          </GalleryModalContainer>
+        </GalleryModalOverlay>
+      )}
+
+      {/* 로그인 필요 모달 */}
+      {showLoginModal && (
+        <ModalOverlay>
+          <ServiceModal>
+            <ModalContent>
+              <ModalIcon>🔐</ModalIcon>
+              <ModalTitle>로그인이 필요합니다</ModalTitle>
+              <ModalMessage>
+                로그인 후 이용가능 합니다
+              </ModalMessage>
+              <ModalButtons>
+                <ModalConfirmBtn onClick={goToLogin}>
+                  로그인
+                </ModalConfirmBtn>
+                <ModalCancelBtn onClick={closeLoginModal}>
+                  취소
+                </ModalCancelBtn>
+              </ModalButtons>
+            </ModalContent>
+          </ServiceModal>
+        </ModalOverlay>
+      )}
+
+    </HomePage>
+  );
+};
+
+
 
 // Styled Components
 const HomePage = styled.div`
@@ -350,276 +620,5 @@ const GalleryModalButton = styled.button`
   }
 `;
 
-
-const Home = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [selectedRegion, setSelectedRegion] = useState('all');
-  const [showServiceModal, setShowServiceModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isFloatingMenuOpen, setIsFloatingMenuOpen] = useState(false);
-  const [showGalleryModal, setShowGalleryModal] = useState(false);
-
-  // 로그인 상태 체크 함수
-  const isLoggedIn = () => {
-    const loginData = localStorage.getItem('loginData') || sessionStorage.getItem('loginData');
-    return !!loginData;
-  };
-
-  // 카드 클릭 핸들러
-  const handleCardClick = (navigateTo) => {
-    // 다른 섹션 클릭 시 플로팅 메뉴 닫기
-    setIsFloatingMenuOpen(false);
-
-    if (!isLoggedIn()) {
-      setShowLoginModal(true);
-      return;
-    }
-    navigate(navigateTo);
-  };
-
-  // 플로팅 메뉴 토글
-  const toggleFloatingMenu = () => {
-    setIsFloatingMenuOpen(!isFloatingMenuOpen);
-  };
-
-  // 플로팅 서브메뉴 클릭 핸들러
-  const handleFloatingSubMenuClick = (path) => {
-    if (!isLoggedIn()) {
-      setShowLoginModal(true);
-      setIsFloatingMenuOpen(false);
-      return;
-    }
-
-    if (path === '/gallery-shop') {
-      setShowGalleryModal(true);
-    } else {
-      navigate(path);
-    }
-    setIsFloatingMenuOpen(false);
-  };
-
-  // 갤러리 모달 닫기
-  const closeGalleryModal = () => {
-    setShowGalleryModal(false);
-  };
-
-  // URL 파라미터에서 지역 정보 읽기
-  useEffect(() => {
-    const regionParam = searchParams.get('region');
-    if (regionParam) {
-      // 지역명을 ID로 변환
-      const regionMapping = {
-        '서울': 'seoul',
-        '부산': 'busan',
-        '제주': 'jeju',
-        '경기': 'gyeonggi',
-        '강원': 'gangwon',
-        '전라': 'jeolla',
-        '충청': 'chungcheong',
-        '경상': 'gyeongsang',
-        '인천': 'incheon'
-      };
-      const regionId = regionMapping[regionParam];
-      if (regionId) {
-        setSelectedRegion(regionId);
-      }
-    }
-  }, [searchParams]);
-
-  // 모달 닫기 함수
-  const closeServiceModal = () => {
-    setShowServiceModal(false);
-  };
-
-  const closeLoginModal = () => {
-    setShowLoginModal(false);
-  };
-
-  const goToLogin = () => {
-    setShowLoginModal(false);
-    navigate('/login');
-  };
-
-  return (
-    <HomePage onClick={() => setIsFloatingMenuOpen(false)}>
-      <RegionCategories 
-        selectedRegion={selectedRegion} 
-        onRegionSelect={setSelectedRegion}
-      />
-      
-      {/* 대형 이미지 슬라이더 섹션 */}
-      <HeroSlider
-        heroSlides={heroSlides}
-        showServiceModal={showServiceModal}
-        setShowServiceModal={setShowServiceModal}
-        onCardClick={handleCardClick}
-      />
-      
-      {/* 함께 동행해요 섹션 */}
-      <CompanionSection
-        companionCards={companionCards}
-        selectedRegion={selectedRegion}
-        onCardClick={handleCardClick}
-      />
-
-      {/* 동행모집 채팅방 섹션 */}
-      <ChatRoomsSection
-        chatRooms={chatRooms}
-        onCardClick={handleCardClick}
-      />
-
-      {/* 여행 일정 섹션 */}
-      <ItinerarySection
-        itineraryCards={itineraryCards}
-        selectedRegion={selectedRegion}
-        onCardClick={handleCardClick}
-      />
-
-      {/* 여행 매거진 섹션 */}
-      <MagazineSection
-        magazineCards={magazineCards}
-        selectedRegion={selectedRegion}
-        onCardClick={handleCardClick}
-      />
-
-      {/* 관광공사 추천여행지 섹션 */}
-      <TourismSection
-        tourismCards={tourismCards}
-        onCardClick={handleCardClick}
-      />
-
-      {/* 준비중인 서비스 모달 */}
-      {showServiceModal && (
-        <ModalOverlay>
-          <ServiceModal>
-            <ModalContent>
-              <ModalIcon>🚧</ModalIcon>
-              <ModalTitle>준비중인 서비스입니다</ModalTitle>
-              <ModalMessage>
-                해당 서비스는 현재 준비중입니다.<br />
-                조금만 기다려주세요!
-              </ModalMessage>
-              <ModalConfirmBtn onClick={closeServiceModal}>
-                확인
-              </ModalConfirmBtn>
-            </ModalContent>
-          </ServiceModal>
-        </ModalOverlay>
-      )}
-
-      {/* 플로팅 메뉴 버튼들 */}
-      <FloatingButtons onClick={(e) => e.stopPropagation()}>
-        <MenuButton
-          className={isFloatingMenuOpen ? 'active' : ''}
-          onClick={toggleFloatingMenu}
-        >
-          <CompanionIcon>
-            {isFloatingMenuOpen ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 6L6 18" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M6 6L18 18" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 12H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 6H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 18H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            )}
-          </CompanionIcon>
-          <CompanionText className="menu-text">메뉴</CompanionText>
-        </MenuButton>
-
-        <SubMenuContainer $isOpen={isFloatingMenuOpen}>
-          <SubMenuButton
-            color="#667eea"
-            onClick={() => handleFloatingSubMenuClick('/community')}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16 17v2H2v-2s0-4 7-4 7 4 7 4zm-3.5-9.5A3.5 3.5 0 1 0 9 11a3.5 3.5 0 0 0 3.5-3.5zm3.44 11.5A5.5 5.5 0 0 1 22 13.5a5.5 5.5 0 0 1-5.06-7.5 3.5 3.5 0 1 0-1 7z"/>
-            </svg>
-            커뮤니티
-          </SubMenuButton>
-
-          <SubMenuButton
-            color="#ff9800"
-            onClick={() => handleFloatingSubMenuClick('/gallery-shop')}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-            </svg>
-            갤러리샵
-          </SubMenuButton>
-
-          <SubMenuButton
-            color="#4caf50"
-            onClick={() => handleFloatingSubMenuClick('/notice')}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-            공지사항
-          </SubMenuButton>
-        </SubMenuContainer>
-
-        <CompanionButton onClick={() => handleCardClick('/companion-list')}>
-          <CompanionIcon>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16 4C18.2091 4 20 5.79086 20 8C20 10.2091 18.2091 12 16 12C13.7909 12 12 10.2091 12 8C12 5.79086 13.7909 4 16 4Z" fill="white"/>
-              <path d="M8 6C9.65685 6 11 7.34315 11 9C11 10.6569 9.65685 12 8 12C6.34315 12 5 10.6569 5 9C5 7.34315 6.34315 6 8 6Z" fill="white"/>
-              <path d="M8 14C11.866 14 15 17.134 15 21H1C1 17.134 4.134 14 8 14Z" fill="white"/>
-              <path d="M16.5 14C19.538 14 22 16.462 22 19.5V21H16V19.5C16 17.567 15.433 15.783 14.461 14.301C15.099 14.108 15.787 14 16.5 14Z" fill="white"/>
-            </svg>
-          </CompanionIcon>
-          <CompanionText>동행{"\n"}모집</CompanionText>
-        </CompanionButton>
-      </FloatingButtons>
-
-      {/* 갤러리샵 준비중 모달 */}
-      {showGalleryModal && (
-        <GalleryModalOverlay onClick={(e) => e.target === e.currentTarget && closeGalleryModal()}>
-          <GalleryModalContainer>
-            <GalleryModalIcon>
-              <img src={repairManIcon} alt="작업중" style={{ width: '64px', height: '64px' }} />
-            </GalleryModalIcon>
-            <GalleryModalTitle>갤러리샵 준비중</GalleryModalTitle>
-            <GalleryModalMessage>
-              갤러리샵 서비스는 현재 준비중입니다.<br />
-              더욱 멋진 서비스로 찾아뵙겠습니다!
-            </GalleryModalMessage>
-            <GalleryModalButton onClick={closeGalleryModal}>
-              확인
-            </GalleryModalButton>
-          </GalleryModalContainer>
-        </GalleryModalOverlay>
-      )}
-
-      {/* 로그인 필요 모달 */}
-      {showLoginModal && (
-        <ModalOverlay>
-          <ServiceModal>
-            <ModalContent>
-              <ModalIcon>🔐</ModalIcon>
-              <ModalTitle>로그인이 필요합니다</ModalTitle>
-              <ModalMessage>
-                로그인 후 이용가능 합니다
-              </ModalMessage>
-              <ModalButtons>
-                <ModalConfirmBtn onClick={goToLogin}>
-                  로그인
-                </ModalConfirmBtn>
-                <ModalCancelBtn onClick={closeLoginModal}>
-                  취소
-                </ModalCancelBtn>
-              </ModalButtons>
-            </ModalContent>
-          </ServiceModal>
-        </ModalOverlay>
-      )}
-
-    </HomePage>
-  );
-};
 
 export default Home;

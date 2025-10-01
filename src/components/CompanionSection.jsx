@@ -1,10 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { supabase } from '../supabaseClient';
 
 
-const CompanionSection = ({ companionCards, selectedRegion, onCardClick }) => {
+const CompanionSection = ({ selectedRegion, onCardClick }) => {
   const navigate = useNavigate();
+  const [companionCards, setCompanionCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Supabase에서 CompanionSection 데이터 가져오기
+  useEffect(() => {
+    const fetchCompanionCards = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('CompanionSection')
+          .select('*')
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching companion cards:', error);
+        } else {
+          setCompanionCards(data || []);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanionCards();
+  }, []);
 
   // 카드 필터링 함수
   const filterCards = (cards, selectedRegion) => {
@@ -39,7 +67,12 @@ const CompanionSection = ({ companionCards, selectedRegion, onCardClick }) => {
       </SectionHeader>
 
       <CompanionCards>
-        {filteredCompanionCards.length > 0 ? (
+        {loading ? (
+          <LoadingMessage>
+            <LoadingSpinner />
+            <LoadingText>동행 정보를 불러오는 중...</LoadingText>
+          </LoadingMessage>
+        ) : filteredCompanionCards.length > 0 ? (
           filteredCompanionCards.map((card) => (
             <CompanionCard key={card.id} onClick={() => onCardClick(`/companion/${card.id}`)}>
               <CardImage src={card.image} alt={card.title} />
@@ -55,7 +88,6 @@ const CompanionSection = ({ companionCards, selectedRegion, onCardClick }) => {
           ))
         ) : (
           <NoResultsMessage>
-            <NoResultsIcon>🔍</NoResultsIcon>
             <NoResultsTitle>검색된 내용이 없습니다</NoResultsTitle>
             <NoResultsText>다른 키워드로 검색해보세요</NoResultsText>
           </NoResultsMessage>
@@ -209,11 +241,6 @@ const NoResultsMessage = styled.div`
   grid-column: 1 / -1;
 `;
 
-const NoResultsIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 20px;
-`;
-
 const NoResultsTitle = styled.h3`
   font-size: 24px;
   color: #6c757d;
@@ -224,6 +251,35 @@ const NoResultsText = styled.p`
   font-size: 16px;
   color: #adb5bd;
   margin: 0;
+`;
+
+const LoadingMessage = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  width: 100%;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.p`
+  margin-top: 20px;
+  font-size: 16px;
+  color: #6c757d;
 `;
 
 export default CompanionSection;

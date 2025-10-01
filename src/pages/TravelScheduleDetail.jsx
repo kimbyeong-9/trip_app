@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
-import { itineraryCards } from '../data/mockData';
+import { supabase } from '../supabaseClient';
 
 // Styled Components
 const TravelScheduleDetailPage = styled.div`
@@ -1018,7 +1018,7 @@ const TravelScheduleDetail = () => {
 
   useEffect(() => {
     // 저장된 사용자 일정 데이터 로드
-    const loadUserSchedule = () => {
+    const loadUserSchedule = async () => {
       try {
         // userSchedules에서 해당 ID의 일정 찾기
         const userSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
@@ -1055,23 +1055,31 @@ const TravelScheduleDetail = () => {
           });
           setIsUserSchedule(true);
         } else {
-          // 기본 샘플 데이터 사용 (기존 mockData 일정들)
-          const mockSchedule = itineraryCards.find(card => card.id === parseInt(id));
-          if (mockSchedule) {
+          // Supabase에서 Itinerary 데이터 가져오기
+          const { data: itineraryCards, error } = await supabase
+            .from('Itinerary')
+            .select('*')
+            .eq('id', parseInt(id))
+            .single();
+
+          if (error) {
+            console.error('Error fetching itinerary:', error);
+            setSchedule(null);
+          } else if (itineraryCards) {
             setSchedule({
               id: id,
-              title: mockSchedule.title,
-              region: mockSchedule.region,
-              duration: mockSchedule.date ? `${mockSchedule.date}` : "여행 기간",
-              description: mockSchedule.description || "여행 일정에 대한 설명입니다.",
-              author: mockSchedule.author,
+              title: itineraryCards.title,
+              region: itineraryCards.region,
+              duration: itineraryCards.date ? `${itineraryCards.date}` : "여행 기간",
+              description: itineraryCards.description || "여행 일정에 대한 설명입니다.",
+              author: itineraryCards.author,
               itinerary: sampleItinerary,
-              image: mockSchedule.image,
-              startDate: mockSchedule.date ? mockSchedule.date.split('~')[0] : '',
-              endDate: mockSchedule.date ? mockSchedule.date.split('~')[1] : '',
-              views: mockSchedule.views,
-              likes: mockSchedule.likes,
-              tags: mockSchedule.tags || []
+              image: itineraryCards.image,
+              startDate: itineraryCards.date ? itineraryCards.date.split('~')[0] : '',
+              endDate: itineraryCards.date ? itineraryCards.date.split('~')[1] : '',
+              views: itineraryCards.views,
+              likes: itineraryCards.likes,
+              tags: itineraryCards.tags || []
             });
           } else {
             // 일정을 찾을 수 없는 경우
