@@ -12,6 +12,7 @@ const CompanionDetail = () => {
   const [companion, setCompanion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isUserPost, setIsUserPost] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // localStorage에서 사용자가 등록한 게시물 불러오기
   const getUserPosts = () => {
@@ -93,7 +94,7 @@ const CompanionDetail = () => {
         }
 
         alert('동행모집이 성공적으로 삭제되었습니다.');
-        navigate('/profile/user'); // 마이페이지로 이동
+        navigate('/companion-list'); // 동행모집 리스트 페이지로 이동
       } catch (error) {
         console.error('동행모집 삭제 실패:', error);
         alert('삭제에 실패했습니다. 다시 시도해주세요.');
@@ -138,10 +139,53 @@ const CompanionDetail = () => {
         </DetailHeader>
 
         <CompanionDetailContent>
-          <div>
-            <DetailImage src={companion.image} alt={companion.title} />
-            <LocationBadge>{companion.region}</LocationBadge>
-          </div>
+          <ImageSliderContainer>
+            {(() => {
+              const images = companion.images && companion.images.length > 0
+                ? companion.images
+                : [companion.image];
+
+              return (
+                <>
+                  <DetailImage src={images[currentImageIndex]} alt={companion.title} />
+                  <LocationBadge>{companion.region}</LocationBadge>
+
+                  {images.length > 1 && (
+                    <>
+                      <SliderButton
+                        $position="left"
+                        onClick={() => setCurrentImageIndex((prev) =>
+                          prev === 0 ? images.length - 1 : prev - 1
+                        )}
+                      >
+                        ‹
+                      </SliderButton>
+                      <SliderButton
+                        $position="right"
+                        onClick={() => setCurrentImageIndex((prev) =>
+                          prev === images.length - 1 ? 0 : prev + 1
+                        )}
+                      >
+                        ›
+                      </SliderButton>
+                      <ImageIndicator>
+                        {images.map((_, index) => (
+                          <Dot
+                            key={index}
+                            $active={index === currentImageIndex}
+                            onClick={() => setCurrentImageIndex(index)}
+                          />
+                        ))}
+                      </ImageIndicator>
+                      <ImageCounter>
+                        {currentImageIndex + 1} / {images.length}
+                      </ImageCounter>
+                    </>
+                  )}
+                </>
+              );
+            })()}
+          </ImageSliderContainer>
 
           <DetailInfo>
             <TitleSection>
@@ -171,11 +215,11 @@ const CompanionDetail = () => {
             <DetailsGrid>
               <DetailItem>
                 <DetailLabel>예산</DetailLabel>
-                <DetailValue>{companion.estimatedCost || companion.budget || '협의 후 결정'}</DetailValue>
+                <DetailValue>{companion.estimatedcost || companion.estimatedCost || companion.budget || '협의 후 결정'}</DetailValue>
               </DetailItem>
               <DetailItem>
                 <DetailLabel>모임 장소</DetailLabel>
-                <DetailValue>{companion.meetingPoint || '추후 공지'}</DetailValue>
+                <DetailValue>{companion.meetingpoint || companion.meetingPoint || '추후 공지'}</DetailValue>
               </DetailItem>
               <DetailItem>
                 <DetailLabel>참여 인원</DetailLabel>
@@ -284,23 +328,119 @@ const CompanionDetailContent = styled.div`
   gap: 30px;
 `;
 
+const ImageSliderContainer = styled.div`
+  position: relative;
+  width: 760px;
+  max-width: calc(100vw - 40px);
+  height: 400px;
+  margin: 0 auto 20px auto;
+  overflow: hidden;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+
+  @media (max-width: 1024px) {
+    width: 700px;
+    height: 380px;
+  }
+
+  @media (max-width: 767px) {
+    width: 450px;
+    height: 300px;
+  }
+
+  @media (max-width: 479px) {
+    width: calc(100vw - 40px);
+    height: 250px;
+  }
+`;
+
 const DetailImage = styled.img`
   width: 100%;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 0.3s ease;
+`;
+
+const SliderButton = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  ${props => props.$position === 'left' ? 'left: 15px;' : 'right: 15px;'}
+  background: rgba(255, 255, 255, 0.1);
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  font-size: 26px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 2;
+
+
+  &:hover {
+    transform: translateY(-50%) scale(1.15);
+  }
+
+  &:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+`;
+
+const ImageIndicator = styled.div`
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+`;
+
+const Dot = styled.button`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: ${props => props.$active ? 'white' : 'transparent'};
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+
+  &:hover {
+    transform: scale(1.2);
+  }
+`;
+
+const ImageCounter = styled.div`
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 2;
 `;
 
 const LocationBadge = styled.div`
-  display: inline-block;
+  position: absolute;
+  top: 15px;
+  left: 15px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 15px;
+  z-index: 2;
 `;
 
 const DetailInfo = styled.div`

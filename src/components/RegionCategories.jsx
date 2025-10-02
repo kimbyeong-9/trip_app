@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { regions } from '../data/mockData';
 
 
 
 const RegionCategories = ({ selectedRegion = 'all', onRegionSelect }) => {
-  const [internalSelectedRegion, setInternalSelectedRegion] = useState(selectedRegion);
-  
-  const currentSelectedRegion = selectedRegion || internalSelectedRegion;
-
-
   const handleRegionClick = (regionId) => {
-    setInternalSelectedRegion(regionId);
     if (onRegionSelect) {
       onRegionSelect(regionId);
     }
-    console.log(`Selected region: ${regionId}`);
   };
 
   return (
@@ -23,17 +16,17 @@ const RegionCategories = ({ selectedRegion = 'all', onRegionSelect }) => {
       <RegionScrollWrapper>
         <RegionItemsContainer>
           {regions.map((region) => (
-            <RegionItem 
-              key={region.id} 
+            <RegionItem
+              key={region.id}
               onClick={() => handleRegionClick(region.id)}
             >
-              <RegionImageWrapper selected={currentSelectedRegion === region.id}>
-                <RegionImage 
-                  src={region.image} 
+              <RegionImageWrapper selected={selectedRegion === region.id}>
+                <RegionImage
+                  src={region.image}
                   alt={region.name}
                 />
               </RegionImageWrapper>
-              <RegionName selected={currentSelectedRegion === region.id}>
+              <RegionName selected={selectedRegion === region.id}>
                 {region.name}
               </RegionName>
             </RegionItem>

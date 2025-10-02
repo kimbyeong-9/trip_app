@@ -46,6 +46,19 @@ const TravelScheduleList = () => {
     };
 
     fetchItineraryCards();
+
+    // 페이지에 다시 돌아올 때마다 데이터 새로고침
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchItineraryCards();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // 로그인 상태 확인

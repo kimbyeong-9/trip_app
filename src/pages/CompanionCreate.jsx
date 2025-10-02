@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
@@ -9,6 +9,11 @@ import { supabase } from '../supabaseClient';
 const CompanionCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 수정 모드 확인
+  const isEditMode = location.state?.isEdit || false;
+  const editPostData = location.state?.postData || null;
+
   const [formData, setFormData] = useState({
     title: '',
     startDate: '',
@@ -29,6 +34,35 @@ const CompanionCreate = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+
+  // 수정 모드일 때 기존 데이터 로드
+  useEffect(() => {
+    if (isEditMode && editPostData) {
+      const dates = editPostData.date ? editPostData.date.split('~') : ['', ''];
+
+      setFormData({
+        title: editPostData.title || '',
+        startDate: dates[0]?.trim() || '',
+        endDate: dates[1]?.trim() || '',
+        ageGroup: editPostData.agegroup || '20대',
+        maxParticipants: editPostData.participants?.max || 2,
+        region: editPostData.region || '서울',
+        description: editPostData.description || '',
+        meetingPoint: editPostData.meetingpoint || '',
+        estimatedCost: editPostData.estimatedcost || '',
+        travelStyle: editPostData.travelstyle || [],
+        images: [],
+        notice: editPostData.notice || ''
+      });
+
+      // 기존 이미지 미리보기 설정
+      if (editPostData.images && editPostData.images.length > 0) {
+        setImagePreview(editPostData.images);
+      } else if (editPostData.image) {
+        setImagePreview([editPostData.image]);
+      }
+    }
+  }, [isEditMode, editPostData]);
 
   const travelStyles = [
     '느긋한 여행', '계획적인 여행', '즉흥적인 여행',
@@ -98,6 +132,13 @@ const CompanionCreate = () => {
     if (!formData.estimatedCost.trim()) newErrors.estimatedCost = '예상 비용을 입력해주세요.';
     if (formData.travelStyle.length === 0) newErrors.travelStyle = '여행 스타일을 선택해주세요.';
 
+    // 이미지 필수 검사 (수정 모드가 아닐 때 또는 새 이미지 추가 없이 기존 이미지도 없을 때)
+    if (!isEditMode && formData.images.length === 0) {
+      newErrors.images = '이미지를 최소 1개 이상 선택해주세요.';
+    } else if (isEditMode && formData.images.length === 0 && imagePreview.length === 0) {
+      newErrors.images = '이미지를 최소 1개 이상 선택해주세요.';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -119,31 +160,54 @@ const CompanionCreate = () => {
 
       const loginData = getLoginData();
 
-      // 이미지 업로드 처리
-      let uploadedImageUrl = "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop";
+      // 여러 이미지 업로드 처리
+      let uploadedImageUrls = [];
+      const defaultImage = "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop";
 
-      if (formData.images.length > 0) {
-        const imageFile = formData.images[0]; // 첫 번째 이미지만 사용
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `companion-images/${fileName}`;
-
-        // Supabase Storage에 업로드
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('trip_images')
-          .upload(filePath, imageFile);
-
-        if (uploadError) {
-          console.error('이미지 업로드 오류:', uploadError);
-          // 업로드 실패해도 기본 이미지로 진행
-        } else {
-          // 업로드된 이미지의 공개 URL 가져오기
-          const { data: { publicUrl } } = supabase.storage
-            .from('trip_images')
-            .getPublicUrl(filePath);
-
-          uploadedImageUrl = publicUrl;
+      // 수정 모드일 때 기존 이미지 유지
+      if (isEditMode && editPostData) {
+        if (editPostData.images && editPostData.images.length > 0) {
+          uploadedImageUrls = [...editPostData.images];
+        } else if (editPostData.image) {
+          uploadedImageUrls = [editPostData.image];
         }
+      }
+
+      // 새로 추가된 이미지가 있을 경우에만 업로드
+      if (formData.images.length > 0) {
+        // 모든 이미지를 순차적으로 업로드
+        for (let i = 0; i < formData.images.length; i++) {
+          const imageFile = formData.images[i];
+          const fileExt = imageFile.name.split('.').pop();
+          const fileName = `${Date.now()}_${i}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `companion-images/${fileName}`;
+
+          try {
+            // Supabase Storage에 업로드
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('trip_images')
+              .upload(filePath, imageFile);
+
+            if (uploadError) {
+              console.error(`이미지 ${i + 1} 업로드 오류:`, uploadError);
+              continue; // 실패한 이미지는 건너뛰기
+            }
+
+            // 업로드된 이미지의 공개 URL 가져오기
+            const { data: { publicUrl } } = supabase.storage
+              .from('trip_images')
+              .getPublicUrl(filePath);
+
+            uploadedImageUrls.push(publicUrl);
+          } catch (err) {
+            console.error(`이미지 ${i + 1} 업로드 중 오류:`, err);
+          }
+        }
+      }
+
+      // 업로드된 이미지가 없으면 기본 이미지 사용
+      if (uploadedImageUrls.length === 0) {
+        uploadedImageUrls.push(defaultImage);
       }
 
       // 작성자 정보 구성
@@ -156,35 +220,60 @@ const CompanionCreate = () => {
       };
 
       // Supabase에 저장할 데이터 구성
-      const newPost = {
+      const postData = {
         title: formData.title,
         agegroup: formData.ageGroup,
         region: formData.region,
         date: `${formData.startDate}~${formData.endDate}`,
         description: formData.description,
-        participants: { current: 1, max: formData.maxParticipants },
-        image: uploadedImageUrl,
-        author: authorInfo,
+        participants: isEditMode ? editPostData.participants : { current: 1, max: formData.maxParticipants },
+        image: uploadedImageUrls[0], // 첫 번째 이미지 (호환성)
+        images: uploadedImageUrls, // 모든 이미지 배열
+        author: isEditMode ? editPostData.author : authorInfo,
         meetingpoint: formData.meetingPoint,
         estimatedcost: formData.estimatedCost,
         travelstyle: formData.travelStyle,
         notice: formData.notice
       };
 
-      // Supabase CompanionList 테이블에 저장
-      const { data, error } = await supabase
-        .from('CompanionList')
-        .insert([newPost])
-        .select();
+      let data, error;
 
-      if (error) {
-        console.error('Supabase 저장 오류:', error);
-        alert('동행모집 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
-        setIsSubmitting(false);
-        return;
+      if (isEditMode) {
+        // 수정 모드: UPDATE
+        const result = await supabase
+          .from('CompanionList')
+          .update(postData)
+          .eq('id', editPostData.id)
+          .select();
+
+        data = result.data;
+        error = result.error;
+
+        if (error) {
+          console.error('Supabase 수정 오류:', error);
+          alert('동행모집 수정 중 오류가 발생했습니다. 다시 시도해주세요.');
+          setIsSubmitting(false);
+          return;
+        }
+        console.log('수정 성공:', data);
+      } else {
+        // 등록 모드: INSERT
+        const result = await supabase
+          .from('CompanionList')
+          .insert([postData])
+          .select();
+
+        data = result.data;
+        error = result.error;
+
+        if (error) {
+          console.error('Supabase 저장 오류:', error);
+          alert('동행모집 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+          setIsSubmitting(false);
+          return;
+        }
+        console.log('등록 성공:', data);
       }
-
-      console.log('등록 성공:', data);
 
       // 등록 완료 모달 표시
       setIsSubmitting(false);
@@ -378,12 +467,12 @@ const CompanionCreate = () => {
             </FormSection>
 
             <FormSection>
-              <SectionTitle>사진 업로드</SectionTitle>
-              
+              <SectionTitle>사진 업로드 <Required>*</Required></SectionTitle>
+
               <FormGroup>
                 <ImageUploadArea onClick={() => document.getElementById('imageUpload').click()}>
                   <ImageUploadText>📷 사진을 업로드해주세요</ImageUploadText>
-                  <ImageUploadSubtext>최대 10장까지 업로드 가능합니다</ImageUploadSubtext>
+                  <ImageUploadSubtext>최대 10장까지 업로드 가능합니다 (필수)</ImageUploadSubtext>
                 </ImageUploadArea>
                 <input
                   id="imageUpload"
@@ -393,7 +482,7 @@ const CompanionCreate = () => {
                   onChange={handleImageUpload}
                   style={{ display: 'none' }}
                 />
-                
+
                 {imagePreview.length > 0 && (
                   <ImagePreview>
                     {imagePreview.map((url, index) => (
@@ -406,6 +495,7 @@ const CompanionCreate = () => {
                     ))}
                   </ImagePreview>
                 )}
+                {errors.images && <ErrorMessage>{errors.images}</ErrorMessage>}
               </FormGroup>
             </FormSection>
 

@@ -298,10 +298,6 @@ const AuthorName = styled.span`
   flex: 1;
 `;
 
-const Date = styled.span`
-  font-weight: 500;
-`;
-
 const DateMeta = styled.div`
   font-size: 14px;
   color: #6c757d;

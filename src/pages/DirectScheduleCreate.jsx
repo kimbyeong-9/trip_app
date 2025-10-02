@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
+import { supabase } from '../supabaseClient';
 
 
 
 const DirectScheduleCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 수정 모드 확인
+  const isEditMode = location.state?.isEdit || false;
+  const editScheduleData = location.state?.scheduleData || null;
 
   // 현재 로그인된 사용자 정보 가져오기
   const getCurrentUser = () => {
@@ -20,10 +25,10 @@ const DirectScheduleCreate = () => {
     }
   };
 
-  // URL에서 날짜 정보 가져오기
+  // URL에서 날짜 정보 가져오기 (수정 모드일 때는 editScheduleData에서)
   const searchParams = new URLSearchParams(location.search);
-  const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate');
+  const startDate = isEditMode ? editScheduleData?.startDate : searchParams.get('startDate');
+  const endDate = isEditMode ? editScheduleData?.endDate : searchParams.get('endDate');
 
   // AI에서 전달된 데이터 가져오기
   const isAIGenerated = searchParams.get('isAIGenerated') === 'true';
@@ -31,6 +36,7 @@ const DirectScheduleCreate = () => {
   const aiRestaurantCount = searchParams.get('restaurantCount');
   const aiCafeCount = searchParams.get('cafeCount');
   const aiActivities = searchParams.get('activities') ? searchParams.get('activities').split(',') : [];
+  const aiCompanion = searchParams.get('companion');
 
   // 지역명을 한글로 변환하는 함수
   const getRegionName = (regionId) => {
@@ -72,15 +78,15 @@ const DirectScheduleCreate = () => {
     return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
   };
 
-  // 폼 상태
+  // 폼 상태 (수정 모드일 때 기존 데이터 사용)
   const [formData, setFormData] = useState({
-    title: generateAITitle(),
-    description: generateAIDescription(),
-    region: isAIGenerated ? getRegionName(aiRegion) : '',
-    transportation: [],
-    companions: '',
-    accommodation: '',
-    representativeImage: '',
+    title: isEditMode ? editScheduleData?.title || '' : generateAITitle(),
+    description: isEditMode ? editScheduleData?.description || '' : generateAIDescription(),
+    region: isEditMode ? editScheduleData?.region || '' : (isAIGenerated ? getRegionName(aiRegion) : ''),
+    transportation: isEditMode ? editScheduleData?.transportation || [] : [],
+    companions: isEditMode ? editScheduleData?.companions || '' : (isAIGenerated && aiCompanion ? aiCompanion : ''),
+    accommodation: isEditMode ? editScheduleData?.accommodation || '' : '',
+    representativeImage: isEditMode ? editScheduleData?.image || '' : '',
   });
 
   // 장소 검색 관련 상태
@@ -97,16 +103,29 @@ const DirectScheduleCreate = () => {
   const [tempStartDate, setTempStartDate] = useState(startDate || '');
   const [tempEndDate, setTempEndDate] = useState(endDate || '');
 
-  // 선택된 장소들 관리 (일차별)
-  const [dailyPlaces, setDailyPlaces] = useState({
-    1: [] // 1일차부터 시작
+  // 선택된 장소들 관리 (일차별) - 수정 모드일 때 기존 데이터 사용
+  const [dailyPlaces, setDailyPlaces] = useState(() => {
+    if (isEditMode && editScheduleData?.places) {
+      return editScheduleData.places;
+    }
+    return { 1: [] }; // 1일차부터 시작
   });
 
-  // 현재 활성화된 일차 수
-  const [activeDays, setActiveDays] = useState(1);
+  // 현재 활성화된 일차 수 - 수정 모드일 때 기존 값 사용
+  const [activeDays, setActiveDays] = useState(() => {
+    if (isEditMode && editScheduleData?.totalDays) {
+      return editScheduleData.totalDays;
+    }
+    return 1;
+  });
 
   // 날짜 차이 계산하여 일차 수 설정 및 AI 데이터 자동 입력
   useEffect(() => {
+    // 수정 모드일 때는 기존 데이터를 유지하고 useEffect 실행 안함
+    if (isEditMode) {
+      return;
+    }
+
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -130,7 +149,7 @@ const DirectScheduleCreate = () => {
         }
       }
     }
-  }, [startDate, endDate, isAIGenerated, aiRegion]);
+  }, [startDate, endDate, isAIGenerated, aiRegion, isEditMode]);
 
   // AI 기반 장소 자동 생성 함수
   const generateAIPlaces = (initialPlaces, dayCount) => {
@@ -472,7 +491,7 @@ const DirectScheduleCreate = () => {
     setActiveDays(activeDays - 1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // 제목 검증
     if (!formData.title.trim()) {
       alert('여행 제목을 입력해주세요.\n\n예시: "제주도 3박 4일 힐링여행", "부산 맛집 투어"');
@@ -509,6 +528,12 @@ const DirectScheduleCreate = () => {
       return;
     }
 
+    // 대표 이미지 검증 (수정 모드가 아닐 때만)
+    if (!isEditMode && !formData.representativeImage) {
+      alert('대표 이미지를 최소 1개 이상 선택해주세요.\n\n일정 정보 섹션에서 이미지를 업로드하세요.');
+      return;
+    }
+
     // 일정에 추가된 장소가 있는지 확인
     const hasPlaces = Object.values(dailyPlaces).some(places => places.length > 0);
     if (!hasPlaces) {
@@ -530,46 +555,99 @@ const DirectScheduleCreate = () => {
     }
 
     try {
-      // 새로운 일정 데이터 생성
+      const currentUser = getCurrentUser();
+
+      // 최대 ID 조회
+      const { data: maxIdData, error: maxIdError } = await supabase
+        .from('Itinerary')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1);
+
+      let nextId = 1;
+      if (maxIdData && maxIdData.length > 0) {
+        nextId = maxIdData[0].id + 1;
+      }
+
+      // Supabase Itinerary 테이블에 저장할 데이터 구성
       const newSchedule = {
-        id: Date.now().toString(),
+        id: nextId,
         title: formData.title,
         region: formData.region,
-        transportation: formData.transportation,
-        companions: formData.companions,
-        accommodation: formData.accommodation,
-        startDate: startDate,
-        endDate: endDate,
-        date: `${startDate} ~ ${endDate}`, // 날짜 표시용 필드 추가
-        duration: `${activeDays}박 ${activeDays + 1}일`,
-        places: dailyPlaces,
-        totalDays: activeDays,
-        author: {
-          name: getCurrentUser()?.user?.name || '여행자',
-          profileImage: getCurrentUser()?.user?.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face'
-        },
+        author: currentUser?.user?.name || '여행자',
+        author_user_id: currentUser?.user?.id || null,
+        date: `${startDate} ~ ${endDate}`,
         image: formData.representativeImage || Object.values(dailyPlaces).flat()[0]?.image || 'https://picsum.photos/300/200?random=1',
-        description: formData.description || `${formData.region}에서 ${activeDays}박 ${activeDays + 1}일 여행`,
-        createdAt: new Date().toISOString(),
+        description: formData.description,
+        detailedDescription: JSON.stringify({
+          transportation: formData.transportation,
+          companions: formData.companions,
+          accommodation: formData.accommodation,
+          startDate: startDate,
+          endDate: endDate,
+          duration: `${activeDays}박 ${activeDays + 1}일`,
+          places: dailyPlaces,
+          totalDays: activeDays,
+          authorProfile: currentUser?.user?.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face'
+        }),
         tags: [formData.region, ...formData.transportation],
-        views: 1,
-        likes: 0
+        views: 0,
+        likes: 0,
+        "createdAt": new Date().toISOString()
       };
 
-      // 기존 일정 목록 가져오기
-      const existingSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
+      let data, error;
 
-      // 새 일정 추가
-      const updatedSchedules = [newSchedule, ...existingSchedules];
+      if (isEditMode) {
+        // 수정 모드: UPDATE
+        // 기존 ID와 작성자 정보, createdAt 유지
+        const updateSchedule = {
+          ...newSchedule,
+          id: editScheduleData.id,
+          author: editScheduleData.author,
+          author_user_id: editScheduleData.author_user_id,
+          createdAt: editScheduleData.createdAt
+        };
 
-      // localStorage에 저장
-      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
+        const result = await supabase
+          .from('Itinerary')
+          .update(updateSchedule)
+          .eq('id', editScheduleData.id)
+          .select();
 
-      alert('일정이 성공적으로 등록되었습니다!');
+        data = result.data;
+        error = result.error;
+
+        if (error) {
+          console.error('Supabase 수정 오류:', error);
+          alert(`일정 수정 중 오류가 발생했습니다: ${error.message || '다시 시도해주세요.'}`);
+          return;
+        }
+        console.log('일정 수정 성공:', data);
+        alert('일정이 성공적으로 수정되었습니다!');
+      } else {
+        // 등록 모드: INSERT
+        const result = await supabase
+          .from('Itinerary')
+          .insert([newSchedule])
+          .select();
+
+        data = result.data;
+        error = result.error;
+
+        if (error) {
+          console.error('Supabase 저장 오류:', error);
+          alert(`일정 등록 중 오류가 발생했습니다: ${error.message || '다시 시도해주세요.'}`);
+          return;
+        }
+        console.log('일정 등록 성공:', data);
+        alert('일정이 성공적으로 등록되었습니다!');
+      }
+
       navigate('/travel-schedules');
     } catch (error) {
       console.error('일정 저장 오류:', error);
-      alert('일정 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+      alert(`일정 등록 중 오류가 발생했습니다: ${error.message || '다시 시도해주세요.'}`);
     }
   };
 
@@ -779,7 +857,7 @@ const DirectScheduleCreate = () => {
         </LocationsSection>
 
         <SubmitButton onClick={handleSubmit}>
-          일정 등록하기
+          {isEditMode ? '일정 수정하기' : '일정 등록하기'}
         </SubmitButton>
       </CreateContainer>
 

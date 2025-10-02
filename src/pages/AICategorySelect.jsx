@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-
-
+import CounterInput from '../components/ai/CounterInput';
+import ActivitySelector from '../components/ai/ActivitySelector';
 
 const AICategorySelect = () => {
   const navigate = useNavigate();
@@ -10,6 +10,7 @@ const AICategorySelect = () => {
   const [restaurantCount, setRestaurantCount] = useState(1);
   const [cafeCount, setCafeCount] = useState(1);
   const [selectedActivities, setSelectedActivities] = useState([]);
+  const [selectedCompanion, setSelectedCompanion] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -31,40 +32,10 @@ const AICategorySelect = () => {
   };
 
   const handleBack = () => {
-    // 이전 AI 지역 선택 모달로 돌아가기
     navigate(`/ai-schedule-create?startDate=${startDate}&endDate=${endDate}`);
   };
 
-  const handleRestaurantIncrement = () => {
-    setRestaurantCount(prev => prev + 1);
-  };
-
-  const handleRestaurantDecrement = () => {
-    if (restaurantCount > 1) {
-      setRestaurantCount(prev => prev - 1);
-    }
-  };
-
-  const handleCafeIncrement = () => {
-    setCafeCount(prev => prev + 1);
-  };
-
-  const handleCafeDecrement = () => {
-    if (cafeCount > 1) {
-      setCafeCount(prev => prev - 1);
-    }
-  };
-
-  const handleActivityToggle = (activity) => {
-    setSelectedActivities(prev =>
-      prev.includes(activity)
-        ? prev.filter(a => a !== activity)
-        : [...prev, activity]
-    );
-  };
-
   const handleNext = () => {
-    // 선택한 모든 데이터를 직접 일정 등록 페이지로 전달
     const params = new URLSearchParams({
       startDate: startDate,
       endDate: endDate,
@@ -72,6 +43,7 @@ const AICategorySelect = () => {
       restaurantCount: restaurantCount,
       cafeCount: cafeCount,
       activities: selectedActivities.join(','),
+      companion: selectedCompanion,
       isAIGenerated: 'true'
     });
 
@@ -106,52 +78,35 @@ const AICategorySelect = () => {
             {selectedRegion && `${getRegionName(selectedRegion)} 여행 계획`}
           </CategoryTitle>
 
-          <QuestionContainer>
-            <QuestionText>하루에 방문하고 싶은 맛집의 횟수는?</QuestionText>
-            <CounterContainer>
-              <CounterButton
-                onClick={handleRestaurantDecrement}
-                disabled={restaurantCount <= 1}
-              >
-                −
-              </CounterButton>
-              <CounterValue>{restaurantCount}</CounterValue>
-              <CounterButton onClick={handleRestaurantIncrement}>
-                +
-              </CounterButton>
-            </CounterContainer>
-          </QuestionContainer>
+          <CounterInput
+            label="하루에 방문하고 싶은 맛집의 횟수는?"
+            value={restaurantCount}
+            onIncrement={() => setRestaurantCount(prev => prev + 1)}
+            onDecrement={() => setRestaurantCount(prev => prev - 1)}
+          />
 
-          <QuestionContainer>
-            <QuestionText>하루에 방문하고 싶은 카페 횟수는?</QuestionText>
-            <CounterContainer>
-              <CounterButton
-                onClick={handleCafeDecrement}
-                disabled={cafeCount <= 1}
-              >
-                −
-              </CounterButton>
-              <CounterValue>{cafeCount}</CounterValue>
-              <CounterButton onClick={handleCafeIncrement}>
-                +
-              </CounterButton>
-            </CounterContainer>
-          </QuestionContainer>
+          <CounterInput
+            label="하루에 방문하고 싶은 카페 횟수는?"
+            value={cafeCount}
+            onIncrement={() => setCafeCount(prev => prev + 1)}
+            onDecrement={() => setCafeCount(prev => prev - 1)}
+          />
 
-          <ActivitySection>
-            <ActivityTitle>식사 전후 또는 하고싶은 활동은?</ActivityTitle>
-            <ActivityGrid>
-              {['체험', '레포츠', '자연', '역사', '건축/조형물', '축제/공연'].map((activity) => (
-                <ActivityButton
-                  key={activity}
-                  selected={selectedActivities.includes(activity)}
-                  onClick={() => handleActivityToggle(activity)}
-                >
-                  {activity}
-                </ActivityButton>
-              ))}
-            </ActivityGrid>
-          </ActivitySection>
+          <ActivitySelector
+            title="식사 전후 또는 하고싶은 활동은?"
+            options={['체험', '레포츠', '자연', '역사', '건축/조형물', '축제/공연']}
+            selectedValues={selectedActivities}
+            onSelect={setSelectedActivities}
+            multiSelect={true}
+          />
+
+          <ActivitySelector
+            title="누구와 함께 여행하시나요?"
+            options={['혼자', '가족', '친구', '연인', '동료']}
+            selectedValues={selectedCompanion}
+            onSelect={setSelectedCompanion}
+            multiSelect={false}
+          />
 
           <ButtonGroup>
             <ActionButton onClick={handleBack}>
@@ -243,68 +198,6 @@ const CategoryTitle = styled.h1`
   background-clip: text;
 `;
 
-const QuestionContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 30px;
-`;
-
-const QuestionText = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-`;
-
-const CounterContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 15px;
-`;
-
-const CounterButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-`;
-
-const CounterValue = styled.span`
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
-  min-width: 30px;
-  text-align: center;
-`;
-
 const ButtonGroup = styled.div`
   display: flex;
   gap: 15px;
@@ -321,7 +214,7 @@ const ActionButton = styled.button`
   transition: all 0.3s ease;
   border: none;
 
-  ${props => props.primary ? `
+  ${props => props.$primary ? `
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
@@ -347,48 +240,6 @@ const ActionButton = styled.button`
       color: #495057;
     }
   `}
-`;
-
-const ActivitySection = styled.div`
-  margin-bottom: 30px;
-`;
-
-const ActivityTitle = styled.h3`
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 20px 0;
-  text-align: center;
-`;
-
-const ActivityGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-`;
-
-const ActivityButton = styled.button`
-  background: ${props => props.selected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
-  color: ${props => props.selected ? 'white' : '#2c3e50'};
-  border: 2px solid ${props => props.selected ? '#667eea' : '#e9ecef'};
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-
-  &:hover {
-    background: ${props => props.selected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa'};
-    border-color: #667eea;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
 `;
 
 export default AICategorySelect;

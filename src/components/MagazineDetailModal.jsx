@@ -228,19 +228,6 @@ const BlogHeader = styled.div`
   }
 `;
 
-const BlogCategory = styled.span`
-  display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`;
-
 const BlogTitle = styled.h1`
   font-size: 28px;
   font-weight: 700;

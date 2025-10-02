@@ -71,6 +71,8 @@ const Login = () => {
           .eq('id', data.user.id)
           .single();
 
+        const defaultProfileImage = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face';
+
         const loginData = {
           isLoggedIn: true,
           user: {
@@ -79,7 +81,8 @@ const Login = () => {
             name: profileData?.username || data.user.email,
             phone: profileData?.phone,
             birthDate: profileData?.birth_date,
-            gender: profileData?.gender
+            gender: profileData?.gender,
+            profileImage: profileData?.profile_image || defaultProfileImage
           },
           loginTime: new Date().toISOString()
         };

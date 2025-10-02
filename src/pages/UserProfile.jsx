@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 import { mockCoupons, myPageData, userProfileData, followerNames, followingNames } from '../data/mockData';
+import { supabase } from '../supabaseClient';
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const UserProfile = () => {
   const [selectedStartDate, setSelectedStartDate] = useState('');
   const [selectedEndDate, setSelectedEndDate] = useState('');
   const [isAICreate, setIsAICreate] = useState(false);
+  const [myCompanionPosts, setMyCompanionPosts] = useState([]);
+  const [myTravelSchedules, setMyTravelSchedules] = useState([]);
 
   // 현재 로그인한 사용자 정보 가져오기
   const getCurrentUser = () => {
@@ -30,6 +33,7 @@ const UserProfile = () => {
   };
 
   const currentUser = getCurrentUser();
+  const currentUserId = currentUser?.user?.id;
 
   // 유효하지 않은 blob URL을 기본 이미지로 교체하는 함수
   const sanitizeImageUrl = (imageUrl) => {
@@ -39,54 +43,125 @@ const UserProfile = () => {
     return imageUrl;
   };
 
-  // 내가 올린 동행모집 가져오기
-  const getMyCompanionPosts = () => {
-    const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-    const userName = currentUser?.user?.name;
-    if (!userName) return [];
-    return storedPosts
-      .filter(post => post.author === userName)
-      .map(post => ({
-        ...post,
-        image: sanitizeImageUrl(post.image)
-      }));
-  };
+  // Supabase에서 내가 올린 동행모집 가져오기
+  useEffect(() => {
+    const fetchMyCompanionPosts = async () => {
+      if (!currentUserId) {
+        setMyCompanionPosts([]);
+        return;
+      }
 
-  // 내가 올린 여행일정 가져오기
-  const getMyTravelSchedules = () => {
-    const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
-    const userName = currentUser?.user?.name;
-    if (!userName) return [];
+      try {
+        const { data, error } = await supabase
+          .from('CompanionList')
+          .select('*')
+          .order('id', { ascending: false });
 
-    // 현재 로그인한 사용자의 일정만 반환
-    return storedSchedules
-      .filter(schedule => {
-        // 현재 사용자의 일정인지 확인
-        return schedule.author?.name === userName || schedule.author === userName;
-      })
-      .map(schedule => ({
-        ...schedule,
-        image: sanitizeImageUrl(schedule.image)
-      }));
-  };
+        if (error) {
+          console.error('Error fetching companion posts:', error);
+          setMyCompanionPosts([]);
+          return;
+        }
 
-  // 동행모집 삭제 함수
-  const deleteCompanionPost = (postId) => {
+        // 현재 로그인한 사용자의 user_id와 일치하는 게시물만 필터링
+        const myPosts = data.filter(post => {
+          const authorUserId = post.author?.user_id;
+          return authorUserId === currentUserId;
+        });
+
+        setMyCompanionPosts(myPosts);
+      } catch (err) {
+        console.error('Error:', err);
+        setMyCompanionPosts([]);
+      }
+    };
+
+    fetchMyCompanionPosts();
+  }, [currentUserId]);
+
+  // Supabase에서 내가 올린 여행일정 가져오기
+  useEffect(() => {
+    const fetchMyTravelSchedules = async () => {
+      if (!currentUserId) {
+        setMyTravelSchedules([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('Itinerary')
+          .select('*')
+          .order('id', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching travel schedules:', error);
+          setMyTravelSchedules([]);
+          return;
+        }
+
+        // 현재 로그인한 사용자의 author_user_id와 일치하는 일정만 필터링
+        const mySchedules = data.filter(schedule => {
+          const authorUserId = schedule.author_user_id;
+          return authorUserId === currentUserId;
+        });
+
+        setMyTravelSchedules(mySchedules);
+      } catch (err) {
+        console.error('Error:', err);
+        setMyTravelSchedules([]);
+      }
+    };
+
+    fetchMyTravelSchedules();
+  }, [currentUserId]);
+
+  // 동행모집 삭제 함수 (Supabase)
+  const deleteCompanionPost = async (postId) => {
     if (window.confirm('정말로 이 동행모집을 삭제하시겠습니까?')) {
-      const storedPosts = JSON.parse(localStorage.getItem('companionPosts')) || [];
-      const updatedPosts = storedPosts.filter(post => post.id !== postId);
-      localStorage.setItem('companionPosts', JSON.stringify(updatedPosts));
-      window.location.reload(); // 페이지 새로고침으로 목록 업데이트
+      try {
+        const { error } = await supabase
+          .from('CompanionList')
+          .delete()
+          .eq('id', postId);
+
+        if (error) {
+          console.error('Error deleting companion post:', error);
+          alert('삭제에 실패했습니다. 다시 시도해주세요.');
+          return;
+        }
+
+        alert('동행모집이 성공적으로 삭제되었습니다.');
+        // 상태 업데이트로 목록 새로고침
+        setMyCompanionPosts(prev => prev.filter(post => post.id !== postId));
+      } catch (err) {
+        console.error('Error:', err);
+        alert('삭제 중 오류가 발생했습니다.');
+      }
     }
   };
 
-  // 여행일정 삭제 함수
-  const deleteTravelSchedule = (scheduleId) => {
+  // 여행일정 삭제 함수 (Supabase)
+  const deleteTravelSchedule = async (scheduleId) => {
     if (window.confirm('정말로 이 여행일정을 삭제하시겠습니까?')) {
-      const storedSchedules = JSON.parse(localStorage.getItem('userSchedules')) || [];
-      const updatedSchedules = storedSchedules.filter(schedule => schedule.id !== scheduleId);
-      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
-      window.location.reload(); // 페이지 새로고침으로 목록 업데이트
+      try {
+        const { error } = await supabase
+          .from('Itinerary')
+          .delete()
+          .eq('id', scheduleId);
+
+        if (error) {
+          console.error('Error deleting travel schedule:', error);
+          alert('삭제에 실패했습니다. 다시 시도해주세요.');
+          return;
+        }
+
+        alert('여행일정이 성공적으로 삭제되었습니다.');
+        // 상태 업데이트로 목록 새로고침
+        setMyTravelSchedules(prev => prev.filter(schedule => schedule.id !== scheduleId));
+      } catch (err) {
+        console.error('Error:', err);
+        alert('삭제 중 오류가 발생했습니다.');
+      }
     }
   };
 
@@ -102,12 +177,45 @@ const UserProfile = () => {
 
   // 동행모집 수정 함수
   const editCompanionPost = (postId) => {
-    navigate(`/companion/edit/${postId}`);
+    // 해당 게시물 찾기
+    const postToEdit = myCompanionPosts.find(post => post.id === postId);
+    if (postToEdit) {
+      // 기존 데이터를 state로 전달하며 수정 페이지로 이동
+      navigate('/companion/create', {
+        state: {
+          isEdit: true,
+          postData: postToEdit
+        }
+      });
+    }
   };
 
   // 여행일정 수정 함수
   const editTravelSchedule = (scheduleId) => {
-    navigate(`/travel-schedule/edit/${scheduleId}`);
+    // 해당 일정 찾기
+    const scheduleToEdit = myTravelSchedules.find(schedule => schedule.id === scheduleId);
+    if (scheduleToEdit) {
+      // detailedDescription 파싱
+      let detailedInfo = {};
+      if (scheduleToEdit.detailedDescription) {
+        try {
+          detailedInfo = JSON.parse(scheduleToEdit.detailedDescription);
+        } catch (e) {
+          console.error('detailedDescription 파싱 오류:', e);
+        }
+      }
+
+      // 기존 데이터를 state로 전달하며 수정 페이지로 이동
+      navigate('/direct-schedule-create', {
+        state: {
+          isEdit: true,
+          scheduleData: {
+            ...scheduleToEdit,
+            ...detailedInfo
+          }
+        }
+      });
+    }
   };
 
   // 새 동행모집 추가
@@ -313,9 +421,45 @@ const UserProfile = () => {
     // 정리 후 데이터 로드
     cleanupBlobUrls();
 
-    const loadSavedSchedules = () => {
+    const loadSavedSchedules = async () => {
       const saved = JSON.parse(localStorage.getItem('savedSchedules') || '[]');
-      setSavedSchedules(saved);
+
+      if (saved.length === 0) {
+        setSavedSchedules([]);
+        return;
+      }
+
+      // localStorage에 저장된 일정 ID들을 가져와서 Supabase에서 최신 데이터 조회
+      const scheduleIds = saved.map(schedule => schedule.id);
+
+      try {
+        const { data, error } = await supabase
+          .from('Itinerary')
+          .select('*')
+          .in('id', scheduleIds);
+
+        if (error) {
+          console.error('Error fetching saved schedules:', error);
+          setSavedSchedules(saved);
+          return;
+        }
+
+        // Supabase에서 가져온 최신 데이터로 업데이트
+        const updatedSchedules = data.map(schedule => ({
+          id: schedule.id,
+          title: schedule.title,
+          region: schedule.region,
+          date: schedule.date,
+          image: schedule.image,
+          author: schedule.author,
+          savedAt: saved.find(s => s.id === schedule.id)?.savedAt || new Date().toISOString()
+        }));
+
+        setSavedSchedules(updatedSchedules);
+      } catch (err) {
+        console.error('Error:', err);
+        setSavedSchedules(saved);
+      }
     };
 
     // 팔로워 데이터 로드 및 초기화
@@ -404,15 +548,15 @@ const UserProfile = () => {
 
             <ProfileStats>
               <StatItem>
-                <StatNumber>{user.totalTrips || 0}</StatNumber>
+                <StatNumber>{myTravelSchedules.length || 0}</StatNumber>
                 <StatLabel>여행</StatLabel>
               </StatItem>
               <StatItem $clickable onClick={handleFollowerClick}>
-                <StatNumber>{username !== 'user' ? followerCount : (user.followers || 0)}</StatNumber>
+                <StatNumber>{username !== 'user' ? followerCount : 0}</StatNumber>
                 <StatLabel>팔로워</StatLabel>
               </StatItem>
               <StatItem $clickable onClick={handleFollowingClick}>
-                <StatNumber>{user.following || 0}</StatNumber>
+                <StatNumber>0</StatNumber>
                 <StatLabel>팔로잉</StatLabel>
               </StatItem>
             </ProfileStats>
@@ -532,8 +676,8 @@ const UserProfile = () => {
                     </AddButton>
                   </SectionHeader>
                   <TextListContainer>
-                    {getMyCompanionPosts().length > 0 ? (
-                      getMyCompanionPosts().map((post) => (
+                    {myCompanionPosts.length > 0 ? (
+                      myCompanionPosts.map((post) => (
                         <TextListItem key={post.id}>
                           <TextListImage
                             src={post.image}
@@ -589,8 +733,8 @@ const UserProfile = () => {
                     </AddButton>
                   </SectionHeader>
                   <TextListContainer>
-                    {getMyTravelSchedules().length > 0 ? (
-                      getMyTravelSchedules().map((schedule) => (
+                    {myTravelSchedules.length > 0 ? (
+                      myTravelSchedules.map((schedule) => (
                         <TextListItem key={schedule.id}>
                           <TextListImage
                             src={schedule.image}

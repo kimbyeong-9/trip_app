@@ -278,7 +278,6 @@ const Navigation = () => {
                         className={!notification.isRead ? 'unread' : ''}
                         onClick={() => {
                           // 알림 클릭 시 처리 로직
-                          console.log('Notification clicked:', notification.id);
                         }}
                       >
                         <NotificationItemContent $unread={!notification.isRead}>
@@ -310,7 +309,11 @@ const Navigation = () => {
               title="프로필"
             >
               <ProfileAvatar>
-                {loginData.user.name ? loginData.user.name.charAt(0) : 'U'}
+                {loginData.user.profileImage ? (
+                  <img src={loginData.user.profileImage} alt={loginData.user.name} />
+                ) : (
+                  loginData.user.name ? loginData.user.name.charAt(0) : 'U'
+                )}
               </ProfileAvatar>
             </NavButton>
           ) : (
@@ -359,7 +362,11 @@ const Navigation = () => {
                 style={{cursor: 'pointer'}}
               >
                 <ProfileAvatar>
-                  {loginData.user.name ? loginData.user.name.charAt(0) : 'U'}
+                  {loginData.user.profileImage ? (
+                    <img src={loginData.user.profileImage} alt={loginData.user.name} />
+                  ) : (
+                    loginData.user.name ? loginData.user.name.charAt(0) : 'U'
+                  )}
                 </ProfileAvatar>
                 <ProfileName>{loginData.user.name} 여행자님</ProfileName>
               </SideProfileSection>
@@ -786,6 +793,13 @@ const ProfileAvatar = styled.div`
   font-size: 18px;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const ProfileName = styled.div`

@@ -15,6 +15,7 @@ const TravelScheduleDetail = () => {
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
   const [isUserSchedule, setIsUserSchedule] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [authorUploadCount, setAuthorUploadCount] = useState(0);
 
   // 샘플 일정 데이터
   const sampleItinerary = {
@@ -138,71 +139,125 @@ const TravelScheduleDetail = () => {
     // 저장된 사용자 일정 데이터 로드
     const loadUserSchedule = async () => {
       try {
-        // userSchedules에서 해당 ID의 일정 찾기
-        const userSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
-        const userSchedule = userSchedules.find(schedule => schedule.id === id);
+        // 현재 로그인한 사용자 정보 가져오기
+        const getLoginData = () => {
+          const localData = localStorage.getItem('loginData');
+          const sessionData = sessionStorage.getItem('loginData');
+          return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+        };
 
-        if (userSchedule) {
-          // 사용자가 작성한 일정이 있는 경우
+        const loginData = getLoginData();
+        const currentUserId = loginData?.user?.id;
+
+        // Supabase에서 Itinerary 데이터 가져오기
+        const { data: itineraryData, error } = await supabase
+          .from('Itinerary')
+          .select('*')
+          .eq('id', parseInt(id))
+          .single();
+
+        if (error) {
+          console.error('Error fetching itinerary:', error);
+          setSchedule(null);
+          setLoading(false);
+          return;
+        }
+
+        if (itineraryData) {
+          // 작성자 확인
+          const isMySchedule = currentUserId && itineraryData.author_user_id &&
+                               currentUserId === itineraryData.author_user_id;
+          setIsUserSchedule(isMySchedule);
+
+          // detailedDescription 파싱
+          let detailedInfo = {};
+          if (itineraryData.detailedDescription) {
+            try {
+              detailedInfo = JSON.parse(itineraryData.detailedDescription);
+            } catch (e) {
+              console.error('detailedDescription 파싱 오류:', e);
+            }
+          }
+
+          // places 데이터로 itinerary 구성
           const formattedItinerary = [];
-
-          // dailyPlaces 데이터를 itinerary 형태로 변환
-          for (let day = 1; day <= userSchedule.totalDays; day++) {
-            const dayPlaces = userSchedule.places[day] || [];
-            if (dayPlaces.length > 0) {
-              formattedItinerary.push({
-                day: `${day}일차`,
-                places: dayPlaces
-              });
+          if (detailedInfo.places) {
+            for (let day = 1; day <= detailedInfo.totalDays; day++) {
+              const dayPlaces = detailedInfo.places[day] || [];
+              if (dayPlaces.length > 0) {
+                formattedItinerary.push({
+                  day: `${day}일차`,
+                  places: dayPlaces
+                });
+              }
             }
           }
 
           setSchedule({
-            id: userSchedule.id,
-            title: userSchedule.title,
-            region: userSchedule.region,
-            duration: userSchedule.duration,
-            description: userSchedule.description,
-            author: userSchedule.author,
-            itinerary: formattedItinerary,
-            transportation: userSchedule.transportation,
-            companions: userSchedule.companions,
-            accommodation: userSchedule.accommodation,
-            startDate: userSchedule.startDate,
-            endDate: userSchedule.endDate
+            id: itineraryData.id,
+            title: itineraryData.title,
+            region: itineraryData.region,
+            duration: detailedInfo.duration || itineraryData.date || "여행 기간",
+            description: itineraryData.description || "여행 일정에 대한 설명입니다.",
+            author: itineraryData.author,
+            author_user_id: itineraryData.author_user_id,
+            itinerary: formattedItinerary.length > 0 ? formattedItinerary : sampleItinerary,
+            transportation: detailedInfo.transportation || [],
+            companions: detailedInfo.companions || '',
+            accommodation: detailedInfo.accommodation || '',
+            image: itineraryData.image,
+            startDate: detailedInfo.startDate || (itineraryData.date ? itineraryData.date.split('~')[0]?.trim() : ''),
+            endDate: detailedInfo.endDate || (itineraryData.date ? itineraryData.date.split('~')[1]?.trim() : ''),
+            views: itineraryData.views || 0,
+            likes: itineraryData.likes || 0,
+            tags: itineraryData.tags || []
           });
-          setIsUserSchedule(true);
-        } else {
-          // Supabase에서 Itinerary 데이터 가져오기
-          const { data: itineraryCards, error } = await supabase
-            .from('Itinerary')
-            .select('*')
-            .eq('id', parseInt(id))
-            .single();
 
-          if (error) {
-            console.error('Error fetching itinerary:', error);
-            setSchedule(null);
-          } else if (itineraryCards) {
-            setSchedule({
-              id: id,
-              title: itineraryCards.title,
-              region: itineraryCards.region,
-              duration: itineraryCards.date ? `${itineraryCards.date}` : "여행 기간",
-              description: itineraryCards.description || "여행 일정에 대한 설명입니다.",
-              author: itineraryCards.author,
-              itinerary: sampleItinerary,
-              image: itineraryCards.image,
-              startDate: itineraryCards.date ? itineraryCards.date.split('~')[0] : '',
-              endDate: itineraryCards.date ? itineraryCards.date.split('~')[1] : '',
-              views: itineraryCards.views,
-              likes: itineraryCards.likes,
-              tags: itineraryCards.tags || []
-            });
-          } else {
-            // 일정을 찾을 수 없는 경우
-            setSchedule(null);
+          // 조회수 증가 (본인이 아닐 때만, 그리고 이번 세션에서 처음 조회할 때만)
+          if (!isMySchedule) {
+            const viewedSchedulesKey = `viewedSchedules_${currentUserId || 'guest'}`;
+            const viewedSchedules = JSON.parse(sessionStorage.getItem(viewedSchedulesKey) || '[]');
+
+            // 이미 조회한 일정인지 확인
+            if (!viewedSchedules.includes(parseInt(id))) {
+              const { error: viewError } = await supabase
+                .from('Itinerary')
+                .update({ views: (itineraryData.views || 0) + 1 })
+                .eq('id', parseInt(id));
+
+              if (viewError) {
+                console.error('조회수 업데이트 오류:', viewError);
+              } else {
+                // 조회 기록 저장
+                viewedSchedules.push(parseInt(id));
+                sessionStorage.setItem(viewedSchedulesKey, JSON.stringify(viewedSchedules));
+
+                // 로컬 상태도 업데이트
+                setSchedule(prev => prev ? { ...prev, views: (prev.views || 0) + 1 } : null);
+              }
+            }
           }
+
+          // 작성자가 업로드한 총 일정 개수 가져오기
+          if (itineraryData.author_user_id) {
+            const { data: authorItineraries, error: countError } = await supabase
+              .from('Itinerary')
+              .select('id')
+              .eq('author_user_id', itineraryData.author_user_id);
+
+            if (!countError && authorItineraries) {
+              setAuthorUploadCount(authorItineraries.length);
+            }
+          }
+
+          // 좋아요 상태 확인 (localStorage에서)
+          if (currentUserId) {
+            const likedSchedulesKey = `likedSchedules_${currentUserId}`;
+            const likedSchedules = JSON.parse(localStorage.getItem(likedSchedulesKey) || '[]');
+            setIsLiked(likedSchedules.includes(parseInt(id)));
+          }
+        } else {
+          setSchedule(null);
         }
 
         setLoading(false);
@@ -277,8 +332,60 @@ const TravelScheduleDetail = () => {
     setShowSaveSuccessModal(false);
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
+  const handleLike = async () => {
+    try {
+      // 현재 로그인한 사용자 정보 가져오기
+      const getLoginData = () => {
+        const localData = localStorage.getItem('loginData');
+        const sessionData = sessionStorage.getItem('loginData');
+        return localData ? JSON.parse(localData) : (sessionData ? JSON.parse(sessionData) : null);
+      };
+
+      const loginData = getLoginData();
+      const currentUserId = loginData?.user?.id;
+
+      if (!currentUserId) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      const newLikedState = !isLiked;
+      const newLikesCount = newLikedState ? (schedule.likes + 1) : (schedule.likes - 1);
+
+      // Supabase 업데이트
+      const { error } = await supabase
+        .from('Itinerary')
+        .update({ likes: newLikesCount })
+        .eq('id', parseInt(id));
+
+      if (error) {
+        console.error('좋아요 업데이트 오류:', error);
+        return;
+      }
+
+      // localStorage에 좋아요 상태 저장
+      const likedSchedulesKey = `likedSchedules_${currentUserId}`;
+      const likedSchedules = JSON.parse(localStorage.getItem(likedSchedulesKey) || '[]');
+
+      if (newLikedState) {
+        // 좋아요 추가
+        likedSchedules.push(parseInt(id));
+      } else {
+        // 좋아요 제거
+        const index = likedSchedules.indexOf(parseInt(id));
+        if (index > -1) {
+          likedSchedules.splice(index, 1);
+        }
+      }
+
+      localStorage.setItem(likedSchedulesKey, JSON.stringify(likedSchedules));
+
+      // 로컬 상태 업데이트
+      setIsLiked(newLikedState);
+      setSchedule(prev => prev ? { ...prev, likes: newLikesCount } : null);
+    } catch (error) {
+      console.error('좋아요 처리 실패:', error);
+    }
   };
 
   const handleAuthorClick = () => {
@@ -314,13 +421,21 @@ const TravelScheduleDetail = () => {
     setShowDeleteModal(false);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     try {
-      // localStorage에서 해당 일정 삭제
-      const userSchedules = JSON.parse(localStorage.getItem('userSchedules') || '[]');
-      const updatedSchedules = userSchedules.filter(schedule => schedule.id !== id);
-      localStorage.setItem('userSchedules', JSON.stringify(updatedSchedules));
+      // Supabase에서 일정 삭제
+      const { error } = await supabase
+        .from('Itinerary')
+        .delete()
+        .eq('id', parseInt(id));
 
+      if (error) {
+        console.error('일정 삭제 오류:', error);
+        alert('일정 삭제에 실패했습니다. 다시 시도해주세요.');
+        return;
+      }
+
+      alert('일정이 성공적으로 삭제되었습니다.');
       // 삭제 후 일정 목록 페이지로 이동
       navigate('/travel-schedules');
     } catch (error) {
@@ -390,7 +505,7 @@ const TravelScheduleDetail = () => {
           {/* 통계 정보 */}
           <StatsSection>
             <StatItem>
-              <StatValue>{schedule.views || 1}</StatValue>
+              <StatValue>{schedule.views || 0}</StatValue>
               <StatLabel>조회</StatLabel>
             </StatItem>
             <StatItem>
@@ -398,11 +513,7 @@ const TravelScheduleDetail = () => {
               <StatLabel>좋아요</StatLabel>
             </StatItem>
             <StatItem>
-              <StatValue>{
-                Array.isArray(schedule.itinerary)
-                  ? schedule.itinerary.reduce((total, day) => total + day.places.length, 0)
-                  : Object.values(schedule.itinerary || {}).reduce((total, day) => total + (day.places ? day.places.length : 0), 0)
-              }</StatValue>
+              <StatValue>{authorUploadCount}</StatValue>
               <StatLabel>업로드</StatLabel>
             </StatItem>
           </StatsSection>
@@ -576,7 +687,6 @@ const TravelScheduleDetail = () => {
 
               <InfoGrid>
                 <InfoItem>
-                  <InfoIcon>📞</InfoIcon>
                   <InfoText>
                     <InfoLabel>전화번호</InfoLabel>
                     <InfoValue>{selectedPlace.phone}</InfoValue>
@@ -584,7 +694,6 @@ const TravelScheduleDetail = () => {
                 </InfoItem>
 
                 <InfoItem>
-                  <InfoIcon>📍</InfoIcon>
                   <InfoText>
                     <InfoLabel>주소</InfoLabel>
                     <InfoValue>{selectedPlace.address}</InfoValue>
@@ -592,7 +701,6 @@ const TravelScheduleDetail = () => {
                 </InfoItem>
 
                 <InfoItem>
-                  <InfoIcon>🕐</InfoIcon>
                   <InfoText>
                     <InfoLabel>운영시간</InfoLabel>
                     <InfoValue>{selectedPlace.hours}</InfoValue>
@@ -601,14 +709,8 @@ const TravelScheduleDetail = () => {
               </InfoGrid>
 
               <ActionButtons>
-                <ActionButton onClick={handleUseCoupon}>
-                  쿠폰사용
-                </ActionButton>
                 <ActionButton onClick={handleShare}>
                   공유
-                </ActionButton>
-                <ActionButton $primary onClick={handleSave}>
-                  장소저장
                 </ActionButton>
               </ActionButtons>
             </ModalBody>
@@ -1280,25 +1382,26 @@ const InfoValue = styled.p`
 `;
 
 const ActionButtons = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
+  display: flex;
+  width: 100%;
 `;
 
 const ActionButton = styled.button`
-  padding: 12px 16px;
+  flex: 1;
+  padding: 14px 20px;
   border: 2px solid #667eea;
   border-radius: 12px;
-  background: ${props => props.$primary ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
-  color: ${props => props.$primary ? 'white' : '#667eea'};
-  font-size: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: ${props => props.$primary ? 'linear-gradient(135deg, #5a6fd8 0%, #6a4c9a 100%)' : '#f0f4ff'};
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4c9a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   }
 `;
 

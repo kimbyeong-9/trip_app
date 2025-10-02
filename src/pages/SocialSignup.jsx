@@ -185,7 +185,8 @@ const SocialSignup = () => {
 
       // Get provider-specific user ID
       const providerUserId = user.user_metadata?.sub || user.id;
-      const profileImage = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+      const defaultProfileImage = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face';
+      const profileImage = user.user_metadata?.avatar_url || user.user_metadata?.picture || defaultProfileImage;
 
       // Save to social_login_users table if it's a social login
       if (provider !== 'email') {

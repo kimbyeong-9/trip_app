@@ -283,14 +283,18 @@ const Signup = () => {
       }
 
       // 3. 회원가입 성공 시 자동 로그인 (localStorage 백업용)
+      const defaultProfileImage = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face';
+
       const userData = {
         isLoggedIn: true,
         user: {
+          id: authData.user.id,
           email: formData.email,
           name: formData.name,
           phone: formData.phone,
           birthDate: formData.birthDate,
-          gender: formData.gender
+          gender: formData.gender,
+          profileImage: defaultProfileImage
         },
         loginTime: new Date().toISOString()
       };
