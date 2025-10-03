@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import FormField from '../components/form/FormField';
+import ImageUploader from '../components/form/ImageUploader';
 
 
 
@@ -101,99 +103,56 @@ const ChatRoomCreate = () => {
       <FormContainer>
         <FormCard>
           <form onSubmit={handleSubmit}>
-            <FormSection>
-              <Label>
-                채팅방 제목<span className="required">*</span>
-              </Label>
-              <Input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="예: 제주도 3박4일 같이 가실 분!"
-                maxLength={50}
+            <FormField
+              label="채팅방 제목"
+              name="title"
+              type="text"
+              value={formData.title}
+              onChange={handleInputChange}
+              placeholder="예: 제주도 3박4일 같이 가실 분!"
+              maxLength={50}
+              required={true}
+              showCharCount={true}
+            />
+
+            <FormField
+              label="채팅방 설명"
+              name="description"
+              type="textarea"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="채팅방에 대한 자세한 설명을 작성해주세요. 여행 일정, 예상 비용, 만날 장소 등을 포함하면 좋습니다."
+              maxLength={500}
+              required={true}
+              showCharCount={true}
+            />
+
+            <FormField
+              label="카테고리"
+              name="category"
+              type="select"
+              value={formData.category}
+              onChange={handleInputChange}
+              options={categories.map(cat => ({ value: cat, label: cat }))}
+            />
+
+            <FormField
+              label="최대 참여인원"
+              name="maxMembers"
+              type="select"
+              value={formData.maxMembers}
+              onChange={handleInputChange}
+              options={[5, 10, 15, 20, 25, 30].map(num => ({ value: num, label: `${num}명` }))}
+            />
+
+            <ImageUploadSection>
+              <ImageLabel>대표 이미지</ImageLabel>
+              <ImageUploader
+                imagePreview={formData.imagePreview}
+                onImageChange={handleImageChange}
+                onRemoveImage={removeImage}
               />
-              <CharCount>{formData.title.length}/50</CharCount>
-            </FormSection>
-
-            <FormSection>
-              <Label>
-                채팅방 설명<span className="required">*</span>
-              </Label>
-              <TextArea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="채팅방에 대한 자세한 설명을 작성해주세요. 여행 일정, 예상 비용, 만날 장소 등을 포함하면 좋습니다."
-                maxLength={500}
-              />
-              <CharCount>{formData.description.length}/500</CharCount>
-            </FormSection>
-
-            <FormSection>
-              <Label>카테고리</Label>
-              <Select
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-              >
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </Select>
-            </FormSection>
-
-            <FormSection>
-              <Label>최대 참여인원</Label>
-              <Select
-                name="maxMembers"
-                value={formData.maxMembers}
-                onChange={handleInputChange}
-              >
-                {[5, 10, 15, 20, 25, 30].map(num => (
-                  <option key={num} value={num}>
-                    {num}명
-                  </option>
-                ))}
-              </Select>
-            </FormSection>
-
-            <FormSection>
-              <Label>대표 이미지</Label>
-              <ImageUploadContainer
-                className={formData.imagePreview ? 'has-image' : ''}
-                onClick={() => document.getElementById('imageInput').click()}
-              >
-                {formData.imagePreview ? (
-                  <div>
-                    <PreviewImage src={formData.imagePreview} alt="미리보기" />
-                    <RemoveImageButton
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeImage();
-                      }}
-                    >
-                      이미지 삭제
-                    </RemoveImageButton>
-                  </div>
-                ) : (
-                  <>
-                    <ImageUploadIcon>📸</ImageUploadIcon>
-                    <ImageUploadText>이미지를 선택해주세요</ImageUploadText>
-                    <ImageUploadSubtext>JPG, PNG 파일 (최대 5MB)</ImageUploadSubtext>
-                  </>
-                )}
-              </ImageUploadContainer>
-              <HiddenFileInput
-                id="imageInput"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-            </FormSection>
+            </ImageUploadSection>
 
             <ButtonContainer>
               <CancelButton type="button" onClick={handleCancel}>
@@ -325,159 +284,16 @@ const FormCard = styled.div`
   }
 `;
 
-const FormSection = styled.div`
+const ImageUploadSection = styled.div`
   margin-bottom: 30px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
 `;
 
-const Label = styled.label`
+const ImageLabel = styled.label`
   display: block;
   font-size: 16px;
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 8px;
-
-  .required {
-    color: #e74c3c;
-    margin-left: 4px;
-  }
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 16px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 16px;
-  color: #2c3e50;
-  background: #f8f9fa;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-
-  &::placeholder {
-    color: #6c757d;
-  }
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: 16px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 16px;
-  color: #2c3e50;
-  background: #f8f9fa;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-  resize: vertical;
-  min-height: 120px;
-  font-family: inherit;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-
-  &::placeholder {
-    color: #6c757d;
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 16px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 16px;
-  color: #2c3e50;
-  background: #f8f9fa;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-`;
-
-const ImageUploadContainer = styled.div`
-  position: relative;
-  border: 2px dashed #dee2e6;
-  border-radius: 12px;
-  padding: 40px 20px;
-  text-align: center;
-  background: #f8f9fa;
-  transition: all 0.3s ease;
-  cursor: pointer;
-
-  &:hover {
-    border-color: #667eea;
-    background: #f0f2ff;
-  }
-
-  &.has-image {
-    border-style: solid;
-    border-color: #667eea;
-    background: #f0f2ff;
-  }
-`;
-
-const ImageUploadIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 15px;
-  opacity: 0.5;
-`;
-
-const ImageUploadText = styled.div`
-  color: #6c757d;
-  font-size: 16px;
-  margin-bottom: 8px;
-`;
-
-const ImageUploadSubtext = styled.div`
-  color: #adb5bd;
-  font-size: 14px;
-`;
-
-const HiddenFileInput = styled.input`
-  display: none;
-`;
-
-const PreviewImage = styled.img`
-  max-width: 100%;
-  max-height: 200px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-`;
-
-const RemoveImageButton = styled.button`
-  background: #e74c3c;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #c0392b;
-  }
 `;
 
 const ButtonContainer = styled.div`
@@ -532,13 +348,6 @@ const CreateButton = styled.button`
     transform: none;
     box-shadow: none;
   }
-`;
-
-const CharCount = styled.div`
-  text-align: right;
-  font-size: 12px;
-  color: #6c757d;
-  margin-top: 5px;
 `;
 
 export default ChatRoomCreate;

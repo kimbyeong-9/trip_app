@@ -144,7 +144,6 @@ const FAQ = () => {
     },
   ];
 
-  const filteredFAQ = faqData;
 
   const toggleExpanded = (id) => {
     setExpandedItems(prev => ({

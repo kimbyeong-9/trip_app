@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home';
 import Search from '../pages/Search';
-import Detail from '../pages/Detail';
 import Booking from '../pages/Booking';
 import Login from '../pages/Login';
 import ForgotPassword from '../pages/ForgotPassword';
@@ -36,9 +35,8 @@ const routes = [
   // 메인 페이지
   { path: '/', element: Home },
 
-  // 검색 및 상세
+  // 검색 및 예약
   { path: '/search', element: Search },
-  { path: '/detail/:id', element: Detail },
   { path: '/booking/:id', element: Booking },
 
   // 인증 관련

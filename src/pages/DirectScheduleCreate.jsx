@@ -380,18 +380,15 @@ const DirectScheduleCreate = () => {
     });
   };
 
-  // 일정 일수 계산
-  const getDaysBetweenDates = (startDate, endDate) => {
+  // 총 일수
+  const totalDays = (() => {
     if (!startDate || !endDate) return 1;
     const start = new Date(startDate);
     const end = new Date(endDate);
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return Math.max(diffDays, 1);
-  };
-
-  // 총 일수
-  const totalDays = getDaysBetweenDates(startDate, endDate);
+  })();
 
   // 장소 선택 핸들러
   const handlePlaceSelect = (place) => {
@@ -1153,47 +1150,6 @@ const TextArea = styled.textarea`
   }
 `;
 
-const Select = styled.select`
-  width: 100%;
-  padding: 12px 15px;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 16px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-
-  @media (max-width: 768px) {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 5px 0;
-
-    /* 스크롤바 숨기기 */
-    &::-webkit-scrollbar {
-      display: none;
-    }
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-
-    /* 버튼들이 줄어들지 않도록 */
-    & > * {
-      flex-shrink: 0;
-    }
-  }
-`;
-
 const KeywordButtonGroup = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -1240,82 +1196,6 @@ const LocationsSection = styled.div`
   padding: 30px;
   margin-bottom: 25px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-`;
-
-const LocationItem = styled.div`
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 15px;
-  padding: 20px;
-  margin-bottom: 15px;
-  position: relative;
-`;
-
-const LocationHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-`;
-
-const LocationNumber = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
-`;
-
-const DeleteLocationButton = styled.button`
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #c82333;
-  }
-`;
-
-const DistanceInfo = styled.div`
-  background: #e8f4f8;
-  border: 1px solid #bee5eb;
-  border-radius: 8px;
-  padding: 10px 15px;
-  margin-top: 10px;
-  color: #0c5460;
-  font-size: 14px;
-  text-align: center;
-`;
-
-const AddLocationButton = styled.button`
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 15px 30px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 100%;
-  margin-top: 20px;
-  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.5);
-  }
 `;
 
 const SubmitButton = styled.button`
@@ -1828,12 +1708,6 @@ const RemoveImageButton = styled.button`
     background: #c82333;
     transform: scale(1.1);
   }
-`;
-
-const ImageUploadIcon = styled.div`
-  font-size: 48px;
-  color: #6c757d;
-  margin-bottom: 15px;
 `;
 
 const ImageUploadText = styled.div`

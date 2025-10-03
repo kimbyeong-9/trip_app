@@ -49,12 +49,6 @@ const CompanionList = () => {
     navigate('/login');
   };
 
-  // 소개글 50자 제한 유틸리티
-  const truncateDescription = (text, max = 50) => {
-    if (!text) return '';
-    const trimmed = text.trim();
-    return trimmed.length > max ? trimmed.slice(0, max) + '…' : trimmed;
-  };
 
   // Supabase에서 CompanionList 데이터 가져오기
   useEffect(() => {
@@ -707,12 +701,6 @@ const AuthorName = styled.span`
   font-size: 13px;
   font-weight: 600;
   color: #2c3e50;
-  line-height: 1.2;
-`;
-
-const AuthorMeta = styled.span`
-  font-size: 11px;
-  color: #6c757d;
   line-height: 1.2;
 `;
 

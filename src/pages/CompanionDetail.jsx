@@ -14,14 +14,6 @@ const CompanionDetail = () => {
   const [isUserPost, setIsUserPost] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // localStorage에서 사용자가 등록한 게시물 불러오기
-  const getUserPosts = () => {
-    try {
-      return JSON.parse(localStorage.getItem('companionPosts')) || [];
-    } catch {
-      return [];
-    }
-  };
 
   // Supabase에서 데이터 가져오기
   useEffect(() => {
@@ -519,12 +511,6 @@ const AuthorName = styled.h3`
   font-weight: 600;
   color: #2c3e50;
   margin: 0 0 5px 0;
-`;
-
-const AuthorRole = styled.p`
-  font-size: 14px;
-  color: #6c757d;
-  margin: 0;
 `;
 
 const ProfileArrow = styled.div`
