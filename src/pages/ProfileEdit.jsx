@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { supabase } from '../supabaseClient';
+import ProfileImageEditor from '../components/profile/ProfileImageEditor';
+import InterestTagEditor from '../components/profile/InterestTagEditor';
+import ProfileFormFields from '../components/profile/ProfileFormFields';
 
 
 const ProfileEdit = () => {
@@ -197,22 +200,11 @@ const ProfileEdit = () => {
     }));
   };
 
-  const handleAddInterest = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      e.stopPropagation();
-      const value = e.target.value.trim();
-      if (value && !formData.interests.includes(value)) {
-        setFormData(prev => ({
-          ...prev,
-          interests: [...prev.interests, value]
-        }));
-        // 입력 필드 초기화
-        setTimeout(() => {
-          e.target.value = '';
-        }, 0);
-      }
-    }
+  const handleAddInterest = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      interests: [...prev.interests, value]
+    }));
   };
 
   const removeInterest = (index) => {
@@ -232,136 +224,25 @@ const ProfileEdit = () => {
             </CardBackButton>
             <CardTitle>프로필 편집</CardTitle>
           </CardHeader>
-          
-          <ProfileImageSection>
-            <ProfileImageContainer>
-              <ProfileImage>
-                {formData.profileImage ? (
-                  <img src={formData.profileImage} alt="프로필 이미지" />
-                ) : (
-                  formData.name.charAt(0)
-                )}
-              </ProfileImage>
-              <ChangeImageButton onClick={handleImageChange} title="이미지 변경">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                  <circle cx="12" cy="13" r="4"/>
-                </svg>
-              </ChangeImageButton>
-            </ProfileImageContainer>
-            <ImageButtonGroup>
-              <ImageActionButton className="default" onClick={handleResetToDefault}>
-                기본 이미지로 변경
-              </ImageActionButton>
-            </ImageButtonGroup>
-          </ProfileImageSection>
+
+          <ProfileImageEditor
+            profileImage={formData.profileImage}
+            name={formData.name}
+            onImageChange={handleImageChange}
+            onResetToDefault={handleResetToDefault}
+          />
 
           <Form onSubmit={handleSave}>
-            <FormGroup>
-              <Label htmlFor="name">이름</Label>
-              <Input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-              />
-            </FormGroup>
+            <ProfileFormFields
+              formData={formData}
+              onChange={handleInputChange}
+            />
 
-            <FormGroup>
-              <Label htmlFor="email">이메일</Label>
-              <Input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="phone">전화번호</Label>
-              <Input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="010-1234-5678"
-                required
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="birthDate">생년월일</Label>
-              <Input
-                type="date"
-                id="birthDate"
-                name="birthDate"
-                value={formData.birthDate}
-                onChange={handleInputChange}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="location">지역</Label>
-              <Select
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">지역을 선택하세요</option>
-                <option value="서울">서울</option>
-                <option value="부산">부산</option>
-                <option value="대구">대구</option>
-                <option value="인천">인천</option>
-                <option value="광주">광주</option>
-                <option value="대전">대전</option>
-                <option value="울산">울산</option>
-                <option value="세종">세종</option>
-                <option value="경기">경기</option>
-                <option value="강원">강원</option>
-                <option value="충북">충북</option>
-                <option value="충남">충남</option>
-                <option value="전북">전북</option>
-                <option value="전남">전남</option>
-                <option value="경북">경북</option>
-                <option value="경남">경남</option>
-                <option value="제주">제주</option>
-              </Select>
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="bio">소개</Label>
-              <TextArea
-                id="bio"
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                placeholder="나를 소개해보세요!"
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>관심사</Label>
-              <InterestTags>
-                {formData.interests.map((interest, index) => (
-                  <InterestTag key={index}>
-                    {interest}
-                    <RemoveButton onClick={() => removeInterest(index)}>×</RemoveButton>
-                  </InterestTag>
-                ))}
-                <AddInterestInput
-                  type="text"
-                  placeholder="관심사 추가..."
-                  onKeyDown={handleAddInterest}
-                />
-              </InterestTags>
-            </FormGroup>
+            <InterestTagEditor
+              interests={formData.interests}
+              onAdd={handleAddInterest}
+              onRemove={removeInterest}
+            />
 
             <ButtonGroup>
               <SaveButton type="submit">저장하기</SaveButton>
@@ -448,175 +329,11 @@ const CardTitle = styled.h1`
   text-align: center;
 `;
 
-
-const ProfileImageSection = styled.div`
-  text-align: center;
-  margin-bottom: 40px;
-`;
-
-const ImageButtonGroup = styled.div`
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 15px;
-`;
-
-const ImageActionButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  }
-
-  &.default {
-    background: #6c757d;
-
-    &:hover {
-      background: #5a6268;
-      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
-    }
-  }
-`;
-
-const ProfileImageContainer = styled.div`
-  position: relative;
-  display: inline-block;
-  margin-bottom: 20px;
-`;
-
-const ProfileImage = styled.div`
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 60px;
-  margin: 0 auto;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const ChangeImageButton = styled.button`
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
-  color: white;
-
-  svg {
-    stroke: white;
-  }
-
-  &:hover {
-    background: linear-gradient(135deg, #5a6fd8 0%, #6a3f92 100%);
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
-  }
-`;
-
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 25px;
   width: 100%;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-`;
-
-const Label = styled.label`
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 10px;
-  font-size: 16px;
-  transition: border-color 0.3s ease;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 10px;
-  font-size: 16px;
-  transition: border-color 0.3s ease;
-  box-sizing: border-box;
-  background: white;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-  }
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 10px;
-  font-size: 16px;
-  min-height: 120px;
-  resize: vertical;
-  transition: border-color 0.3s ease;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-  }
-
-  &::placeholder {
-    color: #999;
-  }
 `;
 
 const ButtonGroup = styled.div`
@@ -663,59 +380,6 @@ const CancelButton = styled.button`
   &:hover {
     background: #f8f9fa;
     color: #495057;
-  }
-`;
-
-const InterestTags = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-`;
-
-const InterestTag = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: #667eea;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const RemoveButton = styled.button`
-  background: none;
-  border: none;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-`;
-
-const AddInterestInput = styled.input`
-  padding: 6px 12px;
-  border: 2px solid #e9ecef;
-  border-radius: 20px;
-  font-size: 14px;
-  min-width: 120px;
-  transition: border-color 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
   }
 `;
 

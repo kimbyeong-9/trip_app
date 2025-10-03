@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { supabase } from '../supabaseClient';
+import TermsCheckbox from '../components/social-signup/TermsCheckbox';
+import FormInput from '../components/social-signup/FormInput';
 
 
 const SocialSignup = () => {
@@ -277,124 +279,94 @@ const SocialSignup = () => {
         <Form onSubmit={handleSubmit}>
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
-          <InputGroup>
-            <Label htmlFor="name">이름 <span style={{ color: '#dc3545' }}>*</span></Label>
-            <Input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="이름을 입력하세요"
-              disabled={isLoading}
-            />
-          </InputGroup>
+          <FormInput
+            id="name"
+            label="이름"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="이름을 입력하세요"
+            disabled={isLoading}
+            isRequired
+          />
 
-          <InputGroup>
-            <Label htmlFor="birthDate">생년월일 <span style={{ color: '#dc3545' }}>*</span></Label>
-            <Input
-              type="text"
-              id="birthDate"
-              value={birthDate}
-              onChange={handleBirthDateChange}
-              placeholder="YYYY-MM-DD (예: 1990-01-01)"
-              maxLength={10}
-              disabled={isLoading}
-            />
-          </InputGroup>
+          <FormInput
+            id="birthDate"
+            label="생년월일"
+            type="text"
+            value={birthDate}
+            onChange={handleBirthDateChange}
+            placeholder="YYYY-MM-DD (예: 1990-01-01)"
+            maxLength={10}
+            disabled={isLoading}
+            isRequired
+          />
 
-          <InputGroup>
-            <Label htmlFor="phone">휴대폰 번호 <span style={{ color: '#dc3545' }}>*</span></Label>
-            <Input
-              type="tel"
-              id="phone"
-              value={phone}
-              onChange={handlePhoneChange}
-              placeholder="010-1234-5678"
-              maxLength={13}
-              disabled={isLoading}
-            />
-          </InputGroup>
+          <FormInput
+            id="phone"
+            label="휴대폰 번호"
+            type="tel"
+            value={phone}
+            onChange={handlePhoneChange}
+            placeholder="010-1234-5678"
+            maxLength={13}
+            disabled={isLoading}
+            isRequired
+          />
 
           <TermsSection>
             <TermsTitle>약관 동의</TermsTitle>
 
-            <CheckboxGroup className="all-agree">
-              <Checkbox
-                type="checkbox"
-                id="allAgree"
-                checked={allAgree}
-                onChange={handleAllAgree}
-                disabled={isLoading}
-              />
-              <CheckboxLabel htmlFor="allAgree" $isAllAgree={true}>
-                전체 동의합니다
-              </CheckboxLabel>
-            </CheckboxGroup>
+            <TermsCheckbox
+              id="allAgree"
+              label="전체 동의합니다"
+              checked={allAgree}
+              onChange={handleAllAgree}
+              disabled={isLoading}
+              isAllAgree
+            />
 
-            <CheckboxGroup>
-              <Checkbox
-                type="checkbox"
-                id="serviceTerms"
-                checked={serviceTerms}
-                onChange={(e) => setServiceTerms(e.target.checked)}
-                disabled={isLoading}
-              />
-              <CheckboxLabel htmlFor="serviceTerms">
-                서비스 이용약관 <span>(필수)</span>
-              </CheckboxLabel>
-            </CheckboxGroup>
+            <TermsCheckbox
+              id="serviceTerms"
+              label="서비스 이용약관"
+              checked={serviceTerms}
+              onChange={(e) => setServiceTerms(e.target.checked)}
+              disabled={isLoading}
+              isRequired
+            />
 
-            <CheckboxGroup>
-              <Checkbox
-                type="checkbox"
-                id="privacyTerms"
-                checked={privacyTerms}
-                onChange={(e) => setPrivacyTerms(e.target.checked)}
-                disabled={isLoading}
-              />
-              <CheckboxLabel htmlFor="privacyTerms">
-                개인정보 수집 및 이용 동의 <span>(필수)</span>
-              </CheckboxLabel>
-            </CheckboxGroup>
+            <TermsCheckbox
+              id="privacyTerms"
+              label="개인정보 수집 및 이용 동의"
+              checked={privacyTerms}
+              onChange={(e) => setPrivacyTerms(e.target.checked)}
+              disabled={isLoading}
+              isRequired
+            />
 
-            <CheckboxGroup>
-              <Checkbox
-                type="checkbox"
-                id="thirdPartyTerms"
-                checked={thirdPartyTerms}
-                onChange={(e) => setThirdPartyTerms(e.target.checked)}
-                disabled={isLoading}
-              />
-              <CheckboxLabel htmlFor="thirdPartyTerms">
-                개인정보 제3자 제공 동의 (선택)
-              </CheckboxLabel>
-            </CheckboxGroup>
+            <TermsCheckbox
+              id="thirdPartyTerms"
+              label="개인정보 제3자 제공 동의 (선택)"
+              checked={thirdPartyTerms}
+              onChange={(e) => setThirdPartyTerms(e.target.checked)}
+              disabled={isLoading}
+            />
 
-            <CheckboxGroup>
-              <Checkbox
-                type="checkbox"
-                id="locationTerms"
-                checked={locationTerms}
-                onChange={(e) => setLocationTerms(e.target.checked)}
-                disabled={isLoading}
-              />
-              <CheckboxLabel htmlFor="locationTerms">
-                위치서비스 이용 동의 (선택)
-              </CheckboxLabel>
-            </CheckboxGroup>
+            <TermsCheckbox
+              id="locationTerms"
+              label="위치서비스 이용 동의 (선택)"
+              checked={locationTerms}
+              onChange={(e) => setLocationTerms(e.target.checked)}
+              disabled={isLoading}
+            />
 
-            <CheckboxGroup>
-              <Checkbox
-                type="checkbox"
-                id="eventTerms"
-                checked={eventTerms}
-                onChange={(e) => setEventTerms(e.target.checked)}
-                disabled={isLoading}
-              />
-              <CheckboxLabel htmlFor="eventTerms">
-                이벤트 및 할인 혜택 동의 (선택)
-              </CheckboxLabel>
-            </CheckboxGroup>
+            <TermsCheckbox
+              id="eventTerms"
+              label="이벤트 및 할인 혜택 동의 (선택)"
+              checked={eventTerms}
+              onChange={(e) => setEventTerms(e.target.checked)}
+              disabled={isLoading}
+            />
           </TermsSection>
 
           <SubmitButton type="submit" disabled={isLoading}>
@@ -483,42 +455,6 @@ const Form = styled.form`
   gap: 20px;
 `;
 
-const InputGroup = styled.div`
-  text-align: left;
-`;
-
-const Label = styled.label`
-  display: block;
-  margin-bottom: 8px;
-  color: #2c3e50;
-  font-weight: 600;
-  font-size: 14px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 15px 20px;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-
-  &::placeholder {
-    color: #adb5bd;
-  }
-
-  &.error {
-    border-color: #dc3545;
-  }
-`;
-
 const ErrorMessage = styled.div`
   background: #fee;
   color: #c33;
@@ -541,55 +477,6 @@ const TermsTitle = styled.div`
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 15px;
-`;
-
-const CheckboxGroup = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 12px;
-  background: white;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: #f8f9fa;
-  }
-
-  &.all-agree {
-    background: #667eea;
-    color: white;
-    font-weight: 600;
-    margin-bottom: 15px;
-
-    &:hover {
-      background: #5a6fd8;
-    }
-  }
-`;
-
-const Checkbox = styled.input`
-  width: 20px;
-  height: 20px;
-  accent-color: #667eea;
-  cursor: pointer;
-  flex-shrink: 0;
-  margin-top: 2px;
-`;
-
-const CheckboxLabel = styled.label`
-  color: ${props => props.$isAllAgree ? 'white' : '#2c3e50'};
-  font-size: 14px;
-  cursor: pointer;
-  flex: 1;
-  line-height: 1.5;
-  user-select: none;
-
-  span {
-    color: ${props => props.$isAllAgree ? '#ffd700' : '#dc3545'};
-    font-weight: 600;
-  }
 `;
 
 const SubmitButton = styled.button`

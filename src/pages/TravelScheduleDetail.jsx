@@ -3,6 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
 import { supabase } from '../supabaseClient';
+import PlaceCard from '../components/travel-schedule-detail/PlaceCard';
+import PlaceDetailModal from '../components/travel-schedule-detail/PlaceDetailModal';
+import SimpleModal from '../components/travel-schedule-detail/SimpleModal';
+import ConfirmModal from '../components/travel-schedule-detail/ConfirmModal';
+import SaveSuccessModal from '../components/travel-schedule-detail/SaveSuccessModal';
 
 const TravelScheduleDetail = () => {
   const navigate = useNavigate();
@@ -594,16 +599,7 @@ const TravelScheduleDetail = () => {
               <PlacesContainer>
                 {dayData.places.map((place, placeIndex) => (
                   <div key={placeIndex}>
-                    <PlaceCard onClick={() => handlePlaceClick(place)}>
-                      <PlaceImage>
-                        <img src={place.image} alt={place.name} />
-                      </PlaceImage>
-                      <PlaceInfo>
-                        <PlaceName>{place.name}</PlaceName>
-                        <PlaceCategory>{place.category}</PlaceCategory>
-                        <PlaceDescription>{place.description}</PlaceDescription>
-                      </PlaceInfo>
-                    </PlaceCard>
+                    <PlaceCard place={place} onClick={handlePlaceClick} />
 
                     {placeIndex < dayData.places.length - 1 && (
                       <ArrowSection>
@@ -628,16 +624,7 @@ const TravelScheduleDetail = () => {
             <PlacesContainer>
               {dayData.places.map((place, index) => (
                 <div key={place.id}>
-                  <PlaceCard onClick={() => handlePlaceClick(place)}>
-                    <PlaceImage>
-                      <img src={place.image} alt={place.name} />
-                    </PlaceImage>
-                    <PlaceInfo>
-                      <PlaceName>{place.name}</PlaceName>
-                      <PlaceCategory>{place.category}</PlaceCategory>
-                      <PlaceDescription>{place.description}</PlaceDescription>
-                    </PlaceInfo>
-                  </PlaceCard>
+                  <PlaceCard place={place} onClick={handlePlaceClick} />
 
                   {index < dayData.places.length - 1 && place.distance !== '끝' && (
                     <ArrowSection>
@@ -674,98 +661,38 @@ const TravelScheduleDetail = () => {
       </DetailContainer>
 
       {/* 장소 상세 정보 모달 */}
-      {selectedPlace && (
-        <Modal onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
-          <ModalContent>
-            <ModalHeader>
-              <img src={selectedPlace.image} alt={selectedPlace.name} />
-              <CloseButton onClick={handleCloseModal}>✕</CloseButton>
-            </ModalHeader>
-
-            <ModalBody>
-              <ModalTitle>{selectedPlace.name}</ModalTitle>
-
-              <InfoGrid>
-                <InfoItem>
-                  <InfoText>
-                    <InfoLabel>전화번호</InfoLabel>
-                    <InfoValue>{selectedPlace.phone}</InfoValue>
-                  </InfoText>
-                </InfoItem>
-
-                <InfoItem>
-                  <InfoText>
-                    <InfoLabel>주소</InfoLabel>
-                    <InfoValue>{selectedPlace.address}</InfoValue>
-                  </InfoText>
-                </InfoItem>
-
-                <InfoItem>
-                  <InfoText>
-                    <InfoLabel>운영시간</InfoLabel>
-                    <InfoValue>{selectedPlace.hours}</InfoValue>
-                  </InfoText>
-                </InfoItem>
-              </InfoGrid>
-
-              <ActionButtons>
-                <ActionButton onClick={handleShare}>
-                  공유
-                </ActionButton>
-              </ActionButtons>
-            </ModalBody>
-          </ModalContent>
-        </Modal>
-      )}
+      <PlaceDetailModal
+        place={selectedPlace}
+        onClose={handleCloseModal}
+        onShare={handleShare}
+      />
 
       {/* 쿠폰 준비중 모달 */}
-      {showCouponModal && (
-        <CouponModal onClick={(e) => e.target === e.currentTarget && handleCloseCouponModal()}>
-          <CouponModalContent>
-            <CouponModalTitle>준비중</CouponModalTitle>
-            <CouponModalMessage>쿠폰 기능을 준비중입니다.</CouponModalMessage>
-            <CouponModalCloseButton onClick={handleCloseCouponModal}>
-              닫기
-            </CouponModalCloseButton>
-          </CouponModalContent>
-        </CouponModal>
-      )}
+      <SimpleModal
+        show={showCouponModal}
+        title="준비중"
+        message="쿠폰 기능을 준비중입니다."
+        buttonText="닫기"
+        onClose={handleCloseCouponModal}
+      />
 
 
       {/* 저장 성공 모달 */}
-      <SaveSuccessModal $show={showSaveSuccessModal} onClick={(e) => e.target === e.currentTarget && handleCloseSaveSuccessModal()}>
-        <SaveSuccessContent $show={showSaveSuccessModal}>
-          <SaveSuccessTitle>저장 완료!</SaveSuccessTitle>
-          <SaveSuccessMessage>
-            일정이 관심 일정에 저장되었습니다.<br />
-            마이페이지에서 확인하실 수 있습니다.
-          </SaveSuccessMessage>
-          <SaveSuccessButton onClick={handleCloseSaveSuccessModal}>
-            확인
-          </SaveSuccessButton>
-        </SaveSuccessContent>
-      </SaveSuccessModal>
+      <SaveSuccessModal
+        show={showSaveSuccessModal}
+        onClose={handleCloseSaveSuccessModal}
+      />
 
       {/* 삭제 확인 모달 */}
-      {showDeleteModal && (
-        <DeleteModal onClick={(e) => e.target === e.currentTarget && handleCloseDeleteModal()}>
-          <DeleteModalContent>
-            <DeleteModalTitle>일정 삭제</DeleteModalTitle>
-            <DeleteModalMessage>
-              정말로 이 일정을 삭제하시겠습니까?<br />
-              삭제된 일정은 복구할 수 없습니다.
-            </DeleteModalMessage>
-            <DeleteModalButtons>
-              <DeleteModalCancelButton onClick={handleCloseDeleteModal}>
-                취소
-              </DeleteModalCancelButton>
-              <DeleteModalConfirmButton onClick={handleConfirmDelete}>
-                삭제
-              </DeleteModalConfirmButton>
-            </DeleteModalButtons>
-          </DeleteModalContent>
-        </DeleteModal>
-      )}
+      <ConfirmModal
+        show={showDeleteModal}
+        title="일정 삭제"
+        message="정말로 이 일정을 삭제하시겠습니까?<br />삭제된 일정은 복구할 수 없습니다."
+        confirmText="삭제"
+        cancelText="취소"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCloseDeleteModal}
+      />
     </TravelScheduleDetailPage>
   );
 };
@@ -890,12 +817,6 @@ const AuthorSection = styled.div`
   margin-top: 20px;
 `;
 
-const AuthorRightSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
 const AuthorLeftSection = styled.div`
   display: flex;
   align-items: center;
@@ -954,15 +875,6 @@ const AuthorActionButton = styled.button`
 
   &:active {
     transform: scale(0.95);
-  }
-`;
-
-const SaveIcon = styled.span`
-  font-size: 20px;
-  color: #667eea;
-
-  &::before {
-    content: '📋';
   }
 `;
 
@@ -1099,106 +1011,12 @@ const PlacesContainer = styled.div`
   border-top: none;
 `;
 
-const PlaceCard = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 20px;
-  border: 2px solid #f1f3f4;
-  border-radius: 16px;
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  background: #fafbfc;
-
-  &:hover {
-    border-color: #667eea;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-    background: white;
-  }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const PlaceImage = styled.div`
-  width: 80px;
-  height: 80px;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-right: 20px;
-  flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const PlaceInfo = styled.div`
-  flex: 1;
-`;
-
-const PlaceName = styled.h4`
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 8px 0;
-`;
-
-const PlaceCategory = styled.p`
-  font-size: 14px;
-  color: #667eea;
-  margin: 0 0 8px 0;
-  font-weight: 500;
-`;
-
-const PlaceDescription = styled.p`
-  font-size: 14px;
-  color: #6c757d;
-  margin: 0;
-  line-height: 1.4;
-`;
-
-const DistanceInfo = styled.div`
-  margin-left: 20px;
-  padding: 12px 16px;
-  background: #e8f2ff;
-  border-radius: 12px;
-  font-size: 14px;
-  color: #667eea;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ArrowDown = styled.div`
-  display: flex;
-  justify-content: center;
-  margin: 15px 0;
-  color: #667eea;
-  font-size: 24px;
-`;
-
 const ArrowSection = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 15px 0;
   gap: 15px;
-`;
-
-const ArrowWithDistance = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f8f9fa;
-  padding: 10px 15px;
-  border-radius: 12px;
-  border: 2px solid #e9ecef;
 `;
 
 const Arrow = styled.div`
@@ -1213,196 +1031,6 @@ const DistanceText = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
-`;
-
-// 쿠폰 모달 스타일
-const CouponModal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 20px;
-`;
-
-const CouponModalContent = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 400px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-`;
-
-const CouponModalTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 15px 0;
-`;
-
-const CouponModalMessage = styled.p`
-  font-size: 16px;
-  color: #6c757d;
-  line-height: 1.5;
-  margin: 0 0 30px 0;
-`;
-
-const CouponModalCloseButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-  }
-`;
-
-// 모달 관련 스타일
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 20px;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 0;
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-
-const ModalHeader = styled.div`
-  position: relative;
-  height: 200px;
-  border-radius: 20px 20px 0 0;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.7);
-  }
-`;
-
-const ModalBody = styled.div`
-  padding: 30px;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 20px 0;
-`;
-
-const InfoGrid = styled.div`
-  display: grid;
-  gap: 15px;
-  margin-bottom: 30px;
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-`;
-
-const InfoIcon = styled.div`
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  margin-top: 2px;
-`;
-
-const InfoText = styled.div`
-  flex: 1;
-`;
-
-const InfoLabel = styled.p`
-  font-size: 14px;
-  color: #6c757d;
-  margin: 0 0 4px 0;
-`;
-
-const InfoValue = styled.p`
-  font-size: 16px;
-  color: #2c3e50;
-  margin: 0;
-  font-weight: 500;
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  width: 100%;
-`;
-
-const ActionButton = styled.button`
-  flex: 1;
-  padding: 14px 20px;
-  border: 2px solid #667eea;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: linear-gradient(135deg, #5a6fd8 0%, #6a4c9a 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  }
 `;
 
 const LoadingContainer = styled.div`
@@ -1422,106 +1050,6 @@ const NotFoundContainer = styled.div`
   height: 50vh;
   font-size: 18px;
   color: #6c757d;
-`;
-
-const FloatingSaveButton = styled.button`
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-size: 18px;
-  cursor: pointer;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    transform: translateY(-5px) scale(1.1);
-    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.6);
-  }
-
-  &:active {
-    transform: translateY(-2px) scale(1.05);
-  }
-
-  @media (max-width: 768px) {
-    bottom: 100px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    font-size: 16px;
-  }
-`;
-
-const SaveSuccessModal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  opacity: ${props => props.$show ? 1 : 0};
-  visibility: ${props => props.$show ? 'visible' : 'hidden'};
-  transition: all 0.3s ease;
-`;
-
-const SaveSuccessContent = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 40px 30px;
-  text-align: center;
-  max-width: 400px;
-  width: 90%;
-  transform: ${props => props.$show ? 'translateY(0) scale(1)' : 'translateY(-20px) scale(0.95)'};
-  transition: all 0.3s ease;
-`;
-
-const SaveSuccessIcon = styled.div`
-  font-size: 60px;
-  margin-bottom: 20px;
-`;
-
-const SaveSuccessTitle = styled.h3`
-  font-size: 24px;
-  color: #2c3e50;
-  margin: 0 0 16px 0;
-  font-weight: 700;
-`;
-
-const SaveSuccessMessage = styled.p`
-  font-size: 16px;
-  color: #6c757d;
-  margin: 0 0 30px 0;
-  line-height: 1.6;
-`;
-
-const SaveSuccessButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 14px 32px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-  }
 `;
 
 const BottomSaveButton = styled.button`
@@ -1570,86 +1098,6 @@ const DeleteButton = styled.button`
 
   &:active {
     transform: translateY(0);
-  }
-`;
-
-const DeleteModal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 20px;
-`;
-
-const DeleteModalContent = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 400px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-`;
-
-const DeleteModalTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #dc3545;
-  margin: 0 0 15px 0;
-`;
-
-const DeleteModalMessage = styled.p`
-  font-size: 16px;
-  color: #6c757d;
-  line-height: 1.5;
-  margin: 0 0 30px 0;
-`;
-
-const DeleteModalButtons = styled.div`
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-`;
-
-const DeleteModalCancelButton = styled.button`
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.6);
-    background: #5a6268;
-  }
-`;
-
-const DeleteModalConfirmButton = styled.button`
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.6);
-    background: #c82333;
   }
 `;
 

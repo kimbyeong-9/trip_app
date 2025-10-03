@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import FAQItem from '../components/faq/FAQItem';
 
 
 
@@ -165,27 +166,22 @@ const FAQ = () => {
 
 
       <FAQList>
-        {filteredFAQ.map(item => (
-          <FAQItem key={item.id}>
-            <FAQQuestion onClick={() => toggleExpanded(item.id)}>
-              <QuestionText>{item.question}</QuestionText>
-              <ExpandIcon expanded={expandedItems[item.id]}>
-                ▼
-              </ExpandIcon>
-            </FAQQuestion>
-            <FAQAnswer expanded={expandedItems[item.id]}>
-              <AnswerContent dangerouslySetInnerHTML={{ __html: item.answer }} />
-            </FAQAnswer>
-          </FAQItem>
+        {faqData.map(item => (
+          <FAQItem
+            key={item.id}
+            item={item}
+            isExpanded={expandedItems[item.id]}
+            onToggle={() => toggleExpanded(item.id)}
+          />
         ))}
       </FAQList>
 
-      {filteredFAQ.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6c757d' }}>
-          <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔍</div>
+      {faqData.length === 0 && (
+        <EmptyState>
+          <EmptyIcon>🔍</EmptyIcon>
           <h3>검색 결과가 없습니다</h3>
           <p>다른 키워드로 검색해보시거나 카테고리를 변경해보세요.</p>
-        </div>
+        </EmptyState>
       )}
     </FAQContainer>
   );
@@ -261,86 +257,15 @@ const FAQList = styled.div`
   margin: 0 auto;
 `;
 
-const FAQItem = styled.div`
-  margin-bottom: 20px;
-  border: 1px solid #e9ecef;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-
-  &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const FAQQuestion = styled.div`
-  padding: 20px 25px;
-  background: white;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background 0.3s ease;
-
-  &:hover {
-    background: #f8f9fa;
-  }
-`;
-
-const QuestionText = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0;
-  flex: 1;
-  line-height: 1.4;
-`;
-
-const ExpandIcon = styled.div`
-  font-size: 20px;
-  color: #667eea;
-  transition: transform 0.3s ease;
-  transform: ${props => props.expanded ? 'rotate(180deg)' : 'rotate(0deg)'};
-  margin-left: 15px;
-`;
-
-const FAQAnswer = styled.div`
-  max-height: ${props => props.expanded ? '500px' : '0'};
-  opacity: ${props => props.expanded ? '1' : '0'};
-  overflow: hidden;
-  transition: all 0.3s ease;
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-`;
-
-const AnswerContent = styled.div`
-  padding: 25px;
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 60px 20px;
   color: #6c757d;
-  font-size: 16px;
-  line-height: 1.6;
+`;
 
-  p {
-    margin: 0 0 15px 0;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  strong {
-    color: #2c3e50;
-    font-weight: 600;
-  }
-
-  ul {
-    margin: 15px 0;
-    padding-left: 20px;
-
-    li {
-      margin-bottom: 8px;
-    }
-  }
+const EmptyIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 20px;
 `;
 
 export default FAQ;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { supabase } from '../supabaseClient';
+import PasswordInput from '../components/signup/PasswordInput';
 
 
 const Signup = () => {
@@ -21,10 +22,6 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [isVerificationSent, setIsVerificationSent] = useState(false);
-  const [verificationTimer, setVerificationTimer] = useState(0);
   const [passwordError, setPasswordError] = useState('');
   const [emailError, setEmailError] = useState('');
 
@@ -70,80 +67,14 @@ const Signup = () => {
     }));
   };
 
-  // 이메일 중복 검사 (Supabase에서는 자동으로 처리되므로 제거 가능)
+  // 이메일 중복 검사
   const checkEmailDuplicate = async (email) => {
-    // Supabase Auth가 자동으로 중복 검사를 하므로
-    // 여기서는 간단한 형식 검증만 수행
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setEmailError('올바른 이메일 형식을 입력해주세요.');
     } else {
       setEmailError('');
     }
-  };
-
-  // 타이머 효과
-  React.useEffect(() => {
-    let interval = null;
-    if (verificationTimer > 0) {
-      interval = setInterval(() => {
-        setVerificationTimer(prev => prev - 1);
-      }, 1000);
-    } else if (verificationTimer === 0 && isVerificationSent) {
-      setIsVerificationSent(false);
-    }
-    return () => clearInterval(interval);
-  }, [verificationTimer, isVerificationSent]);
-
-  // 인증번호 발송
-  const handleSendVerification = async () => {
-    if (!formData.phone) {
-      setError('휴대폰 번호를 먼저 입력해주세요.');
-      return;
-    }
-
-    if (!/^01[016789]-?\d{3,4}-?\d{4}$/.test(formData.phone.replace(/-/g, ''))) {
-      setError('올바른 휴대폰 번호 형식을 입력해주세요.');
-      return;
-    }
-
-    setIsVerificationSent(true);
-    setVerificationTimer(180); // 3분
-    setError('');
-
-    // 실제로는 서버에 인증번호 발송 요청
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    alert(`${formData.phone}로 인증번호가 발송되었습니다.`);
-  };
-
-  // 인증번호 확인
-  const handleVerifyCode = async () => {
-    if (!verificationCode) {
-      setError('인증번호를 입력해주세요.');
-      return;
-    }
-
-    if (verificationCode.length !== 6) {
-      setError('인증번호는 6자리 숫자입니다.');
-      return;
-    }
-
-    // 실제로는 서버에서 인증번호 검증
-    // 여기서는 시뮬레이션으로 '123456'을 정답으로 설정
-    if (verificationCode === '123456') {
-      setIsVerified(true);
-      setError('');
-      alert('휴대폰 인증이 완료되었습니다!');
-    } else {
-      setError('인증번호가 올바르지 않습니다.');
-    }
-  };
-
-  // 인증번호 재발송
-  const handleResendVerification = () => {
-    setVerificationCode('');
-    setIsVerified(false);
-    handleSendVerification();
   };
 
   // 전화번호 포맷팅
@@ -160,14 +91,6 @@ const Signup = () => {
       ...prev,
       phone: formattedPhone
     }));
-
-    // 전화번호가 변경되면 인증 상태 초기화
-    if (isVerified || isVerificationSent) {
-      setIsVerified(false);
-      setIsVerificationSent(false);
-      setVerificationCode('');
-      setVerificationTimer(0);
-    }
   };
 
   const validateForm = () => {
@@ -208,17 +131,6 @@ const Signup = () => {
       setError(passwordError);
       return false;
     }
-
-    // 본인인증 비활성화 (테스트용)
-    // if (formData.phone && !/^01[016789]-?\d{3,4}-?\d{4}$/.test(formData.phone.replace(/-/g, ''))) {
-    //   setError('올바른 휴대폰 번호 형식을 입력해주세요.');
-    //   return false;
-    // }
-
-    // if (formData.phone && !isVerified) {
-    //   setError('휴대폰 번호 인증을 완료해주세요.');
-    //   return false;
-    // }
 
     if (!agreeTerms || !agreePrivacy) {
       setError('필수 약관에 동의해주세요.');
@@ -370,73 +282,33 @@ const Signup = () => {
 
           <FormGroup>
             <Label htmlFor="password">비밀번호 *</Label>
-            <PasswordInputContainer>
-              <Input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="비밀번호를 입력하세요 (6자 이상)"
-                required
-                disabled={isLoading}
-                className={error && error.includes('비밀번호') ? 'error' : ''}
-              />
-              <PasswordToggle
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94L17.94 17.94z"/>
-                    <path d="m1 1 22 22"/>
-                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19l-6.84-6.84z"/>
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                )}
-              </PasswordToggle>
-            </PasswordInputContainer>
+            <PasswordInput
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="비밀번호를 입력하세요 (6자 이상)"
+              disabled={isLoading}
+              showPassword={showPassword}
+              onTogglePassword={() => setShowPassword(!showPassword)}
+              error={error && error.includes('비밀번호')}
+            />
           </FormGroup>
 
           <FormGroup>
             <Label htmlFor="confirmPassword">비밀번호 확인 *</Label>
-            <PasswordInputContainer>
-              <Input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                placeholder="비밀번호를 다시 입력하세요"
-                required
-                disabled={isLoading}
-                className={passwordError || (error && error.includes('일치하지')) ? 'error' : ''}
-              />
-              <PasswordToggle
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                disabled={isLoading}
-              >
-                {showConfirmPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94L17.94 17.94z"/>
-                    <path d="m1 1 22 22"/>
-                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19l-6.84-6.84z"/>
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                )}
-              </PasswordToggle>
-            </PasswordInputContainer>
-            {passwordError && <PasswordErrorMessage>{passwordError}</PasswordErrorMessage>}
+            <PasswordInput
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              placeholder="비밀번호를 다시 입력하세요"
+              disabled={isLoading}
+              showPassword={showConfirmPassword}
+              onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+              error={passwordError || (error && error.includes('일치하지'))}
+              errorMessage={passwordError}
+            />
           </FormGroup>
 
           <FormRow>
@@ -475,91 +347,18 @@ const Signup = () => {
             </FormGroup>
           </FormRow>
 
-          {/* 본인인증 섹션 */}
           <FormGroup>
-            <VerificationSection $verified={isVerified}>
-              {isVerified && <SuccessIcon>✓</SuccessIcon>}
-              <VerificationTitle $verified={isVerified}>
-                본인인증
-              </VerificationTitle>
-
-              <FormGroup>
-                <Label htmlFor="phone">휴대폰 번호</Label>
-                <Input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handlePhoneChange}
-                  placeholder="010-1234-5678"
-                  disabled={isLoading || isVerified}
-                  className={error && error.includes('휴대폰') ? 'error' : ''}
-                  maxLength={13}
-                />
-              </FormGroup>
-
-              {formData.phone && !isVerified && (
-                <>
-                  <VerificationInputGroup>
-                    <Input
-                      type="text"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="인증번호 6자리"
-                      disabled={isLoading || !isVerificationSent}
-                      maxLength={6}
-                      style={{ flex: 1 }}
-                    />
-                    {!isVerificationSent ? (
-                      <VerificationButton
-                        type="button"
-                        onClick={handleSendVerification}
-                        disabled={isLoading || !formData.phone}
-                      >
-                        인증번호 발송
-                      </VerificationButton>
-                    ) : (
-                      <VerificationButton
-                        type="button"
-                        onClick={handleVerifyCode}
-                        disabled={isLoading || !verificationCode || verificationCode.length !== 6}
-                      >
-                        인증확인
-                      </VerificationButton>
-                    )}
-                  </VerificationInputGroup>
-
-                  <VerificationStatus $verified={isVerified}>
-                    {isVerificationSent && verificationTimer > 0 && (
-                      <>
-                        <span>인증번호가 발송되었습니다.</span>
-                        <span className="timer">
-                          {Math.floor(verificationTimer / 60)}:{(verificationTimer % 60).toString().padStart(2, '0')}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleResendVerification}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#667eea',
-                            textDecoration: 'underline',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            marginLeft: '10px'
-                          }}
-                        >
-                          재발송
-                        </button>
-                      </>
-                    )}
-                    {isVerified && (
-                      <span style={{ color: '#28a745' }}>✅ 휴대폰 인증이 완료되었습니다.</span>
-                    )}
-                  </VerificationStatus>
-                </>
-              )}
-            </VerificationSection>
+            <Label htmlFor="phone">휴대폰 번호</Label>
+            <Input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handlePhoneChange}
+              placeholder="010-1234-5678"
+              disabled={isLoading}
+              maxLength={13}
+            />
           </FormGroup>
 
           <TermsSection>
@@ -736,31 +535,6 @@ const Input = styled.input`
 `;
 
 
-const PasswordInputContainer = styled.div`
-  position: relative;
-`;
-
-const PasswordToggle = styled.button`
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6c757d;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 5px;
-
-  &:hover {
-    color: #667eea;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
 
 const TermsSection = styled.div`
   text-align: left;
@@ -899,93 +673,6 @@ const BackArrowButton = styled.button`
     background: rgba(102, 126, 234, 0.2);
     transform: translateX(-2px);
   }
-`;
-
-const VerificationSection = styled.div`
-  border: 2px solid ${props => props.$verified ? '#28a745' : '#e9ecef'};
-  border-radius: 12px;
-  padding: 20px;
-  background-color: ${props => props.$verified ? '#f8fff9' : '#fafafa'};
-  position: relative;
-  transition: all 0.3s ease;
-`;
-
-const VerificationTitle = styled.div`
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  .icon {
-    color: ${props => props.$verified ? '#28a745' : '#6c757d'};
-  }
-`;
-
-const VerificationInputGroup = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  margin-top: 20px;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-  }
-`;
-
-const VerificationButton = styled.button`
-  background: ${props => props.$sent ? '#6c757d' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  opacity: ${props => props.disabled ? 0.6 : 1};
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  }
-
-  @media (max-width: 480px) {
-    padding: 15px 20px;
-  }
-`;
-
-const VerificationStatus = styled.div`
-  font-size: 12px;
-  color: ${props => props.$verified ? '#28a745' : '#6c757d'};
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 10px;
-
-  .timer {
-    color: #ff6b6b;
-    font-weight: 600;
-  }
-`;
-
-const SuccessIcon = styled.div`
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  width: 24px;
-  height: 24px;
-  background: #28a745;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-  font-weight: bold;
 `;
 
 const GenderButtonGroup = styled.div`

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import MagazineDetailModal from '../components/MagazineDetailModal';
+import Pagination from '../components/Pagination';
 import { supabase } from '../supabaseClient';
 
 
@@ -155,49 +156,11 @@ const MagazineList = () => {
               ))}
             </MagazineGrid>
 
-            {/* 페이지네이션 */}
-            {totalPages > 1 && (
-              <PaginationContainer>
-                <PaginationButton
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  ‹
-                </PaginationButton>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
-                  // 현재 페이지 주변의 페이지만 보이도록 제한
-                  if (
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  ) {
-                    return (
-                      <PaginationButton
-                        key={page}
-                        $active={currentPage === page}
-                        onClick={() => handlePageChange(page)}
-                      >
-                        {page}
-                      </PaginationButton>
-                    );
-                  } else if (
-                    page === currentPage - 2 ||
-                    page === currentPage + 2
-                  ) {
-                    return <span key={page}>...</span>;
-                  }
-                  return null;
-                })}
-
-                <PaginationButton
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  ›
-                </PaginationButton>
-              </PaginationContainer>
-            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </>
         ) : (
           <EmptyState>
@@ -388,44 +351,6 @@ const MagazineAuthor = styled.span`
 const MagazineDate = styled.span`
   font-size: 13px;
   color: #adb5bd;
-`;
-
-const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  margin: 40px 0;
-  flex-wrap: wrap;
-`;
-
-const PaginationButton = styled.button`
-  min-width: 40px;
-  height: 40px;
-  border: 2px solid ${props => props.$active ? '#667eea' : '#e9ecef'};
-  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'};
-  color: ${props => props.$active ? 'white' : '#6c757d'};
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover:not(:disabled) {
-    background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa'};
-    border-color: #667eea;
-    color: ${props => props.$active ? 'white' : '#667eea'};
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
 `;
 
 const EmptyState = styled.div`

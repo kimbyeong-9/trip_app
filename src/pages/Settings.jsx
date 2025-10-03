@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
+import SettingToggleItem from '../components/settings/SettingToggleItem';
+import SettingSelectItem from '../components/settings/SettingSelectItem';
 
 
 const Settings = () => {
@@ -122,17 +124,6 @@ const Settings = () => {
 
   };
 
-
-  // 언어 변경 적용
-  const applyLanguageChange = (language) => {
-    document.documentElement.lang = language;
-
-
-    // 언어 변경 시 alert 제거
-    console.log(`Language changed to: ${language}`);
-  };
-
-
   const handleSave = () => {
     setIsLoading(true);
 
@@ -218,78 +209,57 @@ const Settings = () => {
         <SettingsSection data-settings-section>
           <SectionTitle>알림 설정</SectionTitle>
 
-          <SettingItem>
-            <SettingLabel>
-              <SettingTitle>푸시 알림</SettingTitle>
-              <SettingDescription>앱에서 바로 알림을 받습니다</SettingDescription>
-            </SettingLabel>
-            <ToggleSwitch
-              $active={settings.pushNotifications}
-              onClick={() => handleToggle('pushNotifications')}
-            />
-          </SettingItem>
+          <SettingToggleItem
+            title="푸시 알림"
+            description="앱에서 바로 알림을 받습니다"
+            isActive={settings.pushNotifications}
+            onToggle={() => handleToggle('pushNotifications')}
+          />
 
-          <SettingItem>
-            <SettingLabel>
-              <SettingTitle>이메일 알림</SettingTitle>
-              <SettingDescription>중요한 소식을 이메일로 받습니다</SettingDescription>
-            </SettingLabel>
-            <ToggleSwitch
-              $active={settings.notifications}
-              onClick={() => handleToggle('notifications')}
-            />
-          </SettingItem>
+          <SettingToggleItem
+            title="이메일 알림"
+            description="중요한 소식을 이메일로 받습니다"
+            isActive={settings.notifications}
+            onToggle={() => handleToggle('notifications')}
+          />
 
-          <SettingItem>
-            <SettingLabel>
-              <SettingTitle>마케팅 이메일</SettingTitle>
-              <SettingDescription>혜택 및 이벤트 정보를 받습니다</SettingDescription>
-            </SettingLabel>
-            <ToggleSwitch
-              $active={settings.emailMarketing}
-              onClick={() => handleToggle('emailMarketing')}
-            />
-          </SettingItem>
+          <SettingToggleItem
+            title="마케팅 이메일"
+            description="혜택 및 이벤트 정보를 받습니다"
+            isActive={settings.emailMarketing}
+            onToggle={() => handleToggle('emailMarketing')}
+          />
         </SettingsSection>
 
         {/* 개인정보 설정 */}
         <SettingsSection data-settings-section>
           <SectionTitle>개인정보 설정</SectionTitle>
 
-          <SettingItem>
-            <SettingLabel>
-              <SettingTitle>위치 서비스</SettingTitle>
-              <SettingDescription>위치 기반 서비스를 이용합니다</SettingDescription>
-            </SettingLabel>
-            <ToggleSwitch
-              $active={settings.locationServices}
-              onClick={() => handleToggle('locationServices')}
-            />
-          </SettingItem>
+          <SettingToggleItem
+            title="위치 서비스"
+            description="위치 기반 서비스를 이용합니다"
+            isActive={settings.locationServices}
+            onToggle={() => handleToggle('locationServices')}
+          />
         </SettingsSection>
 
         {/* 앱 설정 */}
         <SettingsSection data-settings-section>
           <SectionTitle>앱 설정</SectionTitle>
 
-
-          <SettingItem>
-            <SettingLabel>
-              <SettingTitle>언어</SettingTitle>
-              <SettingDescription>앱 사용 언어를 선택하세요</SettingDescription>
-            </SettingLabel>
-            <SelectBox
-              value={settings.language}
-              onChange={(e) => handleSelectChange('language', e.target.value)}
-            >
-              <option value="ko">한국어</option>
-              <option value="en">English</option>
-              <option value="ja">日本語</option>
-              <option value="zh">中文</option>
-              <option value="vi">Tiếng Việt</option>
-            </SelectBox>
-          </SettingItem>
-
+          <SettingSelectItem
+            title="언어"
+            description="앱 사용 언어를 선택하세요"
+            value={settings.language}
+            onChange={(e) => handleSelectChange('language', e.target.value)}
+            options={[
+              { value: 'ko', label: '한국어' },
+              { value: 'en', label: 'English' },
+              { value: 'ja', label: '日本語' },
+              { value: 'zh', label: '中文' },
+              { value: 'vi', label: 'Tiếng Việt' }
+            ]}
+          />
         </SettingsSection>
 
         {/* 저장 버튼 */}
@@ -415,75 +385,6 @@ const SectionTitle = styled.h3`
   margin: 0 0 20px 0;
   padding-bottom: 15px;
   border-bottom: 2px solid #f8f9fa;
-`;
-
-const SettingItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 0;
-  border-bottom: 1px solid #f8f9fa;
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const SettingLabel = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const SettingTitle = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 5px;
-`;
-
-const SettingDescription = styled.span`
-  font-size: 14px;
-  color: #6c757d;
-`;
-
-const ToggleSwitch = styled.div`
-  position: relative;
-  width: 50px;
-  height: 25px;
-  background: ${props => props.$active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e9ecef'};
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: ${props => props.$active ? '27px' : '2px'};
-    width: 21px;
-    height: 21px;
-    background: white;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-`;
-
-const SelectBox = styled.select`
-  padding: 8px 12px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  background: white;
-  color: #495057;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
 `;
 
 const Button = styled.button`

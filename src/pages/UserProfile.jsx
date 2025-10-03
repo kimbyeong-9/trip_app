@@ -1113,27 +1113,6 @@ const ProfileBio = styled.p`
   }
 `;
 
-const ProfileMetaInfo = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-
-  @media (max-width: 768px) {
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    gap: 12px;
-  }
-`;
 
 const ProfileLocation = styled.div`
   display: flex;
@@ -1537,30 +1516,11 @@ const CouponMinAmount = styled.span`
   display: block;
 `;
 
-const ProfileActions = styled.div`
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-  justify-content: center;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    width: 100%;
-  }
-`;
 
 
 const ProfileSections = styled.div`
   display: grid;
   gap: 30px;
-`;
-
-const InterestsSection = styled.div`
-  background: white;
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 1px solid #f0f0f0;
 `;
 
 const RecentTripsSection = styled.div`
@@ -1734,13 +1694,6 @@ const PointsValue = styled.span`
   font-weight: 700;
 `;
 
-const MemberLevel = styled.div`
-  background: rgba(255, 255, 255, 0.2);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-`;
 
 const PointsUseButton = styled.button`
   background: rgba(255, 255, 255, 0.2);
@@ -1758,141 +1711,6 @@ const PointsUseButton = styled.button`
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   }
-`;
-
-const BookingCard = styled.div`
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
-  border: 1px solid #e9ecef;
-`;
-
-const BookingHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-`;
-
-const HotelName = styled.h4`
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0;
-`;
-
-const Status = styled.span`
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${props => props.status === '예약완료' ? '#d4edda' : '#d1ecf1'};
-  color: ${props => props.status === '예약완료' ? '#155724' : '#0c5460'};
-`;
-
-const BookingDetails = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-`;
-
-const DetailItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-const DetailLabel = styled.span`
-  font-size: 12px;
-  color: #6c757d;
-  font-weight: 500;
-`;
-
-const DetailValue = styled.span`
-  font-size: 14px;
-  color: #2c3e50;
-  font-weight: 600;
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 8px;
-`;
-
-const ActionButton = styled.button`
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-
-  &.primary {
-    background: #007bff;
-    color: white;
-  }
-
-  &.secondary {
-    background: #6c757d;
-    color: white;
-  }
-
-  &:hover {
-    transform: translateY(-1px);
-  }
-`;
-
-const FavoriteCard = styled.div`
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #e9ecef;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const FavoriteImage = styled.img`
-  width: 80px;
-  height: 60px;
-  border-radius: 8px;
-  object-fit: cover;
-`;
-
-const FavoriteInfo = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-`;
-
-const FavoriteName = styled.h4`
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 4px 0;
-`;
-
-const FavoriteLocation = styled.p`
-  font-size: 14px;
-  color: #6c757d;
-  margin: 0 0 4px 0;
-`;
-
-const FavoritePrice = styled.span`
-  font-size: 16px;
-  font-weight: 700;
-  color: #007bff;
 `;
 
 const InterestedTripCard = styled.div`
@@ -2112,34 +1930,6 @@ const PostTab = styled.button`
 const PostsList = styled.div`
   display: grid;
   gap: 16px;
-`;
-
-const PostCard = styled.div`
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
-  }
-`;
-
-const PostTitle = styled.h4`
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 8px 0;
-`;
-
-const PostMeta = styled.div`
-  font-size: 14px;
-  color: #6c757d;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 `;
 
 // 일정 작성 방법 선택 모달 스타일
